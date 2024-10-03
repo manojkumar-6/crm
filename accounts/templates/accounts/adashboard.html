@@ -1,0 +1,219 @@
+{% extends 'accounts/base.html' %} {% block title %} Dashboard - AI Usage {% endblock %} {% block heading %} AI Usage Statistics {% endblock %} {% block content %}
+<br>
+
+<!-- Status Row with Shadow and Hover Effects -->
+<div class="row mb-4">
+    <div class="col">
+        <div class="col-md">
+            <div class="card text-center text-white bg-primary mb-3 shadow-lg hover-card">
+                <div class="card-header">
+                    <h5 class="card-title">Total Tenants Interacted With Model</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ total_users_interacted }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="col-md">
+            <div class="card text-center text-white bg-info mb-3 shadow-lg hover-card">
+                <div class="card-header">
+                    <h5 class="card-title">Total AI Hits</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ total_ai_hits }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="col-md">
+            <div class="card text-center text-white bg-success mb-3 shadow-lg hover-card">
+                <div class="card-header">
+                    <h5 class="card-title">Total Messages Sent</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">{{ total_messages_sent }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Combined Graph Accordion -->
+<div class="accordion mb-4" id="combinedGraphAccordion">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingCombined">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCombined" aria-expanded="true" aria-controls="collapseCombined">
+                Combined AI Usage Data
+            </button>
+        </h2>
+        <div id="collapseCombined" class="accordion-collapse collapse show" aria-labelledby="headingCombined" data-bs-parent="#combinedGraphAccordion">
+            <div class="accordion-body">
+                <!-- Filters in One Row -->
+                <div class="row mb-3">
+                    <!-- Tenant Filter -->
+                    <!-- Tenant Filter -->
+                    <div class="col-md-3">
+                        <label for="tenantSelect" class="form-label">Filter By Client</label>
+                        <select id="tenantSelect" class="form-select" onchange="filterGraph()">
+        <option value="all">All</option>
+        {% for tenant in tenant_names %}
+        <option value="{{ tenant }}">{{ tenant }}</option>
+        {% endfor %}
+    </select>
+                    </div>
+
+                    <!-- Year Filter -->
+                    <div class="col-md-3">
+                        <label for="yearSelect" class="form-label">Filter By Year</label>
+                        <select id="yearSelect" class="form-select" onchange="filterGraph()">
+        <option value="all">All</option>
+        {% for year in years %}
+        <option value="{{ year }}">{{ year }}</option>
+        {% endfor %}
+    </select>
+                    </div>
+
+                    <!-- Month Filter -->
+                    <div class="col-md-3">
+                        <label for="monthSelect" class="form-label">Filter By Month</label>
+                        <select id="monthSelect" class="form-select" onchange="filterGraph()">
+        <option value="all">All</option>
+        {% for month in months %}
+        <option value="{{ month }}">{{ month }}</option>
+        {% endfor %}
+    </select>
+                    </div>
+
+                    <!-- Day Filter -->
+                    <div class="col-md-3">
+                        <label for="daySelect" class="form-label">Filter By Day</label>
+                        <select id="daySelect" class="form-select" onchange="filterGraph()">
+        <option value="all">All</option>
+        {% for day in days %}
+        <option value="{{ day }}">{{ day }}</option>
+        {% endfor %}
+    </select>
+                    </div>
+
+                </div>
+
+                <!-- Scrollable Container for Chart -->
+                <div style="overflow-x: auto;">
+                    <canvas id="combinedGraph" width="800" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pass the data from Django to JavaScript -->
+{{ tenant_names|json_script:"tenant-names" }} {{ ai_hits_filtered|json_script:"ai-hits-filtered" }}
+
+<!-- JavaScript for Chart.js and Filtering -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let tenantNames = JSON.parse(document.getElementById('tenant-names').textContent);
+    let aiHitsData = JSON.parse(document.getElementById('ai-hits-filtered').textContent);
+
+    // Function to create or update the chart
+    function createCombinedChart(filteredData) {
+        const ctx = document.getElementById('combinedGraph').getContext('2d');
+
+        // Destroy previous chart if it exists
+        if (window.combinedChart) {
+            window.combinedChart.destroy();
+        }
+
+        // Get tenant names and counts from filteredData
+        let labels = filteredData.map(item => item.tenant); // Correctly map tenant names
+        let data = filteredData.map(item => item.count); // Correctly map counts
+
+        // Handle empty data (no filtered results)
+        if (labels.length === 0) {
+            labels = ["No Data"];
+            data = [0];
+        }
+
+        // Create a new chart
+        window.combinedChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'AI Hits',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    barThickness: 25
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of AI Hits'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Clients'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to filter the data based on user selection
+    function filterGraph() {
+        const selectedTenant = document.getElementById('tenantSelect').value;
+        const selectedYear = document.getElementById('yearSelect').value;
+        const selectedMonth = document.getElementById('monthSelect').value;
+        const selectedDay = document.getElementById('daySelect').value;
+
+        // Filter the data based on tenant, year, month, and day
+        let filteredData = aiHitsData;
+
+        if (selectedTenant !== 'all') {
+            filteredData = filteredData.filter(item => item.tenant === selectedTenant);
+        }
+
+        if (selectedYear !== 'all') {
+            filteredData = filteredData.filter(item => item.year === parseInt(selectedYear));
+        }
+
+        if (selectedMonth !== 'all') {
+            filteredData = filteredData.filter(item => item.month === parseInt(selectedMonth));
+        }
+
+        // Assuming day exists in your data and needs to be filtered
+        if (selectedDay !== 'all') {
+            filteredData = filteredData.filter(item => item.day === parseInt(selectedDay));
+        }
+
+        // Update the chart with the filtered data
+        createCombinedChart(filteredData);
+    }
+
+    // Initialize the graph on page load
+    filterGraph();
+</script>
+
+{% endblock %}

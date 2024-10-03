@@ -1,0 +1,296 @@
+{% extends 'accounts/base.html' %} {% load static %} {% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Credentials Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .table-responsive {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 400px;
+            /* Set maximum height */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+        }
+
+        table thead {
+            background-color: #343a40;
+            color: white;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .btn-primary,
+        .btn-warning,
+        .btn-danger {
+            border-radius: 50px;
+            padding: 5px 15px;
+        }
+
+        .form-control {
+            border-radius: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container my-4">
+        <div class="row align-items-center mb-3">
+            <div class="col">
+                <h1 class="display-6 text-dark">Facebook Credentials</h1>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Credential</button>
+            </div>
+        </div>
+
+        <!-- Search Filter -->
+        <div class="mb-3">
+            <input type="text" id="search-filter" class="form-control" placeholder="Search in all fields" onkeyup="filterTable()">
+        </div>
+
+        <!-- Responsive Table for Facebook Credentials -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="credentialsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Client</th>
+                        <th>App ID</th>
+                        <th>Phone Number ID</th>
+                        <th>Version</th>
+                        <th>Access Token</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for credential in credentials %}
+                    <tr>
+                        <td>{{ credential.id }}</td>
+                        <td>{{ credential.user.name }}</td>
+                        <td>{{ credential.appId }}</td>
+                        <td>{{ credential.phoneNumberId }}</td>
+                        <td>{{ credential.version }}</td>
+                        <td class="access-token" title="{{ credential.accessToken }}">{{ credential.accessToken }}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ credential.id }}" data-appid="{{ credential.appId }}" data-phonenumberid="{{ credential.phoneNumberId }}" data-version="{{ credential.version }}" data-accesstoken="{{ credential.accessToken }}">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteCredential({{ credential.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Facebook Credential Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">Add New Facebook Credential</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createCredentialForm">
+                        <div class="mb-3">
+                            <label for="tenant-select" class="form-label">Client</label>
+                            <select class="form-select" id="tenant-select" name="tenant_id" required>
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-appid" class="form-label">App ID</label>
+                            <input type="text" class="form-control" id="new-appid" name="appId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-phonenumberid" class="form-label">Phone Number ID</label>
+                            <input type="text" class="form-control" id="new-phonenumberid" name="phoneNumberId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-version" class="form-label">Version</label>
+                            <input type="text" class="form-control" id="new-version" name="version" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-access-token" class="form-label">Access Token</label>
+                            <input type="text" class="form-control" id="new-access-token" name="accessToken" required>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="createCredential()">Create</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Facebook Credential Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Facebook Credential</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editCredentialForm">
+                        <input type="hidden" id="credential-id" name="credential_id">
+                        <div class="mb-3">
+                            <label for="tenant-select" class="form-label">Client</label>
+                            <select class="form-select" id="tenant-select" name="tenant_id" required>
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-appid" class="form-label">App ID</label>
+                            <input type="text" class="form-control" id="edit-appid" name="appId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-phonenumberid" class="form-label">Phone Number ID</label>
+                            <input type="text" class="form-control" id="edit-phonenumberid" name="phoneNumberId" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-version" class="form-label">Version</label>
+                            <input type="text" class="form-control" id="edit-version" name="version" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-access-token" class="form-label">Access Token</label>
+                            <input type="text" class="form-control" id="edit-access-token" name="accessToken" required>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Populate edit modal with credential data
+        document.getElementById('editModal').addEventListener('show.bs.modal', function(event) {
+            var button = event.relatedTarget;
+            document.getElementById('credential-id').value = button.getAttribute('data-id');
+            document.getElementById('edit-appid').value = button.getAttribute('data-appid');
+            document.getElementById('edit-phonenumberid').value = button.getAttribute('data-phonenumberid');
+            document.getElementById('edit-version').value = button.getAttribute('data-version');
+            document.getElementById('edit-access-token').value = button.getAttribute('data-accesstoken');
+        });
+
+        // Truncate Access Token Function
+        function truncateAccessToken(token) {
+            const maxLength = 20; // Set your desired max length
+            if (token.length > maxLength) {
+                return token.substring(0, maxLength) + '...'; // Truncate and add ellipsis
+            }
+            return token; // Return the original token if it's within the length
+        }
+
+        // Truncate access tokens on page load
+        window.onload = function() {
+            const tokens = document.querySelectorAll('.access-token');
+            tokens.forEach(token => {
+                const fullToken = token.getAttribute('title');
+                token.innerText = truncateAccessToken(fullToken);
+            });
+        };
+
+        // Create Credential
+        function createCredential() {
+            var form = document.getElementById('createCredentialForm');
+            var formData = new FormData(form);
+
+            fetch("{% url 'create_facebook_credential' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        // Save Changes (Update Credential)
+        function saveChanges() {
+            var form = document.getElementById('editCredentialForm');
+            var formData = new FormData(form);
+
+            fetch("{% url 'update_facebook_credential' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        // Delete Credential
+        function deleteCredential(id) {
+            if (confirm('Are you sure you want to delete this credential?')) {
+                fetch("{% url 'delete_facebook_credential' 0 %}".replace('0', id), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    });
+            }
+        }
+
+        // Filter table rows
+        function filterTable() {
+            const input = document.getElementById("search-filter");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("credentialsTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName("td");
+                let found = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j] && td[j].innerText.toLowerCase().includes(filter)) {
+                        found = true;
+                        break;
+                    }
+                }
+                tr[i].style.display = found ? "" : "none";
+            }
+        }
+    </script>
+
+</body>
+{% endblock %}

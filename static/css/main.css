@@ -1,0 +1,55 @@
+#logo {}
+
+body {
+    background-color: #ebeff5;
+}
+
+#total-orders {
+    background-color: #4cb4c7;
+}
+
+#orders-delivered {
+    background-color: #7abecc;
+}
+
+#orders-pending {
+    background-color: #7CD1C0;
+}
+
+.scrollable-card {
+    max-height: 400px;
+    /* Adjust the height as needed */
+    overflow-y: auto;
+    /* Adds vertical scrollbar if content exceeds max-height */
+    padding: 10px;
+    background-color: #f9f9f9;
+    /* Optional: to give a background color */
+}
+
+.message-container {
+    display: flex;
+    justify-content: space-between;
+    /* Aligns user query to the left and bot reply to the right */
+    margin-bottom: 20px;
+    /* Space between messages */
+}
+
+.user-query,
+.bot-reply {
+    max-width: 45%;
+    /* Ensures that both sides fit within the card */
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.user-query {
+    background-color: #e0f7fa;
+    /* Optional: light blue background for user queries */
+}
+
+.bot-reply {
+    background-color: #ffe0b2;
+    /* Optional: light orange background for bot replies */
+    text-align: right;
+    /* Aligns the text to the right in the bot reply */
+}

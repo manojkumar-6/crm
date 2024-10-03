@@ -1,0 +1,363 @@
+{% extends 'accounts/base.html' %} {% load static %} {% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Status Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .table-responsive {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table thead {
+            background-color: #343a40;
+            color: white;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .btn-primary,
+        .btn-warning,
+        .btn-danger {
+            border-radius: 50px;
+            padding: 5px 15px;
+        }
+
+        .form-control {
+            border-radius: 50px;
+        }
+
+        .scrollable-textarea {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container my-4">
+        <div class="row align-items-center mb-3">
+            <div class="col">
+                <h1 class="display-6 text-dark">Ticket Status Management</h1>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Ticket Status</button>
+            </div>
+        </div>
+
+        <!-- Search Filter -->
+        <div class="mb-3">
+            <input type="text" id="search-filter" class="form-control" placeholder="Search in all fields" onkeyup="filterTable()">
+        </div>
+
+        <!-- Responsive Table for Ticket Status -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="ticketsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Tenant</th>
+                        <th>Client</th>
+                        <th>Ticket Number</th>
+                        <th>Issue</th>
+                        <th>Status</th>
+                        <th>Comments</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.id }}</td>
+                        <td>{{ ticket.user.name }}</td>
+                        <td>{{ ticket.tenant_to.name }}</td>
+                        <td>{{ ticket.ticket_number.ticket_number }}</td>
+                        <td>{{ ticket.issue }}</td>
+                        <td>{{ ticket.ticket_status }}</td>
+                        <td>{{ ticket.comments }}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.tenant_to.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-issue="{{ ticket.issue }}"
+                                data-status="{{ ticket.ticket_status }}" data-comments="{{ ticket.comments }}">
+                                Edit
+                            </button>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-description="{{ ticket.description }}" data-status="{{ ticket.ticket_status }}"
+                                data-date-reported="{{ ticket.date_reported }}">
+                                Show Description
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Ticket Status Modal -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createModalLabel">Add New Ticket Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ticketStatusForm" method="POST" onsubmit="submitForm(); return false;">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="user" class="form-label">Tenant</label>
+                            <select name="user" id="user" class="form-select" required>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tenant_to" class="form-label">Client:</label>
+                            <select name="tenant_to" id="tenant_to" class="form-select" required>
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ticket_number" class="form-label">Ticket Number:</label>
+                            <select name="ticket_number" id="ticket_number" class="form-select" required>
+                                {% for ticket in ticket_numbers %}
+                                <option value="{{ ticket.id }}">{{ ticket.ticket_number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="issue" class="form-label">Issue:</label>
+                            <select name="issue" id="issue" class="form-select" required>
+                                {% for issue in issues %}
+                                <option value="{{ issue.id }}">{{ issue.issue_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ticket_status" class="form-label">Ticket Status:</label>
+                            <select name="ticket_status" id="ticket_status" class="form-select" required>
+                                <option value="PENDING">Pending</option>
+                                <option value="INPROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comments" class="form-label">Comments:</label>
+                            <textarea name="comments" id="comments" class="form-control" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Create Ticket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Show Description Modal -->
+    <div class="modal fade" id="showDescriptionModal" tabindex="-1" aria-labelledby="showDescriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <!-- Set larger size -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="showDescriptionModalLabel">Ticket Description</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Ticket Number:</strong> <span id="modalTicketNumber"></span></p>
+                    <p><strong>Status:</strong> <span id="modalTicketStatus"></span></p>
+                    <p><strong>Date Reported:</strong> <span id="modalDateReported"></span> (<span id="modalDaysSinceReported"></span> days ago)</p>
+                    <div class="mb-3">
+                        <label for="modalDescription" class="form-label">Description:</label>
+                        <textarea id="modalDescription" class="form-control scrollable-textarea" readonly></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Ticket Status Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Ticket Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTicketStatusForm" method="POST" action="{% url 'update_ticket_status' %}" onsubmit="saveChanges(); return false;">
+                        {% csrf_token %}
+                        <input type="hidden" name="id" id="editTicketId">
+                        <div class="mb-3">
+                            <label for="editUserSelect" class="form-label">Tenant</label>
+                            <select class="form-select" id="editUserSelect" name="user" required>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editTenantSelect" class="form-label">Client</label>
+                            <select class="form-select" id="editTenantSelect" name="tenant_to" required>
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editTicketNumberSelect" class="form-label">Ticket Number</label>
+                            <select class="form-select" id="editTicketNumberSelect" name="ticket_number" required>
+                                {% for ticket in ticket_numbers %}
+                                <option value="{{ ticket.id }}">{{ ticket.ticket_number }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editIssueSelect" class="form-label">Issue</label>
+                            <select class="form-select" id="editIssueSelect" name="issue" required>
+                                {% for issue in issues %}
+                                <option value="{{ issue.id }}">{{ issue.issue_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editTicketStatusSelect" class="form-label">Ticket Status</label>
+                            <select class="form-select" id="editTicketStatusSelect" name="ticket_status" required>
+                                <option value="PENDING">Pending</option>
+                                <option value="INPROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editComments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="editComments" name="comments" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitForm() {
+            const form = document.getElementById('ticketStatusForm');
+            form.submit();
+        }
+
+        // Show Description Modal Data Population
+        const showDescriptionModal = document.getElementById('showDescriptionModal');
+        showDescriptionModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const ticketNumber = button.getAttribute('data-ticket-number');
+            const description = button.getAttribute('data-description');
+            const ticketStatus = button.getAttribute('data-status');
+            const dateReported = button.getAttribute('data-date-reported');
+
+            const modalTicketNumber = showDescriptionModal.querySelector('#modalTicketNumber');
+            const modalDescription = showDescriptionModal.querySelector('#modalDescription');
+            const modalTicketStatus = showDescriptionModal.querySelector('#modalTicketStatus');
+            const modalDateReported = showDescriptionModal.querySelector('#modalDateReported');
+
+            modalTicketNumber.textContent = ticketNumber;
+            modalDescription.value = description;
+            modalTicketStatus.textContent = ticketStatus;
+            modalDateReported.textContent = dateReported;
+        });
+
+        // Edit Modal Data Population
+        const editModal = document.getElementById('editModal');
+        editModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute('data-id');
+            const user = button.getAttribute('data-user');
+            const tenant = button.getAttribute('data-tenant');
+            const ticketNumber = button.getAttribute('data-ticket-number');
+            const issue = button.getAttribute('data-issue');
+            const status = button.getAttribute('data-status');
+            const comments = button.getAttribute('data-comments');
+
+            const modal = editModal.querySelector('.modal-body');
+            modal.querySelector('#editTicketId').value = id;
+            modal.querySelector('#editUserSelect').value = user;
+            modal.querySelector('#editTenantSelect').value = tenant;
+            modal.querySelector('#editTicketNumberSelect').value = ticketNumber;
+            modal.querySelector('#editIssueSelect').value = issue;
+            modal.querySelector('#editTicketStatusSelect').value = status;
+            modal.querySelector('#editComments').value = comments;
+        });
+
+        // Save Changes AJAX Submission
+        function saveChanges() {
+            const form = document.getElementById('editTicketStatusForm');
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => {
+                    console.log(response)
+                    if (response.ok) {
+                        alert('Changes saved successfully.');
+                        location.reload(); // Refresh the page to show updates
+                    } else {
+                        alert('Error saving changes.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+        }
+
+        // Table Search Filter
+        function filterTable() {
+            const filter = document.getElementById('search-filter').value.toUpperCase();
+            const table = document.getElementById('ticketsTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                let match = false;
+
+                for (let j = 0; j < cells.length; j++) {
+                    const cell = cells[j];
+                    if (cell && cell.innerText.toUpperCase().indexOf(filter) > -1) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                rows[i].style.display = match ? '' : 'none';
+            }
+        }
+    </script>
+</body>
+{% endblock %}

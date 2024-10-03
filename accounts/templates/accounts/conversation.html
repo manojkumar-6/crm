@@ -1,0 +1,115 @@
+{% extends 'accounts/main_template.html' %} {% block content %} {% load widget_tweaks %}
+
+
+<br>
+
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>USER: {{customer.name}}</h5>
+            <hr>
+            <a class="btn btn-outline-info  btn-sm btn-block" href="">Update Customer</a>
+            <a class="btn btn-outline-danger  btn-sm btn-block" href="">Delete Customer</a>
+        </div>
+    </div>
+
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>Contact Information</h5>
+            <hr>
+            <p>Email: {{customer.email}}</p>
+            <p>Phone: {{customer.phone}}</p>
+        </div>
+    </div>
+
+    <div class="col-md">
+        <div class="card card-body">
+            <h5>Total AI Requests</h5>
+            <hr>
+            <h1 style="text-align: center;padding: 10px">{{total_messages}}</h1>
+        </div>
+    </div>
+</div>
+
+
+<br>
+<div class="row">
+    <div class="col">
+        <div class="card card-body">
+            <h5>Conversation of user {{customer.name}} made with AI Model on {{date}} is as follow</h5>
+        </div>
+    </div>
+
+</div>
+<br>
+<style>
+    .scrollable-card {
+        max-height: 400px;
+        /* Adjust the height as needed */
+        overflow-y: auto;
+        /* Adds vertical scrollbar if content exceeds max-height */
+        padding: 10px;
+        background-color: #f9f9f9;
+        /* Optional: to give a background color */
+    }
+
+    .message-container {
+        display: flex;
+        flex-direction: column;
+        /* Aligns items vertically */
+        margin-bottom: 20px;
+        /* Space between messages */
+    }
+
+    .message-content {
+        display: flex;
+        flex-direction: column;
+        /* Aligns user query and bot reply vertically */
+    }
+
+    .user-query,
+    .bot-reply {
+        max-width: 100%;
+        /* Ensures that both sides fit within the card */
+        padding: 10px;
+        border-radius: 5px;
+        word-wrap: break-word;
+        /* Allows long words to break and prevent overflow */
+    }
+
+    .user-query {
+        background-color: #e0f7fa;
+        /* Optional: light blue background for user queries */
+    }
+
+    .bot-reply {
+        background-color: #ffe0b2;
+        /* Optional: light orange background for bot replies */
+        text-align: right;
+        /* Aligns the text to the right in the bot reply */
+        margin-top: 10px;
+        /* Adds space above the bot reply */
+    }
+</style>
+<div class="row">
+    <div class="col-md">
+        <div class="card card-body scrollable-card">
+            {% for message in messages %}
+            <div class="message-container">
+                <div class="message-content">
+                    <div class="user-query">
+                        <h5>User Query</h5>
+                        <p>{{ message.user_query }}</p>
+                    </div>
+                    <!-- Bot reply is now correctly placed outside of .message-content -->
+                </div>
+                <div class="bot-reply">
+                    <h5>Bot Reply</h5>
+                    <p>{{ message.ai_model_reply }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,167 @@
+{% extends 'accounts/main_template.html' %} {% block content %} {% load widget_tweaks %}
+
+<div class="content">
+    <h1>Tenant List</h1>
+    <table id="tenantTable" class="responsive-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tenant in tenants %}
+            <tr>
+                <td>{{ tenant.id }}</td>
+                <td>{{ tenant.name.username }}</td>
+                <td>{{ tenant.email }}</td>
+                <td>
+                    <button class="btn-edit" data-id="{{ tenant.id }}" data-name="{{ tenant.name.username }}" data-email="{{ tenant.email }}" onclick="openEditModal(this)">Edit</button>
+                    <a href="{% url 'delete_tenant' tenant.id %}" class="btn-delete">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Edit Tenant</h2>
+        <form id="editForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" id="tenantId" name="tenant_id">
+            <label for="tenantName">Name:</label>
+            <input type="text" id="tenantName" name="name" required>
+
+            <label for="tenantEmail">Email:</label>
+            <input type="email" id="tenantEmail" name="email" required>
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Open Modal for Editing
+    function openEditModal(button) {
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('tenantId').value = button.getAttribute('data-id');
+        document.getElementById('tenantName').value = button.getAttribute('data-name');
+        document.getElementById('tenantEmail').value = button.getAttribute('data-email');
+    }
+
+    // Close Modal
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    // Submit Edit Form via AJAX
+    document.getElementById('editForm').onsubmit = function(e) {
+        e.preventDefault();
+        let tenantId = document.getElementById('tenantId').value;
+        let formData = new FormData(this);
+
+        fetch(`/update_tenant/${tenantId}/`, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.reload(); // Reload the page on success
+                } else {
+                    alert(data.message);
+                }
+            });
+    };
+</script>
+
+<style>
+    /* Modal styling */
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 50%;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        cursor: pointer;
+    }
+    /* Responsive table styling */
+
+    .responsive-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .responsive-table th,
+    .responsive-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .responsive-table th {
+        background-color: #333;
+        color: white;
+    }
+
+    .responsive-table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        padding: 8px 16px;
+        margin-right: 5px;
+        cursor: pointer;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+    .btn-delete {
+        background-color: red;
+    }
+    /* Responsive adjustments */
+
+    @media (max-width: 600px) {
+        .responsive-table,
+        .responsive-table th,
+        .responsive-table td {
+            display: block;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

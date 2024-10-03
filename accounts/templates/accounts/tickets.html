@@ -1,0 +1,250 @@
+{% extends 'accounts/base.html' %}{% load static %}{% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickets Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .table-responsive {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        table thead {
+            background-color: #343a40;
+            color: white;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .btn-primary,
+        .btn-warning,
+        .btn-danger {
+            border-radius: 50px;
+            padding: 5px 15px;
+        }
+
+        .form-control {
+            border-radius: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container my-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="display-6 text-dark">Tickets Management</h1>
+            </div>
+            <div class="col-auto text-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTicketModal">Add New Ticket</button>
+            </div>
+        </div>
+
+        <!-- Search Filter -->
+        <div class="mb-3">
+            <input type="text" id="search-filter" class="form-control" placeholder="Search tickets" onkeyup="filterTable()">
+        </div>
+
+        <!-- Table to list all tickets -->
+        <div class="table-responsive mt-3">
+            <table class="table table-hover" id="ticketsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Tenant</th>
+                        <th>Ticket Number</th>
+                        <th>Ticket Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.id }}</td>
+                        <td>{{ ticket.user.name }}</td>
+
+                        <td>{{ ticket.ticket_number }}</td>
+                        <td>{{ticket.Description}}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editTicketModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-ticketnumber="{{ ticket.ticket_number }}">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Ticket Modal -->
+    <div class="modal fade" id="createTicketModal" tabindex="-1" aria-labelledby="createTicketModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createTicketModalLabel">Add New Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createTicketForm">
+                        <div class="mb-3">
+                            <label for="create-user" class="form-label">Tenant</label>
+                            <select class="form-select" id="create-user" name="user">
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="create-ticketnumber" class="form-label">Ticket Number</label>
+                            <input type="text" class="form-control" id="create-ticketnumber" name="ticket_number">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="createTicket()">Create</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Ticket Modal -->
+    <div class="modal fade" id="editTicketModal" tabindex="-1" aria-labelledby="editTicketModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTicketModalLabel">Edit Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTicketForm">
+                        <input type="hidden" id="edit-ticket-id" name="ticket_id">
+                        <div class="mb-3">
+                            <label for="edit-user" class="form-label">Tenant</label>
+                            <select class="form-select" id="edit-user" name="user">
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">{{ user.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-ticketnumber" class="form-label">Ticket Number</label>
+                            <input type="text" class="form-control" id="edit-ticketnumber" name="ticket_number">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="updateTicket()">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create Ticket
+        function createTicket() {
+            var form = document.getElementById('createTicketForm');
+            var formData = new FormData(form);
+
+            fetch("{% url 'create_ticket' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        // Populate the edit modal with ticket data
+        document.getElementById('editTicketModal').addEventListener('show.bs.modal', function(event) {
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-id');
+            var user = button.getAttribute('data-user');
+            var ticketNumber = button.getAttribute('data-ticketnumber');
+
+            document.getElementById('edit-ticket-id').value = id;
+            document.getElementById('edit-user').value = user;
+            document.getElementById('edit-ticketnumber').value = ticketNumber;
+        });
+
+        // Update Ticket
+        function updateTicket() {
+            var form = document.getElementById('editTicketForm');
+            var formData = new FormData(form);
+
+            fetch("{% url 'update_ticket' ticket_id=0 %}".replace('0', document.getElementById('edit-ticket-id').value), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        // Delete Ticket
+        function deleteTicket(id) {
+            if (confirm('Are you sure you want to delete this ticket?')) {
+                fetch("{% url 'delete_ticket' ticket_id=0 %}".replace('0', id), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    });
+            }
+        }
+
+        // Filter Table
+        function filterTable() {
+            const filterValue = document.getElementById("search-filter").value.toLowerCase();
+            const table = document.getElementById("ticketsTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                const tds = tr[i].getElementsByTagName("td");
+                let rowContainsFilterValue = false;
+
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j].textContent.toLowerCase().includes(filterValue)) {
+                        rowContainsFilterValue = true;
+                        break;
+                    }
+                }
+
+                tr[i].style.display = rowContainsFilterValue ? '' : 'none';
+            }
+        }
+    </script>
+
+</body>
+{% endblock %}

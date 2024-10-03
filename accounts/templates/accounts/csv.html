@@ -1,0 +1,15 @@
+<div class="container my-4">
+    <h2>CSV Upload Result</h2>
+
+    <!-- If there is an error, display it -->
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% else %}
+    <!-- If there is no error, display the table -->
+    <div class="table-responsive">
+        {{ table_html|safe }}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'upload-csv' %}" class="btn btn-primary mt-4">Upload Another File</a>
+</div>

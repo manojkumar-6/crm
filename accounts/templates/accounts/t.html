@@ -1,0 +1,132 @@
+{% extends 'accounts/main_template.html' %} {% load static %}{% load widget_tweaks %} {% block content %}
+
+<!-- Include Bootstrap CSS and Quill -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<style>
+    /* Center the form vertically and horizontally */
+
+    .centered-form {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 90vh;
+        background-color: #f8f9fa;
+        /* Light gray background */
+        padding: 20px;
+        /* Increased padding for mobile */
+    }
+    /* Style the form title */
+
+    .form-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #0d6efd;
+        /* Bootstrap primary color */
+    }
+    /* Add card shadow and rounded corners */
+
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        /* Subtle shadow */
+        transition: transform 0.3s ease-in-out;
+        /* Smooth transition on hover */
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        /* Lift effect on hover */
+    }
+    /* Card body padding */
+
+    .card-body {
+        padding: 2rem;
+        background-color: white;
+    }
+    /* Style the input fields */
+
+    .form-control {
+        border-radius: 10px;
+        transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
+        /* Blue shadow on focus */
+    }
+    /* Submit button styling */
+
+    .btn-info {
+        background-color: #0d6efd;
+        /* Bootstrap primary */
+        border-color: #0d6efd;
+        color: white;
+        font-size: 1.2rem;
+        border-radius: 10px;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .btn-info:hover {
+        background-color: #0b5ed7;
+        /* Slightly darker blue on hover */
+        transform: scale(1.05);
+        /* Slightly enlarge on hover */
+    }
+    /* Animation on submit */
+
+    .btn-info:active {
+        transform: scale(0.98);
+        /* Shrink button slightly on click */
+    }
+    /* Add fade-in effect for the card */
+
+    .card {
+        opacity: 0;
+        animation: fadeIn 0.6s forwards;
+    }
+    /* Fade-in keyframe */
+
+    @keyframes fadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+            /* Start slightly below */
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+            /* End at normal position */
+        }
+    }
+</style>
+
+<div class="centered-form">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="form-title">
+                    {% if action == "create user" %} Create User {% elif action == "credentials" %} Update Facebook Credentials {% endif %}
+                </div>
+                <form action="" method="POST">
+                    {% csrf_token %} {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label> {{ field|add_class:"form-control" }}
+                        <!-- Added class to style the field -->
+                    </div>
+                    {% endfor %}
+                    <hr>
+                    <input type="submit" class="btn btn-info w-100">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,65 @@
+from django.urls import path
+from . import views
+from .views import *
+
+urlpatterns = [
+    path('', views.loginUser, name="login"),
+    path("dashboard",views.dashBoard,name="dashboard"),
+    path("create_user",views.createUser,name="create_user"),
+    path('customer/<str:pk>/', views.customer, name="customer"),
+    path('<str:userpk>/<str:date>/view_conversation/', views.user_ai_model_coversation, name='view_conversation'),
+    path('update_customer/<int:customer_id>/', views.update_customer, name='update_customer'),
+    path('delete_customer/<int:customer_id>/', views.delete_customer, name='delete_customer'),
+    path('delete_conversation/<int:message_id>/', views.delete_conversation, name='delete_conversation'),
+    path('conversations/', views.conversation_list, name='conversation_list'),
+    path("send_whatsapp_message",views.send_whatsapp_message,name="reply"),
+    path('upload-csv/', views.upload_csv, name='upload-csv'),  # Make sure 'upload_csv' is the name
+    path("update_facebook_credentials",views.updateCredentials,name="update_facebook_credentials"),
+    path('issue/<str:issue_id>/export_issue_csv', views.export_issue_csv, name='export_issue_csv'),
+    path('issue/<str:issue_id>/', views.issue_detail_view, name='issue_detail'),
+    path('export-issue-csv/', views.export_issue_csv, name='export_issue_csv'),
+    path('get_detailed_export_issue_csv', views.get_detailed_export_issue_csv, name='get_detailed_export_issue_csv'),
+    path('tenant_', views.tenant_list, name='tenant_list'),  # Display the tenant list
+    path('send-email/', views.send_email_view, name='send_email_view'),
+    path('auto-save-url/', views.AutoSaveView.as_view(), name='auto_save'),
+    path('update_tenant/<int:tenant_id>/', views.update_tenant, name='update_tenant'),  # Update tenant
+    path('delete_tenant/<int:tenant_id>/', views.delete_tenant, name='delete_tenant'),  #
+    path('tenant/', views.tenant_page, name='tenant_page'),
+    path('tenant/create/', views.create_tenant, name='create_tenant'),
+    path('tenant/update/', views.update_tenant, name='update_tenant'),
+    path('tenant/delete/<str:tenant_id>/', views.delete_tenant, name='delete_tenant'),
+    path('user_dashboard', views.dashboard_, name='dashboard'),
+    path('create-user/', views.create_user, name='create_user'),
+    path('update-user/', views.update_user, name='update_user'),
+    path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('create-ticket/', views.create_ticket, name='create_ticket'),
+    path('update-ticket-status/', views.update_ticket_status, name='update_ticket_status'),
+    path('delete-ticket-status/<int:status_id>/', views.delete_ticket_status, name='delete_ticket_status'),
+    path('facebook-credentials/', views.facebook_credentials_page, name='facebook_credentials_page'),
+    path('facebook-credentials/create/', views.create_facebook_credential, name='create_facebook_credential'),
+    path('facebook-credentials/update/', views.update_facebook_credential, name='update_facebook_credential'),
+    path('facebook-credentials/delete/<int:credential_id>/', views.delete_facebook_credential, name='delete_facebook_credential'),
+    path('tickets_status/', views.ticket_status_list, name='ticket_status_list'),
+    path('tickets_status/create/', views.create_ticket_status, name='create_ticket_status'),
+    path('tickets_status/update/', views.update_ticket_status, name='update_ticket_status'),
+    path('tickets_status/delete/<int:ticket_id>/', views.delete_ticket_status, name='update_ticket_status'),
+    path('issues/', views.issue_list, name='issue_list'),
+    path('tickets/', views.list_tickets, name='list_tickets'),  # List and display tickets
+    path('tickets/create/', views.create_ticket, name='create_ticket'),  # Create ticket
+    path('tickets/update/<int:ticket_id>/', views.update_ticket, name='update_ticket'),  # Update ticket
+    path('tickets/delete/<int:ticket_id>/', views.delete_ticket, name='delete_ticket'),  # Delete ticket
+    path('issues/create/', views.create_issue, name='create_issue'),
+    path('users/', views.get_users, name='user_management'),
+    path('users/create/', views.create_user, name='create_user'),
+    path('users/get/', views.get_user, name='get_user'),
+    path('users/update/', views.update_user, name='update_user'),
+    path('users/delete/', views.delete_user, name='delete_user'),
+    path('adashboard/', views.adashboard, name='dashboard'),
+    path('issues/update/<int:issue_id>/', views.update_issue, name='update_issue'),
+    path('issues/delete/<int:issue_id>/', views.delete_issue, name='delete_issue'),
+    path('tickets/delete/<int:ticket_id>/', views.delete_ticket_status, name='delete_ticket_status'),
+    path('users_/', views.user_list, name='user_list'),
+    path('users_/create/', views.create_user_tenant, name='create_user_tenant'),
+    path('users_/update/', views.update_user_tenant, name='update_user_tenant'),
+    path('users_/delete/<int:user_id>/', views.delete_user_tenant, name='delete_user_tenant'),
+]

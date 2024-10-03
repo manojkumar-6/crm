@@ -1,0 +1,268 @@
+{% extends 'accounts/base.html' %}{% load static %}{% block content %}
+
+<head>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .table-responsive {
+            max-height: 400px;
+            /* Set max height for scrolling */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        table thead {
+            background-color: #343a40;
+            color: white;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .btn-primary,
+        .btn-warning,
+        .btn-danger {
+            border-radius: 50px;
+            padding: 5px 15px;
+        }
+
+        .form-control {
+            border-radius: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container my-5">
+        <div class="row align-items-center mb-3">
+            <div class="col">
+
+
+                <h1 class="display-6 text-dark">Tenant Management Dashboard</h1>
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">Create New Tenant</button>
+            </div>
+        </div>
+
+        <!-- Search Filter -->
+        <div class="mb-3">
+            <input type="text" id="search-filter" class="form-control" placeholder="Search Users" onkeyup="filterTable()">
+        </div>
+
+        <!-- Scrollable Table for Users -->
+        <div class="table-responsive">
+            <table class="table table-bordered" id="userTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Client</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.tenant_to.name.username }}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" data-id="{{ user.id }}" data-name="{{ user.name }}" data-phone="{{ user.phone }}" data-email="{{ user.email }}" data-tenant-id="{{ user.tenant_to.id }}">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Create User Modal -->
+        <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createUserModalLabel">Create New Tenant</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="createUserForm">
+                            <div class="mb-3">
+                                <label for="userName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="userName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="userPhone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="userPhone" name="phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="userEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="userEmail" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tenantSelect" class="form-label">Client</label>
+                                <select class="form-select" id="tenantSelect" name="tenant_to">
+                                    {% for tenant in tenants %}
+                                    <option value="{{ tenant.id }}">{{ tenant.name.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="createUser()">Create Tenant</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editUserModalLabel">Edit Tenant</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editUserForm">
+                            <input type="hidden" id="edit-user-id" name="user_id">
+                            <div class="mb-3">
+                                <label for="editUserName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="editUserName" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editUserPhone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="editUserPhone" name="phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editUserEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editUserEmail" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tenantSelectEdit" class="form-label">Client</label>
+                                <select class="form-select" id="tenantSelectEdit" name="tenant_to" required>
+                                    {% for tenant in tenants %}
+                                        <option value="{{ tenant.id }}">{{ tenant.name.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="updateUser()">Update Tenant</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Handle creating a user
+        function createUser() {
+            var formData = new FormData(document.getElementById('createUserForm'));
+            $.ajax({
+                type: 'POST',
+                url: '{% url "create_user" %}',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error creating user');
+                    }
+                }
+            });
+        }
+
+        // Handle editing a user
+        $('#editUserModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+            var id = button.data('id');
+            var name = button.data('name');
+            var phone = button.data('phone');
+            var email = button.data('email');
+            var tenantId = button.data('tenant-id');
+
+            var modal = $(this);
+            modal.find('#edit-user-id').val(id);
+            modal.find('#editUserName').val(name);
+            modal.find('#editUserPhone').val(phone);
+            modal.find('#editUserEmail').val(email);
+            modal.find('#tenantSelectEdit').val(tenantId);
+        });
+
+        function updateUser() {
+            var formData = new FormData(document.getElementById('editUserForm'));
+            $.ajax({
+                type: 'POST',
+                url: '{% url "update_user" %}',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error updating user: ' + response.error);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating user:', error);
+                }
+            });
+        }
+
+        // Handle deleting a user
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/delete-user/' + userId + '/',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Error deleting user');
+                        }
+                    }
+                });
+            }
+        }
+
+        // Filter user table rows
+        function filterTable() {
+            const input = document.getElementById("search-filter");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("userTable");
+            const tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName("td");
+                let found = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j] && td[j].innerText.toLowerCase().includes(filter)) {
+                        found = true;
+                        break;
+                    }
+                }
+                tr[i].style.display = found ? "" : "none";
+            }
+        }
+    </script>
+</body>
+{% endblock %}

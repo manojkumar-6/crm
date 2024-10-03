@@ -1,0 +1,324 @@
+{% extends 'accounts/main_template.html' %} {% load static %} {% block content %} {% include 'accounts/status_row.html' %}
+
+<!-- Include Bootstrap CSS and Quill -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<style>
+    .accordion-item {
+        border: 1px solid #007bff;
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+        background-color: #f7f7f7;
+        /* Light grey background for accordion items */
+    }
+
+    .accordion-button {
+        background-color: #ffffff;
+        /* Light button background */
+        color: #007bff;
+        border: 1px solid #007bff;
+        /* Optional: keep border consistent */
+    }
+
+    .accordion-button:not(.collapsed) {
+        background-color: #e1ecf4;
+        /* Lighter active button background */
+        color: #0056b3;
+    }
+
+    .accordion-body {
+        background-color: #ffffff;
+        /* Light background for body */
+        color: #333;
+        /* Slightly darker text for readability */
+    }
+</style>
+
+<br>
+<div class="dashboard">
+    <div class="row">
+        <!-- Main Content (Issues Accordion) -->
+        <div class="col-md-12">
+            <div class="accordion" id="issuesAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingEmail">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmail" aria-expanded="false" aria-controls="collapseEmail">
+                            Custom Template
+                        </button>
+                    </h2>
+                    <div id="collapseEmail" class="accordion-collapse collapse" aria-labelledby="headingEmail" data-bs-parent="#issuesAccordion">
+                        <div class="accordion-body">
+                            <form id="emailTemplateForm" method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="emailDescription" class="form-label">Welcome message</label>
+                                    <div id="emailDescription" style="height: 200px;">
+                                        {{ email_description|safe }}
+                                    </div>
+                                    <input type="hidden" name="emailDescription" id="emailDescriptionInput">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="emailFormat" class="form-label">Format Options</label>
+                                    <select id="emailFormat" name="emailFormat" class="form-select">
+                                        <option value="plain">Plain Text</option>
+                                        <option value="html">HTML</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary" id="sendEmailButton">Send Whastapp Message</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                            Issues Reported By Your Users
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#issuesAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <!-- Data Table (75%) -->
+                                <div class="col-md-9 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm">Export as CSV</a>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="toggleFilterButton">Show Filter</button>
+                                    </div>
+                                    <div id="filterSection" class="filter-section" style="display: none;">
+                                        <form id="filterForm" method="GET" class="form-inline mb-3">
+                                            <label for="status" class="mr-2">Filter by Status:</label>
+                                            <select name="status" id="status" class="form-control mr-2">
+                                                <option value="">All</option>
+                                                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                                                <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
+                                                <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                                            </select>
+                                            <label for="start_date" class="mr-2">From:</label>
+                                            <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
+                                            <label for="end_date" class="mr-2">To:</label>
+                                            <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
+                                            <button type="submit" class="btn btn-primary mr-2">Filter</button>
+                                            <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
+                                        </form>
+                                    </div>
+
+                                    <div class="table-responsive mt-3" style="border: 5px solid #ddd; border-radius: 8px; padding: 10px; max-height: 400px; overflow-y: auto;">
+                                        <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th> Tenant
+                                                            <a href="?sort_by=user">↑</a>
+                                                            <a href="?sort_by=-user">↓</a>
+                                                        </th>
+                                                        <th>Ticket Number
+                                                            <a href="?sort_by=ticket_number">↑</a>
+                                                            <a href="?sort_by=-ticket_number">↓</a>
+                                                        </th>
+                                                        <th>Ticket Status
+                                                            <a href="?sort_by=ticket_status">↑</a>
+                                                            <a href="?sort_by=-ticket_status">↓</a>
+                                                        </th>
+                                                        <th>Reported Date
+                                                            <a href="?sort_by=date_reported">↑</a>
+                                                            <a href="?sort_by=-date_reported">↓</a>
+                                                        </th>
+                                                        <th>Comment</th>
+                                                        <th>Days Reported</th>
+                                                        <th>Ticket Info</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in ticket_list %}
+                                                    <tr style="background-color: #ffffff; border-bottom: 1px solid #ddd;">
+                                                        <td>{{ item.ticket.user }}</td>
+                                                        <td>{{ item.ticket.ticket_number }}</td>
+                                                        <td>{{ item.ticket.ticket_status }}</td>
+                                                        <td>{{ item.ticket.date_reported }}</td>
+                                                        <td>{{ item.ticket.comments }}</td>
+                                                        <td>{{ item.days_reported }}</td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#ticketInfoModal{{ item.ticket.id }}">View</button>
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- Ticket Info Modal -->
+                                                    <div class="modal fade" id="ticketInfoModal{{ item.ticket.id }}" tabindex="-1" aria-labelledby="ticketInfoModalLabel{{ item.ticket.id }}" aria-hidden="true">
+                                                        <div class="modal-dialog modal-lg">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="ticketInfoModalLabel{{ item.ticket.id }}">Ticket Info - {{ item.ticket.ticket_number }}</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    <p><strong>Ticket Number:</strong> {{ item.ticket.ticket_number }}</p>
+                                                                    <p><strong>Days Reported:</strong> {{ item.days_reported }}</p>
+                                                                    <div class="form-group">
+                                                                        <label for="description">Description:</label>
+                                                                        <textarea class="form-control" id="description" rows="10" style="resize: none; overflow-y: scroll;" readonly>{{ item.ticket.Description }}</textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {% empty %}
+                                                    <tr>
+                                                        <td colspan="7" class="text-center">No tickets found for this issue.</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Ticket Status Summary (25%) -->
+                                <div class="col-md-3 d-flex flex-column justify-content-between mb-3" style="height: 100%;">
+                                    <div class="card shadow-sm border-primary" style="border-width: 2px; background-color: #f9fafb; border-radius: 12px; padding: 10px;">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title mb-4" style="font-size: 1.25rem; color: #007bff;">Ticket Status Summary</h5>
+
+                                            <div class="status-item d-flex justify-content-between align-items-center mb-3">
+                                                <div class="status-label d-flex align-items-center">
+                                                    <div class="status-icon" style="background-color: #f0ad4e; width: 8px; height: 8px; border-radius: 40%; margin-right: 8px;"></div>
+                                                    <p class="mb-0" style="font-size: 1rem;">Pending Tickets</p>
+                                                </div>
+                                                <span class="status-count badge bg-warning text" style="font-size: 1rem; padding: 0.5rem 1rem; border-radius: 5px;">
+                                                    {{ pending_count|default:"0" }}
+                                                </span>
+                                            </div>
+
+                                            <div class="status-item d-flex justify-content-between align-items-center mb-3">
+                                                <div class="status-label d-flex align-items-center">
+                                                    <div class="status-icon" style="background-color: #5bc0de; width: 8px; height: 8px; border-radius: 40%;margin-right: 8px;"></div>
+                                                    <p class="mb-0" style="font-size: 1rem;">In Progress</p>
+                                                </div>
+                                                <span class="status-count badge bg-info text" style="font-size: 1rem; padding: 0.5rem 1rem; border-radius: 5px;">
+                                                    {{ inprogress_count|default:"0" }}
+                                                </span>
+                                            </div>
+
+                                            <div class="status-item d-flex justify-content-between align-items-center mb-3">
+                                                <div class="status-label d-flex align-items-center">
+                                                    <div class="status-icon" style="background-color: #5cb85c; width: 8px; height: 8px; border-radius: 40%; margin-right: 8px;"></div>
+                                                    <p class="mb-0" style="font-size: 1rem;">Completed Tickets</p>
+                                                </div>
+                                                <span class="status-count badge bg-success text" style="font-size: 1rem; padding: 0.5rem 1rem; border-radius: 5px;">
+                                                    {{ completed_count|default:"0" }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Template Section -->
+    </div>
+</div>
+
+<!-- Initialize Quill -->
+<script>
+    var quill = new Quill('#emailDescription', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                ['link', 'image'],
+                [{
+                    'list': 'ordered'
+                }, {
+                    'list': 'bullet'
+                }]
+            ]
+        }
+    });
+
+    // Set default content in Quill
+    quill.root.innerHTML = '{{ email_description|safe }}';
+
+    let typingTimer;
+    const doneTypingInterval = 200;
+
+    function autoSave() {
+        const emailDescription = quill.root.innerHTML;
+        document.getElementById('emailDescriptionInput').value = emailDescription;
+
+        fetch('/auto-save-url/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    emailDescription: emailDescription
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Auto-saved successfully!');
+                } else {
+                    console.error('Error in auto-saving:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+            });
+    }
+
+    quill.on('text-change', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(autoSave, doneTypingInterval);
+    });
+
+    document.getElementById('sendEmailButton').addEventListener('click', function() {
+        const emailDescription = quill.root.innerHTML;
+        document.getElementById('emailDescriptionInput').value = emailDescription;
+
+        if (confirm("Are you sure you want to send this email?")) {
+            fetch('/send-email/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        emailDescription: emailDescription
+                    }),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Email sent successfully!");
+                    } else {
+                        console.error('Error in sending email:', response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+        }
+    });
+
+    // JavaScript for Filter Toggle
+    document.getElementById('toggleFilterButton').addEventListener('click', function() {
+        const filterSection = document.getElementById('filterSection');
+        filterSection.style.display = filterSection.style.display === 'none' ? 'block' : 'none';
+    });
+
+    function resetFilters() {
+        document.getElementById('filterForm').reset();
+    }
+</script>
+{% endblock %}

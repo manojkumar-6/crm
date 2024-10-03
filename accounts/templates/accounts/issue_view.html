@@ -1,0 +1,312 @@
+{% extends 'accounts/main_template.html' %} {% load static %} {% block content %}
+<style>
+    /* Hide filter section initially */
+    
+    .filter-section {
+        display: none;
+        margin-bottom: 20px;
+        /* Space below filter section */
+    }
+    /* Position buttons container at the bottom of the page, above pagination */
+    
+    .buttons-container {
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 20px;
+        /* Space above buttons container */
+        margin-bottom: 20px;
+        /* Space below buttons container */
+    }
+    /* Add spacing between buttons */
+    
+    .buttons-container .btn {
+        margin-right: 10px;
+        /* Adjust spacing as needed */
+    }
+    /* Improved table styling */
+    
+    .table {
+        margin-top: 20px;
+        /* Space above table */
+        margin-bottom: 20px;
+        /* Space below table */
+    }
+    /* Improve pagination appearance */
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    
+    .pagination .page-link {
+        margin: 0 5px;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #007bff;
+    }
+    
+    .pagination .page-link.active {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #e9ecef;
+    }
+    /* Space above the tickets issue heading */
+    
+    h3 {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    /* Space between the filter by status and the tickets issue heading */
+    
+    .form-inline {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container">
+    <!-- Tickets Issue Heading -->
+    <h3>Tickets for Issue: {{ issue }}</h3>
+
+    <!-- Filter Section -->
+    <div id="filterSection" class="filter-section">
+        <form id="filterForm" method="GET" class="form-inline">
+            <!-- Status Filter -->
+            <label for="status" class="mr-2">Filter by Status:</label>
+            <select name="status" id="status" class="form-control mr-2">
+                <option value="">All</option>
+                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
+                <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+            </select>
+
+            <!-- Date Range Filter -->
+            <label for="start_date" class="mr-2">From:</label>
+            <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
+            <label for="end_date" class="mr-2">To:</label>
+            <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
+
+            <!-- Buttons with Spacing -->
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ticket Issues Table with Sorting -->
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>
+                    Reported User
+                    <a href="?sort_by=user">↑</a>
+                    <a href="?sort_by=-user">↓</a>
+                </th>
+                <th>
+                    Ticket Number
+                    <a href="?sort_by=ticket_number">↑</a>
+                    <a href="?sort_by=-ticket_number">↓</a>
+                </th>
+                <th>
+                    Ticket Status
+                    <a href="?sort_by=ticket_status">↑</a>
+                    <a href="?sort_by=-ticket_status">↓</a>
+                </th>
+                <th>
+                    Reported Date
+                    <a href="?sort_by=date_reported">↑</a>
+                    <a href="?sort_by=-date_reported">↓</a>
+                </th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in page_obj %}
+            <tr>
+                <td>{{ ticket.user }}</td>
+                <td>{{ ticket.ticket_number }}</td>
+                <td>{{ ticket.ticket_status }}</td>
+                <td>{{ ticket.date_reported }}</td>
+                <td>{{ ticket.comments }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No tickets found for this issue.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Buttons Container -->
+    <div class="buttons-container">
+
+        <!-- Export as CSV Button -->
+        <a id="exportCsvButton" class="btn btn-primary" href="#">Export as CSV</a>
+        <!-- Show Scatter Chart Button -->
+        <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#scatterChartModal">Show Scatter Chart</button>
+        <!-- Toggle Filter Button -->
+        <button type="button" class="btn btn-secondary" id="toggleFilterButton">Show Filter</button>
+    </div>
+
+    <!-- Improved Pagination Section -->
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" class="page-link">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-link">Previous</a> {% endif %} {% for page_num in page_obj.paginator.page_range %} {% if page_num == page_obj.number %}
+        <a href="#" class="page-link active">{{ page_num }}</a> {% else %}
+        <a href="?page={{ page_num }}" class="page-link">{{ page_num }}</a> {% endif %} {% endfor %} {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">Last &raquo;</a> {% endif %}
+    </div>
+
+    <!-- Hidden element to store chart data -->
+    <div id="chart-data" data-pending="{{ pending_count|default:" 0 " }}" data-in-progress="{{ in_progress_count|default:" 0 " }}" data-completed="{{ completed_count|default:" 0 " }}">
+    </div>
+</div>
+
+<!-- Scatter Chart Modal -->
+<div class="modal fade" id="scatterChartModal" tabindex="-1" role="dialog" aria-labelledby="scatterChartModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scatterChartModalLabel">Ticket Status Scatter Chart</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <canvas id="statusScatterChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script to render the Chart.js scatter chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var chartData = document.getElementById('chart-data');
+        var pendingCount = parseInt(chartData.getAttribute('data-pending'));
+        var inProgressCount = parseInt(chartData.getAttribute('data-in-progress'));
+        var completedCount = parseInt(chartData.getAttribute('data-completed'));
+
+        var scatterData = [{
+                x: 1,
+                y: pendingCount
+            }, // Pending data point
+            {
+                x: 2,
+                y: inProgressCount
+            }, // In Progress data point
+            {
+                x: 3,
+                y: completedCount
+            } // Completed data point
+        ];
+
+        var ctx = document.getElementById('statusScatterChart').getContext('2d');
+        var statusScatterChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Ticket Status Scatter',
+                    data: scatterData, // Scatter data points
+                    backgroundColor: '#ff6600',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return ['Pending', 'In Progress', 'Completed'][value - 1]; // Label for each point on the x-axis
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Ticket Count'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Toggle filter visibility
+        document.getElementById('toggleFilterButton').addEventListener('click', function() {
+            var filterSection = document.getElementById('filterSection');
+            if (filterSection.style.display === 'none') {
+                filterSection.style.display = 'block';
+                this.textContent = 'Hide Filter'; // Change button text to "Hide Filter"
+            } else {
+                filterSection.style.display = 'none';
+                this.textContent = 'Show Filter'; // Change button text to "Show Filter"
+            }
+        });
+    });
+
+    // Reset filters function
+    function resetFilters() {
+        document.getElementById('filterForm').reset();
+        // Clear URL parameters and refresh the page
+        const url = new URL(window.location.href);
+        url.searchParams.delete('status');
+        url.searchParams.delete('start_date');
+        url.searchParams.delete('end_date');
+        window.location.href = url.toString();
+    }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle the export CSV button click
+        document.getElementById('exportCsvButton').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default anchor behavior
+
+            // Define the URL for exporting CSV (Django URL name should match your view)
+            var exportCsvUrl = "{% url 'export_issue_csv' %}";
+
+            // Create a form to submit the request
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = exportCsvUrl;
+
+            // Add CSRF token for security
+            var csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            var csrfField = document.createElement('input');
+            csrfField.type = 'hidden';
+            csrfField.name = 'csrfmiddlewaretoken';
+            csrfField.value = csrfToken;
+            form.appendChild(csrfField);
+
+            // Append form to the body and submit
+            document.body.appendChild(form);
+            form.submit();
+        });
+
+        // Other existing JavaScript code...
+    });
+
+    // Reset filters function
+    function resetFilters() {
+        document.getElementById('filterForm').reset();
+        // Clear URL parameters and refresh the page
+        const url = new URL(window.location.href);
+        url.searchParams.delete('status');
+        url.searchParams.delete('start_date');
+        url.searchParams.delete('end_date');
+        window.location.href = url.toString();
+    }
+</script>{% endblock %}
