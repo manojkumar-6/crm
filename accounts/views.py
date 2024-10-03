@@ -543,25 +543,11 @@ from functools import wraps
 import requests
 
 message_dict = {}
-client = None  # Define client if necessary
+client = None
 
-import requests
-import json
-
-import smtplib  # For sending emails
-from email.mime.text import MIMEText
-import hashlib
-import hmac
-import logging
 import json
 from PIL import Image
-import re
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from functools import wraps
-import requests
-import smtplib  # For sending emails
-from email.mime.text import MIMEText
+
 from transformers import pipeline
 import nltk
 from nltk.corpus import wordnet
