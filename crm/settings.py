@@ -25,7 +25,7 @@ SECRET_KEY = 'hr^i7t@_3_-fu+j7d))x#p0vtq%=@hpoke@=1vg80=!gxg%qf9'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*","https://charmed-sailfish-neutral.ngrok-free.app"]
+ALLOWED_HOSTS = ["*","https://charmed-sailfish-neutral.ngrok-free.app","http://34.207.201.210","https://ec2-34-207-201-210.compute-1.amazonaws.com/"]
 
 
 # Application definition
@@ -73,6 +73,8 @@ TEMPLATES = [
 
 CSRF_TRUSTED_ORIGINS = [
     'https://charmed-sailfish-neutral.ngrok-free.app',
+    "http://34.207.201.210",
+    "https://ec2-34-207-201-210.compute-1.amazonaws.com/"
 ]
 
 WSGI_APPLICATION = 'crm.wsgi.application'
@@ -134,5 +136,6 @@ STATICFILES_DIRS = [
 ]
 
 
+LOGOUT_REDIRECT_URL = '/'
 
 

@@ -67,6 +67,10 @@
                         <input type="text" class="form-control" id="create-username" name="username" required>
                     </div>
                     <div class="mb-3">
+                        <label for="create-password" class="form-label">Password</label>
+                        <input type="text" class="form-control" id="create-password" name="password" required>
+                    </div>
+                    <div class="mb-3">
                         <label for="create-email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="create-email" name="email" required>
                     </div>
@@ -99,6 +103,10 @@
                     <div class="mb-3">
                         <label for="edit-username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="edit-username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-password" class="form-label">Password</label>
+                        <input type="text" class="form-control" id="edit-password" name="password" required>
                     </div>
                     <div class="mb-3">
                         <label for="edit-email" class="form-label">Email</label>
@@ -144,7 +152,7 @@
         var form = document.getElementById('createUserForm');
         var formData = new FormData(form);
 
-        fetch("{% url 'create_user' %}", {
+        fetch("{% url 'create_user_' %}", {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
@@ -164,12 +172,18 @@
     // Populate the edit modal with user data
     function editUser(id) {
         fetch("{% url 'get_user' %}?id=" + id)
-            .then(response => response.json())
+            .then(response =>
+                response.json()
+
+            )
             .then(data => {
                 document.getElementById('edit-user-id').value = data.id;
                 document.getElementById('edit-username').value = data.username;
                 document.getElementById('edit-email').value = data.email;
                 document.getElementById('edit-is_superuser').value = data.is_superuser;
+                document.getElementById('edit-password').value = data.password;
+                console.log(data)
+
                 var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
                 modal.show();
             });
@@ -180,7 +194,7 @@
         var form = document.getElementById('editUserForm');
         var formData = new FormData(form);
 
-        fetch("{% url 'update_user' %}", {
+        fetch("{% url 'update_user_' %}", {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
@@ -224,13 +238,13 @@
         overflow: hidden;
         /* Ensures rounded corners are applied to the table */
     }
-    
+
     .table th,
     .table td {
         border: 1px solid #dee2e6;
     }
     /* Full-width filter styling */
-    
+
     .form-select {
         width: 100%;
     }

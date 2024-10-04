@@ -65,6 +65,13 @@
                 <li class="nav-item"><a class="nav-link" href="/users_/">Tenant Management</a></li>
                 <li class="nav-item"><a class="nav-link" href="/update_facebook_credentials">Update My Facebook Data</a></li>
                 <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a></li>
+                <li class="nav-item">
+                    <!-- Logout Form (replacing the logout link) -->
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link btn btn-link">Logout</button>
+                    </form>
+                </li>
             </ul>
         </div>
     </div>

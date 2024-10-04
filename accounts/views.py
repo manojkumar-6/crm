@@ -1,71 +1,41 @@
+from PIL import Image
+from transformers import pipeline
+import nltk
+import requests
+from nltk.corpus import wordnet
+import tempfile
 from django.shortcuts import render,redirect
-from django.http import HttpResponse
 from .models import *
 from django.db.models import Count, Case, When, IntegerField
-from . forms import *
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.db.models import Count
 from django.contrib.auth import authenticate,login,logout
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from collections import defaultdict
 from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from .filters import *
-from django.shortcuts import get_object_or_404, redirect
-from django.http import HttpResponse
-from .models import ConversationModel
-import requests
-import json
-import pandas as pd
 from django.shortcuts import render
-from .forms import UploadCSVForm
-from functools import wraps
-from flask import current_app, jsonify, request
-import logging
-import hashlib
-import hmac
+from .forms import *
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from functools import wraps
-from django.http import HttpResponse
-import pandas as pd
 from django.shortcuts import render
 from django.db.models import Count
-from .models import UserModels, ConversationModel, MessageModel
-from django.core.paginator import Paginator
-import csv
-from django.http import HttpResponse
-# views.py
-from django.http import HttpResponse
 import csv
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.core.mail import send_mail
 from django.conf import settings
 import json
 from django.contrib.auth.models import User
-# views.py
-from django.http import HttpResponse
 import csv
 from django.views.decorators.csrf import csrf_exempt
-
-from django.core.paginator import Paginator
-from django.db.models import Q
-
 from django.shortcuts import render
-from .models import TicketsStatusModel
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 import pandas as pd
-account_sid = ''
-auth_token = ''
-twilio_whatsapp_number = ''
 
 issue_dict={}
 
@@ -325,10 +295,7 @@ def dashBoard(request):
     print("user",request.user.username)
     username=User.objects.filter(username=request.user.username).first()
     tenant=TenantModel.objects.filter(name=username).first()
-    print("tenant",username,tenant)
-    email_description=tenant.email_template
-    # Count the total number of customers
-    print(email_description,"description")
+
     total_users=0
     if tenant :
         total_users =(UserModels.objects.filter(tenant_to=tenant).count())
@@ -356,9 +323,8 @@ def dashBoard(request):
     else:
         ticket_list_=[]
     context = {
-        'tickets': tickets,
+        'tickets': tickets_,
         'ticket_list': ticket_list_,
-        'email_description':email_description,
         'today': today,
         "total_users":total_users,
         'total_users_interacted': i_count,
@@ -377,7 +343,7 @@ def dashBoard(request):
     }
 
 
-    return render(request, 'accounts/dashBoard.html', context)
+    return render(request, 'accounts/dashboard.html', context)
 
 
 @csrf_exempt  # You can use CSRF exemption for API-like views if needed
@@ -521,8 +487,6 @@ def deleteUser(request,pk):
 	user.objects.delete()
 	return redirect("/")
 
-from twilio.rest import Client
-from twilio.twiml.messaging_response import MessagingResponse
 import google.generativeai as genai
 
 genai.configure(api_key="AIzaSyDy3FHTLDFr_gUM74_RuVHoOSnF5BEC-No")
@@ -530,28 +494,9 @@ genai.configure(api_key="AIzaSyDy3FHTLDFr_gUM74_RuVHoOSnF5BEC-No")
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 message_dict = {}
-client = Client(account_sid, auth_token)
 
-import hashlib
-import hmac
-import logging
-import json
-import re
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from functools import wraps
-import requests
 
-message_dict = {}
-client = None
 
-import json
-from PIL import Image
-
-from transformers import pipeline
-import nltk
-from nltk.corpus import wordnet
-import tempfile
 # Download necessary datasets for nltk
 nltk.download('wordnet')
 nltk.download('omw-1.4')
@@ -856,7 +801,6 @@ def send_message(data,facebookData):
 @csrf_exempt
 def handle_message(request):
     body = json.loads(request.body.decode("utf-8"))
-    logging.info(f"Request body: {body}")
 
     if is_valid_whatsapp_message(body):
         process_whatsapp_message(body)
@@ -1042,10 +986,10 @@ def create_ticket(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         ticket_number = request.POST.get('ticket_number')
-        descrition=request.POST.get('description')
+        descrition=request.POST.get('ticket_des')
         print("descrioto",descrition)
         user = get_object_or_404(UserModels, id=user_id)
-        ticket = TicketsModel.objects.create(user=user, ticket_number=ticket_number,description=descrition)
+        ticket = TicketsModel.objects.create(user=user, ticket_number=ticket_number,Description=descrition)
         ticket.save()
         return JsonResponse({'success': True})
 
@@ -1217,10 +1161,10 @@ def create_ticket(request):
     if request.method == 'POST':
         user_id = request.POST.get('user')
         ticket_number = request.POST.get('ticket_number')
-        descrition=request.POST.get('description')
+        descrition=request.POST.get('ticket_des')
         try:
             user = get_object_or_404(UserModels, id=user_id)
-            ticket = TicketsModel.objects.create(user=user, ticket_number=ticket_number,description=descrition)
+            ticket = TicketsModel.objects.create(user=user, ticket_number=ticket_number,Description=descrition)
             return JsonResponse({'success': True, 'ticket_id': ticket.id})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
@@ -1233,7 +1177,7 @@ def update_ticket(request, ticket_id):
         ticket = get_object_or_404(TicketsModel, id=ticket_id)
         user_id = request.POST.get('user')
         ticket_number = request.POST.get('ticket_number')
-        description=request.POST.get('description')
+        description=request.POST.get('ticket_des')
         try:
             user = get_object_or_404(UserModels, id=user_id)
             ticket.user = user
@@ -1290,18 +1234,17 @@ def adashboard(request):
     # Prepare the filtered AI hits data for the frontend
     ai_hits_filtered = []
     for tenant, years_data in ai_hits_counts.items():
-        print(tenant,tenant_names)
         if tenant not in tenant_names:
             tenant_names.append(tenant)
+
         for year, months_data in years_data.items():
-            for month, count in months_data.items():
-                ai_hits_filtered.append({
-                    'tenant': tenant,
-                    'year': year,
-                    'month': month,
-                    'count': count
-                })
-    print(ai_hits_filtered,years_data,months_data)
+                for month, count in months_data.items():
+                    ai_hits_filtered.append({
+                        'tenant': tenant,
+                        'year': year,
+                        'month': month,
+                        'count': count
+                    })
     # Convert QuerySet objects to lists for JSON serialization
     years = list(set(conversation.date_queried.year for conversation in ConversationModel.objects.all()))
     months = list(set(conversation.date_queried.month for conversation in ConversationModel.objects.all()))
@@ -1337,8 +1280,9 @@ def create_user_(request):
         username = request.POST.get('username')
         email = request.POST.get('email')
         is_superuser = request.POST.get('is_superuser') == 'true'
+        password=request.POST.get('password')
 
-        user = User.objects.create(username=username, email=email, is_superuser=is_superuser)
+        user = User.objects.create(username=username, email=email, is_superuser=is_superuser,password=password)
         return JsonResponse({'success': True})
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
@@ -1351,12 +1295,13 @@ def get_user(request):
         'id': user.id,
         'username': user.username,
         'email': user.email,
-        'is_superuser': user.is_superuser
+        'is_superuser': user.is_superuser,
+        "password":user.password
     })
 
 # Update user
 @csrf_exempt
-def update_user__(request):
+def update_user_(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         username = request.POST.get('username')

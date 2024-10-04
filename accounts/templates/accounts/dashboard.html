@@ -247,7 +247,7 @@
     });
 
     // Set default content in Quill
-    quill.root.innerHTML = '{{ email_description|safe }}';
+    quill.root.innerHTML = '{{ tenant.email_teamplate|safe }}';
 
     let typingTimer;
     const doneTypingInterval = 200;

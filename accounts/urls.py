@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from .views import *
-
+from django.contrib.auth.views import LogoutView
 urlpatterns = [
     path('', views.loginUser, name="login"),
     path("dashboard",views.dashBoard,name="dashboard"),
@@ -29,8 +29,8 @@ urlpatterns = [
     path('tenant/update/', views.update_tenant, name='update_tenant'),
     path('tenant/delete/<str:tenant_id>/', views.delete_tenant, name='delete_tenant'),
     path('user_dashboard', views.dashboard_, name='dashboard'),
-    path('create-user/', views.create_user, name='create_user'),
-    path('update-user/', views.update_user, name='update_user'),
+    path('create-user/', views.create_user_, name='create_user_'),
+    path('update-user/', views.update_user_, name='update_user_'),
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('create-ticket/', views.create_ticket, name='create_ticket'),
     path('update-ticket-status/', views.update_ticket_status, name='update_ticket_status'),
@@ -62,4 +62,5 @@ urlpatterns = [
     path('users_/create/', views.create_user_tenant, name='create_user_tenant'),
     path('users_/update/', views.update_user_tenant, name='update_user_tenant'),
     path('users_/delete/<int:user_id>/', views.delete_user_tenant, name='delete_user_tenant'),
+    path('logout/', LogoutView.as_view(), name='logout'),
 ]

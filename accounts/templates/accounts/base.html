@@ -73,20 +73,30 @@
                 <li class="nav-item"></li>
                 <a class="nav-link" href="/users/"> DashBoard Access Management </a>
                 </li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a></li>
+
+
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a>
+                </li>
+                <li class="nav-item"></li>
+                <!-- Logout Form (replacing the logout link) -->
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link btn btn-link">Logout</button>
+                </form>
+                </li>
             </ul>
         </div>
     </div>
 
     <div class="container my-4">
-
-
         <main>
             {% block content %}
             <!-- Content specific to each page goes here -->
             {% endblock %}
         </main>
     </div>
+
     <!-- Upload Modal -->
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -110,6 +120,7 @@
             </div>
         </div>
     </div>
+
     <script>
         document.getElementById('csv-upload-form').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent the default form submission
@@ -138,11 +149,7 @@
                         document.getElementById('upload-result').innerText = data.error;
                     } else {
                         // Show success message and the table if successful
-                        document.getElementById('upload-result').innerHTML = "upload completed sucessful ";
-
-                        // Close the modal after a successful upload
-                        //                        let modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
-                        // <!-- modal.hide(); -->
+                        document.getElementById('upload-result').innerHTML = "upload completed successfully";
                     }
                 })
                 .catch(error => {
