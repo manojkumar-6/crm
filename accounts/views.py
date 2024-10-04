@@ -949,6 +949,7 @@ def create_user(request):
 
         tenant = get_object_or_404(TenantModel, id=tenant_id)
         user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant)
+        user.save()
         return JsonResponse({'success': True, 'user_id': user.id})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
@@ -1283,6 +1284,7 @@ def create_user_(request):
         password=request.POST.get('password')
 
         user = User.objects.create(username=username, email=email, is_superuser=is_superuser,password=password)
+        user.save()
         return JsonResponse({'success': True})
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
