@@ -72,7 +72,9 @@ TEMPLATES = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "*"
+    'https://charmed-sailfish-neutral.ngrok-free.app',
+    "https://notifier-1050649476.us-east-1.elb.amazonaws.com",
+    "https://ec2-34-207-201-210.compute-1.amazonaws.com/"
 ]
 
 WSGI_APPLICATION = 'crm.wsgi.application'
