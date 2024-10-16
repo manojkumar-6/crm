@@ -14,7 +14,7 @@
         background-color: #f7f7f7;
         /* Light grey background for accordion items */
     }
-
+    
     .accordion-button {
         background-color: #ffffff;
         /* Light button background */
@@ -22,56 +22,217 @@
         border: 1px solid #007bff;
         /* Optional: keep border consistent */
     }
-
+    
     .accordion-button:not(.collapsed) {
         background-color: #e1ecf4;
         /* Lighter active button background */
         color: #0056b3;
     }
-
+    
     .accordion-body {
         background-color: #ffffff;
         /* Light background for body */
         color: #333;
         /* Slightly darker text for readability */
     }
+    
+    .user-tag {
+        background-color: #e0e0e0;
+        padding: 5px;
+        margin: 5px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 5px;
+    }
+    
+    .remove-user {
+        cursor: pointer;
+        color: red;
+        font-weight: bold;
+        font-size: 1.2em;
+        /* Increased size for better visibility */
+        margin-left: 10px;
+    }
+    
+    #userSelectList {
+        max-height: 300px;
+        /* Height for scrolling */
+        overflow-y: auto;
+    }
+    
+    .modal-body {
+        max-height: 400px;
+        /* Height for modal body scrolling */
+        overflow-y: auto;
+    }
 </style>
 
 <br>
 <div class="dashboard">
+    <!-- Button to Add Template -->
+    <div class="mb-3">
+        <button id="addTemplateBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
+        Add Template
+    </button>
+    </div>
+    <!-- Send Message Modal -->
+    <div id="sendMessageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Select Users to Send Template</h2>
+            <div id="userList">
+                <!-- Dynamically populate users here -->
+            </div>
+            <button id="sendTemplateButton">Send</button>
+        </div>
+    </div>
+
+    <!-- Modal for Adding a New Template -->
+    <div class="modal fade" id="addTemplateModal" tabindex="-1" aria-labelledby="addTemplateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTemplateModalLabel">Create New Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTemplateForm">
+                        <div class="mb-3">
+                            <label for="templateName" class="form-label">Template Name</label>
+                            <input type="text" class="form-control" id="templateName" name="templateName" required>
+                            <small id="templateNameError" class="form-text text-danger" style="display: none;">Template name already exists!</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="templateContent" class="form-label">Template Content</label>
+                            <textarea class="form-control" id="templateContent" rows="5" required></textarea>
+                        </div>
+                        <button id="saveTemplate" type="submit" class="btn btn-primary" disabled>Save Template</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <!-- Main Content (Issues Accordion) -->
         <div class="col-md-12">
             <div class="accordion" id="issuesAccordion">
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingEmail">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEmail" aria-expanded="false" aria-controls="collapseEmail">
-                            Custom Template
-                        </button>
-                    </h2>
-                    <div id="collapseEmail" class="accordion-collapse collapse" aria-labelledby="headingEmail" data-bs-parent="#issuesAccordion">
-                        <div class="accordion-body">
-                            <form id="emailTemplateForm" method="POST">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="emailDescription" class="form-label">Welcome message</label>
-                                    <div id="emailDescription" style="height: 200px;">
-                                        {{ email_description|safe }}
+
+
+                <div id="templateList">
+                    {% for template in templates %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTemplate{{ template.templateName }}">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTemplate{{ template.templateName }}" aria-expanded="false" aria-controls="collapseTemplate{{ template.templateName }}">
+                {{ template.templateName }}
+            </button>
+                        </h2>
+                        <div id="collapseTemplate{{ template.templateName }}" class="accordion-collapse collapse" aria-labelledby="headingTemplate{{ template.templateName }}" data-bs-parent="#templateList">
+                            <div class="accordion-body">
+                                <form id="emailTemplateForm{{ template.templateName }}" method="POST">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="emailDescription{{ template.templateName }}" class="form-label">Message</label>
+                                        <div id="emailDescription{{ template.templateName }}" style="height: 200px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;">
+                                            {{ template.templateDescription|safe }}
+                                        </div>
+                                        <input type="hidden" name="emailDescription" id="emailDescriptionInput{{ template.templateName }}">
                                     </div>
-                                    <input type="hidden" name="emailDescription" id="emailDescriptionInput">
+                                    <div class="mb-3">
+                                        <label for="userSelect{{ template.templateName }}" class="form-label">Select Users</label>
+                                        <button class="btn btn-primary openUserSelect" type="button" data-template-name="{{ template.templateName }}" style="font-size: 0.8em;" onclick="add('{{ template.templateName }}')">Select Users</button>
+                                        <div id="selectedUsersContainer{{ template.templateName }}" class="mt-2" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f9f9f9; max-height: 100px; overflow-y: auto;">
+                                            <h6>Selected Users:</h6>
+                                            <div id="selectedUsers{{ template.templateName }}"></div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-danger" id="deleteTemplateButton{{ template.templateName }}" onclick="deleteTemplate('{{ template.templateName }}')">Delete Template</button>
+                                    <button type="button" class="btn btn-primary" id="sendEmailButton{{ template.templateName }}" onclick="sendMessageTemplate('{{ template.templateName }}', '{{ template.templateDescription }}')">Send WhatsApp Message</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- User Selection Modal -->
+                <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="userSelectModalLabel">Select Users</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="text" id="userFilter" placeholder="Filter users..." class="form-control mb-2" style="width: 100%;">
+                                <div id="userSelectList" style="max-height: 300px; overflow-y: auto;">
+                                    {% for user in users %}
+                                    <div class="form-check user-check">
+                                        <input class="form-check-input" type="checkbox" value="{{ user.id }}" id="userCheckbox{{ user.id }}">
+                                        <label class="form-check-label" for="userCheckbox{{ user.id }}">{{ user.name }}</label>
+                                    </div>
+                                    {% endfor %}
                                 </div>
-                                <div class="mb-3">
-                                    <label for="emailFormat" class="form-label">Format Options</label>
-                                    <select id="emailFormat" name="emailFormat" class="form-select">
-                                        <option value="plain">Plain Text</option>
-                                        <option value="html">HTML</option>
-                                    </select>
-                                </div>
-                                <button type="button" class="btn btn-primary" id="sendEmailButton">Send Whastapp Message</button>
-                            </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="confirmSelection">Confirm Selection</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- </div User Selection Modal -->
+                <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="userSelectModalLabel">Select Users</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="userSelectList"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="confirmSelection">Confirm Selection</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- User Selection Modal -->
+                <!-- User Selection Modal -->
+                <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="userSelectModalLabel">Select Users</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                                <input type="text" id="userFilter" placeholder="Filter users..." class="form-control mb-2" style="width: 100%;">
+                                <div id="userSelectList" style="max-height: 300px; overflow-y: auto;">
+                                    {% for user in users %}
+                                    <div class="form-check user-check">
+                                        <input class="form-check-input" type="checkbox" value="{{ user.id }}" id="userCheckbox{{ user.id }}">
+                                        <label class="form-check-label" for="userCheckbox{{ user.id }}">{{ user.name }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" id="confirmSelection">Confirm Selection</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
 
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingOne">
@@ -88,25 +249,24 @@
                                         <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm">Export as CSV</a>
                                         <button type="button" class="btn btn-secondary btn-sm" id="toggleFilterButton">Show Filter</button>
                                     </div>
-                                    <div id="filterSection" class="filter-section" style="display: none;">
-                                        <form id="filterForm" method="GET" class="form-inline mb-3">
-                                            <label for="status" class="mr-2">Filter by Status:</label>
-                                            <select name="status" id="status" class="form-control mr-2">
-                                                <option value="">All</option>
-                                                <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
-                                                <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
-                                                <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
-                                            </select>
-                                            <label for="start_date" class="mr-2">From:</label>
-                                            <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
-                                            <label for="end_date" class="mr-2">To:</label>
-                                            <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
-                                            <button type="submit" class="btn btn-primary mr-2">Filter</button>
-                                            <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
-                                        </form>
-                                    </div>
+                                    <form id="filterForm" method="GET" class="form-inline mb-3">
+                                        <label for="status" class="mr-2">Filter by Status:</label>
+                                        <select name="status" id="status" class="form-control mr-2">
+                                            <option value="">All</option>
+                                            <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                                            <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
+                                            <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                                        </select>
+                                        <label for="start_date" class="mr-2">From:</label>
+                                        <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
+                                        <label for="end_date" class="mr-2">To:</label>
+                                        <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
+                                        <button type="submit" class="btn btn-primary mr-2">Filter</button>
+                                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
+                                    </form>
 
-                                    <div class="table-responsive mt-3" style="border: 5px solid #ddd; border-radius: 8px; padding: 10px; max-height: 400px; overflow-y: auto;">
+
+                                    <div class="table-responsive mt-3" style="border: 1px solid #ddd; border-radius: 4px; padding: 1px; max-height: 400px; overflow-y: auto;">
                                         <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
                                             <table class="table">
                                                 <thead>
@@ -115,11 +275,11 @@
                                                             <a href="?sort_by=user">↑</a>
                                                             <a href="?sort_by=-user">↓</a>
                                                         </th>
-                                                        <th>Ticket Number
+                                                        <th>Ticket
                                                             <a href="?sort_by=ticket_number">↑</a>
                                                             <a href="?sort_by=-ticket_number">↓</a>
                                                         </th>
-                                                        <th>Ticket Status
+                                                        <th>Status
                                                             <a href="?sort_by=ticket_status">↑</a>
                                                             <a href="?sort_by=-ticket_status">↓</a>
                                                         </th>
@@ -157,10 +317,7 @@
                                                                 <div class="modal-body">
                                                                     <p><strong>Ticket Number:</strong> {{ item.ticket.ticket_number }}</p>
                                                                     <p><strong>Days Reported:</strong> {{ item.days_reported }}</p>
-                                                                    <div class="form-group">
-                                                                        <label for="description">Description:</label>
-                                                                        <textarea class="form-control" id="description" rows="10" style="resize: none; overflow-y: scroll;" readonly>{{ item.ticket.Description }}</textarea>
-                                                                    </div>
+                                                                    <p><strong>Description:</strong><br> {{ item.ticket.description }}<br></p>
                                                                 </div>
                                                                 <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -228,97 +385,478 @@
         <!-- Email Template Section -->
     </div>
 </div>
-
-<!-- Initialize Quill -->
 <script>
-    var quill = new Quill('#emailDescription', {
-        theme: 'snow',
-        modules: {
-            toolbar: [
-                ['bold', 'italic', 'underline'],
-                ['link', 'image'],
-                [{
-                    'list': 'ordered'
-                }, {
-                    'list': 'bullet'
-                }]
-            ]
-        }
-    });
+    const selectedUsersMap = new Map();
 
-    // Set default content in Quill
-    quill.root.innerHTML = '{{ tenant.email_teamplate|safe }}';
+    function add(templateName) {
+        console.log("clicked")
+        const userSelectModal = new bootstrap.Modal(document.getElementById('userSelectModal'));
+        userSelectModal.show();
 
-    let typingTimer;
-    const doneTypingInterval = 200;
+        // Clear previous selections
+        const selectedUsersContainer = document.getElementById(`selectedUsers${templateName}`);
+        selectedUsersContainer.innerHTML = '';
 
-    function autoSave() {
-        const emailDescription = quill.root.innerHTML;
-        document.getElementById('emailDescriptionInput').value = emailDescription;
+        // Populate selected users if any
+        if (selectedUsersMap.has(templateName)) {
+            const selectedUsers = selectedUsersMap.get(templateName);
+            selectedUsers.forEach(userId => {
+                const userTag = document.createElement('div');
+                userTag.className = 'user-tag d-flex justify-content-between align-items-center';
+                userTag.innerText = document.querySelector(`label[for="userCheckbox${userId}"]`).innerText;
 
-        fetch('/auto-save-url/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    emailDescription: emailDescription
-                }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('Auto-saved successfully!');
-                } else {
-                    console.error('Error in auto-saving:', response.statusText);
+                const crossMark = document.createElement('span');
+                crossMark.innerHTML = '&times;'; // Cross mark
+                crossMark.className = 'remove-user';
+                crossMark.onclick = () => {
+                    selectedUsersContainer.removeChild(userTag);
+                    const checkbox = document.getElementById(`userCheckbox${userId}`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                    selectedUsersMap.set(templateName, selectedUsers.filter(id => id !== userId));
+                };
+
+                userTag.appendChild(crossMark);
+                selectedUsersContainer.appendChild(userTag);
+
+                const checkbox = document.getElementById(`userCheckbox${userId}`);
+                if (checkbox) {
+                    checkbox.checked = true;
                 }
-            })
-            .catch(error => {
-                console.error('Fetch error:', error);
             });
+        }
+
+        // Filter logic
+        const userFilter = document.getElementById('userFilter');
+        userFilter.addEventListener('input', function() {
+            const filterValue = userFilter.value.toLowerCase();
+            const userChecks = document.querySelectorAll('#userSelectList .form-check');
+            userChecks.forEach(userCheck => {
+                const label = userCheck.querySelector('.form-check-label').innerText.toLowerCase();
+                userCheck.style.display = label.includes(filterValue) ? '' : 'none';
+            });
+        });
+
+        // Confirm selection logic
+        document.getElementById('confirmSelection').onclick = () => {
+            selectedUsersContainer.innerHTML = ''; // Clear previous selection
+            const checkboxes = document.querySelectorAll('#userSelectList input[type="checkbox"]:checked');
+            const selectedIds = [];
+
+            checkboxes.forEach(cb => {
+                const userId = cb.value;
+                selectedIds.push(userId);
+
+                const userTag = document.createElement('div');
+                userTag.className = 'user-tag d-flex justify-content-between align-items-center';
+                userTag.innerText = cb.nextElementSibling.innerText;
+
+                const crossMark = document.createElement('span');
+                crossMark.innerHTML = '&times;'; // Cross mark
+                crossMark.className = 'remove-user';
+                crossMark.onclick = () => {
+                    selectedUsersContainer.removeChild(userTag);
+                    cb.checked = false;
+                    selectedUsersMap.set(templateName, selectedIds.filter(id => id !== userId));
+                };
+
+                userTag.appendChild(crossMark);
+                selectedUsersContainer.appendChild(userTag);
+            });
+
+            selectedUsersMap.set(templateName, selectedIds);
+            userSelectModal.hide();
+        };
     }
 
-    quill.on('text-change', () => {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(autoSave, doneTypingInterval);
+    // Filter logic
+    const userFilter = document.getElementById('userFilter');
+    userFilter.addEventListener('input', function() {
+        const filterValue = userFilter.value.toLowerCase();
+        const userChecks = document.querySelectorAll('#userSelectList .form-check');
+        userChecks.forEach(userCheck => {
+            const label = userCheck.querySelector('.form-check-label').innerText.toLowerCase();
+            userCheck.style.display = label.includes(filterValue) ? '' : 'none';
+        });
     });
 
-    document.getElementById('sendEmailButton').addEventListener('click', function() {
-        const emailDescription = quill.root.innerHTML;
-        document.getElementById('emailDescriptionInput').value = emailDescription;
+    // Confirm selection logic
+    document.getElementById('confirmSelection').onclick = () => {
+        selectedUsersContainer.innerHTML = ''; // Clear previous selection
+        const checkboxes = document.querySelectorAll('#userSelectList input[type="checkbox"]:checked');
+        const selectedIds = []; // Array to hold selected IDs
 
-        if (confirm("Are you sure you want to send this email?")) {
-            fetch('/send-email/', {
-                    method: 'POST',
+        checkboxes.forEach(cb => {
+            const userId = cb.value;
+            selectedIds.push(userId);
+
+            const userTag = document.createElement('div');
+            userTag.className = 'user-tag d-flex justify-content-between align-items-center';
+            userTag.innerText = cb.nextElementSibling.innerText;
+
+            const crossMark = document.createElement('span');
+            crossMark.innerHTML = '&times;'; // Cross mark
+            crossMark.className = 'remove-user';
+            crossMark.onclick = () => {
+                selectedUsersContainer.removeChild(userTag);
+                cb.checked = false; // Uncheck the checkbox
+                // Remove from selected users map
+                selectedUsersMap.set(templateName, selectedIds.filter(id => id !== userId));
+            };
+
+            userTag.appendChild(crossMark);
+            selectedUsersContainer.appendChild(userTag);
+        });
+
+        // Update the map with selected user IDs
+        selectedUsersMap.set(templateName, selectedIds);
+        userSelectModal.hide();
+    };
+
+
+    function resetFilters() {
+        document.getElementById('status').value = '';
+        document.getElementById('start_date').value = '';
+        document.getElementById('end_date').value = '';
+        document.getElementById('filterForm').submit(); // Optionally submit to apply reset
+    }
+
+    document.getElementById('saveTemplate').addEventListener('click', function(event) {
+        event.preventDefault(); // Prevent form submission
+
+        // Get form data
+        const templateName = document.getElementById('templateName').value;
+        const templateContent = document.getElementById('templateContent').value;
+
+        // Prepare the data to send in the request
+        const data = {
+            templateName: templateName,
+            templateContent: templateContent
+        };
+
+        // Send the data to the server using the fetch API
+        fetch('/save-template/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json', // Send data as JSON
+                },
+                body: JSON.stringify(data), // Convert the data object to a JSON string
+            })
+            .then(response => response.json()) // Parse JSON response
+            .then(data => {
+                console.log('Success:', data); // Handle success response
+                location.reload();
+                // You can do something like closing the modal or showing a success message here
+            })
+            .catch((error) => {
+                console.error('Error:', error); // Handle error
+                // You can show an error message to the user here
+            });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+
+        let isQuillReady = false; // Flag to check if Quill is ready
+        let isContentLoaded = false; // Flag to check if content is loaded into Quill
+        const form = document.getElementById('addTemplateForm');
+        const templateNameInput = document.getElementById('templateName');
+        const templateNameError = document.getElementById('templateNameError');
+        const saveButton = document.getElementById('saveTemplate');
+
+        // Initially disable the save button
+        saveButton.disabled = true;
+
+        // Handle template name input change
+        templateNameInput.addEventListener('input', function() {
+                const templateName = templateNameInput.value.trim();
+
+                if (templateName) {
+                    // Make an AJAX request to check if the template name exists
+                    fetch(`/check-template-name/?templateName=${templateName}`)
+                        .then(response => {
+                            if (response.ok) {
+                                // Template name is available
+                                templateNameError.style.display = 'none';
+                                saveButton.disabled = false; // Enable the save button
+                            } else {
+                                // Template name already exists
+                                templateNameError.style.display = 'block';
+                                saveButton.disabled = true; // Disable the save button
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking template name:', error);
+                            alert('Something went wrong!');
+                        });
+                } else {
+                    // If template name is empty, disable the save button
+
+                    templateNameError.style.display = 'none';
+                    saveButton.disabled = true;
+                }
+            })
+            // Ensure that Quill is initialized for each dynamically rendered template
+        const templates = document.querySelectorAll('.accordion-item'); // All templates (accordion items)
+        console.log(templates);
+
+        templates.forEach((templateElement) => {
+            const templateName = templateElement.querySelector('.accordion-header').textContent.trim();
+            const quillId = `emailDescription${templateName}`; // Ensure the ID is consistent
+            const descriptionElement = templateElement.querySelector(`#${quillId}`);
+            console.log(quillId);
+
+            if (descriptionElement) {
+                // Initialize Quill editor
+                const quill = new Quill(`#${quillId}`, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline'],
+                            ['link'],
+                            [{
+                                'list': 'ordered'
+                            }, {
+                                'list': 'bullet'
+                            }]
+                        ]
+                    }
+                });
+
+                // Mark as content loading has started
+                isQuillReady = true;
+
+                // Use Quill's clipboard API to set the content (avoids triggering `text-change` event)
+                const templateDescription = descriptionElement.innerHTML.trim();
+                quill.clipboard.dangerouslyPasteHTML(templateDescription); // Avoid triggering event
+
+                // Mark as content loaded
+                isContentLoaded = true;
+
+                let typingTimer;
+                const doneTypingInterval = 2 // 200ms delay after typing stops before auto-save triggers
+
+                // Function to auto-save the content for the specific template
+                function autoSave(text, id) {
+                    fetch('/auto-save-url/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}' // Send the CSRF token in the header
+                            },
+                            body: JSON.stringify({
+                                emailDescription: text,
+                                templateName: id, // Send the unique templateName to target this specific template
+                            }),
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                console.log(`Auto-saved content for template: ${id}`);
+                            } else {
+                                console.error(`Error in auto-saving template ${id}:`, response.statusText);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error during auto-save:', error);
+                        });
+                }
+
+                // Handle text changes in Quill editor
+                quill.on('text-change', (delta, oldDelta, source) => {
+                    // Skip text-change event during initialization or loading content
+                    if (!isQuillReady || !isContentLoaded) {
+                        console.log("Quill is initializing or content is being loaded, skipping auto-save.");
+                        return; // Skip the auto-save during initialization
+                    }
+
+                    // Prevent accidental triggering of auto-save for programmatic changes
+                    if (source === 'api') {
+                        console.log("Skipping auto-save as change was triggered by API.");
+                        return; // Skip if the change was made programmatically
+                    }
+
+                    // Clear the previous timer and trigger auto-save if the content has changed
+                    clearTimeout(typingTimer);
+                    const updatedText = quill.root.innerHTML
+                    const emailFormatSelect = templateElement.querySelector(`#emailFormat${templateName}`);
+                    console.log(updatedText, emailFormatSelect.value);
+                    const editorId = quill.container.id;
+                    if (emailFormatSelect == "plain") {
+                        // Get the plain text content (without formatting)
+
+                        const updatedText = quill.getText();
+                    }
+                    // Get the Quill container's ID
+                    console.log(`Changes occurred in editor with ID: ${editorId}`);
+                    const emailDescription = quill.root.innerHTML; // Get the HTML content from the editor
+                    document.getElementById(`emailDescriptionInput${templateName}`).value = emailDescription; // Update the hidden input
+                    // Set a new timer for auto-save (debounced)
+                    typingTimer = setTimeout(() => autoSave(updatedText, editorId), doneTypingInterval); // Delay auto-save
+                });
+
+                // Handle the Save Template button functionality (if needed)
+                // You can use this function inside the loop if there's any "Save" button inside each template
+            }
+        });
+
+        // Handle delete template
+        const deleteButtons = document.querySelectorAll('.delete-template-button');
+        deleteButtons.forEach(deleteButton => {
+            deleteButton.addEventListener('click', function() {
+                const templateName = this.closest('.accordion-item').querySelector('.template-name').innerText; // Capture template name
+                deleteTemplate(templateName); // Ensure the deleteTemplate function is implemented
+            });
+        });
+
+        // Send email button functionality (can be adjusted as needed)
+        const sendButtons = document.querySelectorAll('.send-email-button');
+        sendButtons.forEach(sendButton => {
+            sendButton.addEventListener('click', function() {
+                const emailDescription = quill.root.innerHTML; // Capture Quill editor content
+                const templateName = this.closest('.accordion-item').querySelector('.template-name').innerText; // Get template name
+
+                if (confirm("Are you sure you want to send this email?")) {
+                    fetch('/send-email/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}' // CSRF token for Django
+                            },
+                            body: JSON.stringify({
+                                emailDescription: emailDescription,
+                                templateName: templateName
+                            })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                alert("Email sent successfully!");
+                            } else {
+                                console.error('Error in sending email:', response.statusText);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                        });
+                }
+            });
+        });
+
+        // Optional: Toggle filter section visibility
+        document.getElementById('toggleFilterButton').addEventListener('click', function() {
+            const filterSection = document.getElementById('filterSection');
+            filterSection.style.display = filterSection.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+
+    // Delete template function (Ensure it works on dynamically rendered delete buttons)
+    function deleteTemplate(templateName) {
+        if (confirm(`Are you sure you want to delete the template: ${templateName}?`)) {
+            fetch(`/delete-template/${templateName}/`, { // Adjust the URL to use template name
+                    method: 'DELETE',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRFToken': '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({
-                        emailDescription: emailDescription
-                    }),
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert("Email sent successfully!");
+                        alert('Template deleted successfully!');
+                        location.reload(); // Reload the page to update the template list
                     } else {
-                        console.error('Error in sending email:', response.statusText);
+                        console.error('Error deleting template:', response.statusText);
                     }
                 })
                 .catch(error => {
                     console.error('Fetch error:', error);
                 });
         }
+    }
+
+    // Open the modal when the send button is clicked
+    const sendButtons = document.querySelectorAll('.send-email-button');
+    sendButtons.forEach(sendButton => {
+        sendButton.addEventListener('click', function() {
+            const templateName = this.closest('.accordion-item').querySelector('.template-name').innerText;
+            openUserSelectionModal(templateName);
+        });
     });
 
-    // JavaScript for Filter Toggle
-    document.getElementById('toggleFilterButton').addEventListener('click', function() {
-        const filterSection = document.getElementById('filterSection');
-        filterSection.style.display = filterSection.style.display === 'none' ? 'block' : 'none';
-    });
+    // Function to open the modal and populate user list
+    function openUserSelectionModal(templateName) {
+        const modal = document.getElementById('sendMessageModal');
+        const userList = document.getElementById('userList');
 
-    function resetFilters() {
-        document.getElementById('filterForm').reset();
+        // Fetch users from the server (assuming you have an endpoint for this)
+        fetch('/get-users/')
+            .then(response => response.json())
+            .then(users => {
+                userList.innerHTML = ''; // Clear previous users
+                users.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.innerHTML = `
+                    <input type="checkbox" value="${user.id}" /> ${user.name}
+                `;
+                    userList.appendChild(userItem);
+                });
+            });
+
+        modal.style.display = 'block'; // Show the modal
+
+        // Handle sending the template
+        document.getElementById('sendTemplateButton').onclick = function() {
+            const selectedUsers = Array.from(userList.querySelectorAll('input:checked')).map(input => input.value);
+            console.log()
+            sendMessageTemplate(templateName, selectedUsers);
+            modal.style.display = 'none'; // Close the modal after sending
+        };
+
+        // Close modal on clicking the close button
+        modal.querySelector('.close-button').onclick = function() {
+            modal.style.display = 'none';
+        };
+    }
+
+    // Function to send the message to selected users
+    function sendMessageTemplate(templateName, selectedUsers) {
+        const selectedUsers_ = selectedUsersMap.get(templateName);
+
+        // Check if there are selected users
+        if (!selectedUsers_ || selectedUsers_.length === 0) {
+            alert('Please select at least one user to send the message.');
+            return;
+        }
+
+        // Log the selected users
+        console.log(selectedUsers_); // Log the selected users for debugging
+
+
+        fetch('/send-template-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // CSRF token for security
+                },
+                body: JSON.stringify({
+                    templateName: templateName,
+                    userIds: selectedUsers_ // Send the selected user IDs
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Template message sent successfully!');
+                    selectedUsersMap.set(templateName, []);
+                    location.reload(); // Reload the page to reflect changes
+                } else {
+                    console.error('Error sending message:', data.message || 'Unknown error');
+                    alert('Failed to send template message');
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                alert('An error occurred while sending the template message');
+            });
     }
 </script>
+
+
 {% endblock %}

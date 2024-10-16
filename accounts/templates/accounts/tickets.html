@@ -1,4 +1,4 @@
-{% extends 'accounts/base.html' %}{% load static %}{% block content %}
+{% extends 'accounts/main_template.html' %}{% load static %}{% block content %}
 
 <head>
     <meta charset="UTF-8">
@@ -10,29 +10,45 @@
         body {
             background-color: #f8f9fa;
         }
-
+        
         .table-responsive {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
         }
-
+        
         table thead {
             background-color: #343a40;
             color: white;
         }
-
+        
         table tbody tr:hover {
             background-color: #f1f3f5;
         }
-
+        
         .btn-primary,
         .btn-warning,
         .btn-danger {
             border-radius: 50px;
             padding: 5px 15px;
         }
-
+        
+        .btn-danger {
+            margin-top: 12px;
+            /* Adjust spacing as needed */
+        }
+        
+        .description-column {
+            max-height: 100px;
+            /* Set the maximum height for the description */
+            overflow-y: auto;
+            /* Enable vertical scrolling if content exceeds the max height */
+            word-wrap: break-word;
+            /* Ensure long words wrap to the next line */
+            width: 300px;
+            /* Optionally, set a fixed width if needed */
+        }
+        
         .form-control {
             border-radius: 50px;
         }
@@ -79,6 +95,7 @@
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editTicketModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-ticketnumber="{{ ticket.ticket_number }}">
                                 Edit
                             </button>
+                            <br>
                             <button class="btn btn-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">Delete</button>
                         </td>
                     </tr>

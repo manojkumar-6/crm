@@ -9,6 +9,13 @@ class TenantModel(models.Model):
     email_template= models.CharField(max_length=5000)
     def __str__(self):
         return self.name.username
+class TemplateModel(models.Model):
+     id = models.AutoField(primary_key=True)  # Optional: Explicitly set id as primary key
+     name = models.ForeignKey(User, on_delete=models.CASCADE)
+     templateName=models.CharField(max_length=50)
+     templateDescription=models.CharField(max_length=2000)
+     def __str__(self):
+          return self.templateName
 class UserModels(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, null=True)
@@ -16,6 +23,7 @@ class UserModels(models.Model):
     email = models.CharField(max_length=200, null=True)
     tenant_to=models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
     def __str__(self):
 	    return self.name
 class TicketsModel(models.Model):
@@ -40,7 +48,7 @@ class TicketsStatusModel(models.Model):
     user = models.ForeignKey(UserModels, on_delete=models.CASCADE)
     tenant_to = models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     ticket_number = models.ForeignKey(TicketsModel, on_delete=models.CASCADE)
-    issue = models.ForeignKey(IssueModel, on_delete=models.CASCADE)  # Use the dynamic issue model
+    issue = models.ForeignKey(IssueModel, on_delete=models.CASCADE,null=True,blank=True)  # Use the dynamic issue model
     ticket_status = models.CharField(
         max_length=20,
         choices=TicketStatusChoices.choices,
@@ -56,7 +64,6 @@ class TicketsStatusModel(models.Model):
 class FacebookCredentials(models.Model):
 	user=models.ForeignKey(TenantModel, on_delete=models.CASCADE)
 	appId=models.CharField(max_length=50)
-	appSecret=models.CharField(max_length=50)
 	version=models.CharField(max_length=10)
 	phoneNumberId=models.CharField(max_length=20,unique=True)
 	accessToken=models.CharField(max_length=243)
@@ -70,11 +77,10 @@ class MessageModel(models.Model):
 		return str(self.customer)
 class ConversationModel(models.Model):
 	user=models.ForeignKey(UserModels,on_delete=models.CASCADE)
-	date_queried = models.DateTimeField(auto_now_add=False, null=True, blank=True)
+	date_queried = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 	ai_model_reply=models.CharField(max_length=7000)
 	user_query=models.CharField(max_length=5000)
 	def __str__(self):
-
 		return self.user.name
 class IssueReported(models.Model):
     class IssueChoices(models.TextChoices):
@@ -85,10 +91,6 @@ class IssueReported(models.Model):
     escalated_count = models.IntegerField(default=0)
     def __str__(self):
         return self.user.name
-
-
-
-
 
 
 

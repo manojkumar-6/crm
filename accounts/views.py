@@ -56,7 +56,51 @@ def delete_conversation(request, message_id):
         conversation.delete()
         return redirect('dashboard')  # Adjust as needed
     return HttpResponse(status=405)  # Method not allowed
+def send_onbarding_mail(username,email_,link):
+    smtp_server = "smtp.hostinger.com"
+    smtp_port = 587  # Use 465 if you want SSL
+    sender_email = "notifications@fixm8.com"  # Your email address
+    receiver_email = email_  # Recipient's email
+    password = "Vlookup@2024"  # Your email account password
 
+    # Create the email message
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = "On Boarding Email"
+
+    # Email body with an HTML table
+    body = f"""
+<html>
+    <body>
+        <h3>Hello, You are account has been craeted sucessfully</h3>
+
+        <p>you can login with this credentails to the dashboard {link}</p>
+
+        <br>
+        <p> username :{username}</p>
+        <br>temp password :12345678@A</p>
+    Thanks
+"""
+    message.attach((body, "html"))
+    try:
+        # Connect to the SMTP server
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Secure the connection with TLS
+
+        # Log in to the server
+        server.login(sender_email, password)
+
+        # Send the email
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        print("Email sent successfully!")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    finally:
+        # Close the connection
+        server.quit()
 @login_required(login_url='/')
 def upload_csv(request):
     print("getting loaded")
@@ -66,20 +110,52 @@ def upload_csv(request):
             print("valid")
             csv_file = request.FILES['file']
             try:
-                # Assuming the file is being processed correctly
+                # Read the CSV file
                 df = pd.read_csv(csv_file)
-                table_html = df.to_html(classes="table table-striped")  # Generate HTML for the table
+                home_directory_link = request.build_absolute_uri('/')
 
-                # Return JSON response with HTML table
-                return JsonResponse({'message': 'Upload successful'})
+                # Validate the required columns
+                if not all(col in df.columns for col in ['username', 'phone', 'email']):
+                    return JsonResponse({'error': 'CSV file must contain username, phone, and email columns.'}, status=400)
+                if (request.user.is_superuser):
+                    for index, row in df.iterrows():
+                        username = row['username']
+                        email = row['email']
+                        phone = row['phone']
+                        user=User(username=username, email=email)
+                        user.set_password("12345678@A")
+                        user.save()
+                        print("creating tenant")
+                        tenant=TenantModel(name=user,email=email)
+                        tenant.save()
+                        print("sending onbarding mail")
+                        send_onbarding_mail(username,email,home_directory_link)
+                    return JsonResponse({'message': f'Uploaded {len(df)} users successfully.'})
+
+                else:
+
+                    user_=User.objects.filter(username=request.user.username,email=request.user.email).first()
+                    tenant=TenantModel.objects.filter(name=user_).first()
+                    # Iterate over the DataFrame and create User instances
+                    for index, row in df.iterrows():
+                        username = row['username']
+                        email = row['email']
+                        phone = row['phone']
+
+                        # Create user with default password
+                        user = UserModels(name=username, email=email, phone=phone,tenant_to=tenant)
+                        user.save()
+                        print("user dsaved")
+                        # Optionally, you can save phone number if you have a field for it in your user model
+                        # user.profile.phone = phone  # assuming you have a related Profile model
+                        # user.profile.save()
+
+                    return JsonResponse({'message': f'Uploaded {len(df)} users successfully.'})
 
             except Exception as e:
-                # Return an error response with a descriptive error message
-                return JsonResponse({'error': f'There was an error processing the file: {e}'}, status=400)
+                    return JsonResponse({'error': f'There was an error processing the file: {e}'}, status=400)
 
-    # If the request method is not POST or form is invalid, show an error message
     return JsonResponse({'error': 'The form was not submitted successfully. Please try again.'}, status=400)
-
 
 @login_required(login_url='/')
 def verify(request):
@@ -246,6 +322,7 @@ def dashBoard(request):
 
     # Fetch all tickets for the given issue
     tenant = TenantModel.objects.filter(name=request.user).first()
+    print(tenant)
     tickets_ = TicketsStatusModel.objects.filter(tenant_to=tenant)
 
     # Apply status filter
@@ -294,22 +371,26 @@ def dashBoard(request):
     user_conversated = ConversationModel.objects.all()
     print("user",request.user.username)
     username=User.objects.filter(username=request.user.username).first()
-    tenant=TenantModel.objects.filter(name=username).first()
-
+    tenant__=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    templates = TemplateModel.objects.filter(name=tenant__)
+    print(templates)
     total_users=0
     if tenant :
         total_users =(UserModels.objects.filter(tenant_to=tenant).count())
     # Count interactions per user and order by interaction count
     total_hits = ConversationModel.objects.exclude(ai_model_reply__icontains='welcome message')
     i_count=0
+    temp=set()
     a_count=0
+    m_count=0
     for data in total_hits:
-        if data.user.tenant_to.email==request.user.email:
+        if data.user.tenant_to.email==request.user.email and data.user.tenant_to.name.username==request.user.username:
             a_count+=1
     for data in ConversationModel.objects.all():
-        if data.user.tenant_to.email==request.user.email:
-            i_count+=1
-    a_count = i_count//2
+        if data.user.tenant_to.email==request.user.email and data.user.tenant_to.name.username==request.user.username:
+            temp.add(data.user)
+            m_count+=1
+    i_count=len(list(temp))
     today = timezone.now().date()
     if tenant:
         tickets = TicketsStatusModel.objects.filter(tenant_to=tenant)
@@ -322,13 +403,15 @@ def dashBoard(request):
             })
     else:
         ticket_list_=[]
+    users=UserModels.objects.filter(tenant_to=tenant)
     context = {
         'tickets': tickets_,
         'ticket_list': ticket_list_,
         'today': today,
         "total_users":total_users,
         'total_users_interacted': i_count,
-        "i_count":i_count,
+        'users':users,
+        "i_count":m_count,
         "a_count":a_count,
         "issues_count":issues_count,
         'page_obj': tickets_,
@@ -340,50 +423,109 @@ def dashBoard(request):
         'pending_count': pending_count,
         'in_progress_count': in_progress_count,
         'completed_count': completed_count,
+        'templates': templates,
     }
 
 
     return render(request, 'accounts/dashboard.html', context)
+from bs4 import BeautifulSoup
+import re
+
+def html_to_whatsapp_text(html_content):
+    # Parse HTML content using BeautifulSoup
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # Replace <b>, <strong> with WhatsApp-friendly *bold* syntax
+    for b_tag in soup.find_all(['b', 'strong']):
+        if b_tag.string:  # Ensure there is text inside the tag
+            b_tag.string = '*' + b_tag.string + '*'  # Wrap content with *
+
+    # Replace <i>, <em> with WhatsApp-friendly _italic_ syntax
+    for i_tag in soup.find_all(['i', 'em']):
+        if i_tag.string:  # Ensure there is text inside the tag
+            i_tag.string = '_' + i_tag.string + '_'  # Wrap content with _
+
+    # Replace <u> with WhatsApp-friendly ~underline~ syntax
+    for u_tag in soup.find_all('u'):
+        if u_tag.string:  # Ensure there is text inside the tag
+            u_tag.string = '~' + u_tag.string + '~'  # Wrap content with ~
+
+    # Handle links (<a href="URL">link text</a>) and make them clickable
+    for a_tag in soup.find_all('a', href=True):
+        link = a_tag['href']
+        text = a_tag.get_text()
+
+        if text:  # Ensure the link text is not empty
+            # If there's text, display the text followed by the URL
+            a_tag.string = f"{text} ({link})"
+        else:
+            # If there is no text, just display the URL itself
+            a_tag.string = link  # Remove the <a> tag, keep the URL as plain text
+
+    # Handle <br> and <p> tags to insert newlines
+    for br_tag in soup.find_all('br'):
+        if br_tag.string:  # Ensure there is text inside the tag
+            br_tag.string = '\n' + br_tag.string + '\n'  # Wrap content with *
+
+    for p_tag in soup.find_all('p'):
+        if p_tag.string:  # Ensure there is text inside the tag
+            p_tag.string = '\n' + p_tag.string + '\n'  # Wrap content with *
+
+    # Now, get the plain text from the HTML (removes remaining HTML tags)
+    text_content = soup.get_text(separator=' ', strip=True)
+
+    # Fix unwanted characters (like non-breaking spaces) and extra spaces
+    text_content = re.sub(r'\s+', ' ', text_content)  # Replace multiple spaces with a single space
+    text_content = text_content.replace('\xa0', ' ')  # Remove non-breaking spaces
+
+    return text_content
 
 
+from django.views.decorators.csrf import csrf_protect
+@csrf_protect
+@login_required
 @csrf_exempt  # You can use CSRF exemption for API-like views if needed
 def send_email_view(request):
     if request.method == 'POST':
-        try:
+            print("in method")
             data = json.loads(request.body)
-            email_description = data.get('emailDescription')
-            userData=UserModels.objects.filter(email=request.email).first()
-            name=User.objects.filter(username=userData.tenant_to).first()
-            tenant_id = data.get('tenant_id')
-            tenant=TenantModel.objects.filter(name=name).first()
-
+            userData=User.objects.filter(username=request.user.username,email=request.user.email).first()
+            tenant=TenantModel.objects.filter(name=userData).first()
+            template=TemplateModel.objects.filter(name=userData,templateName=data.get('templateName')).first()
             facebookData=FacebookCredentials.objects.filter(user=tenant).first()
-            print(facebookData)
-            for user in UserModels.objects.filter(tenant_to=tenant):
-                message = get_text_message_input(user.phone[2:], data)
+            print(facebookData,data.get('userIds'),data)
+            message = html_to_whatsapp_text(template.templateDescription)
+            json_string=data.get('userIds')
+            # user_ids = json.loads(json_string.replace("'", '"'))
+            for user in UserModels.objects.filter(tenant_to=tenant, id__in=data.get('userIds')):
+                message = get_text_message_input(user.phone,message)
                 conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
                 conv.save()
+                print("sent",message)
                 send_message(message,facebookData)
 
-            return JsonResponse({'message': 'messages successfully!'}, status=200)
+            return JsonResponse({'message': 'messages successfully!','success': True}, status=200)
 
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request method'}, status=405)
-
+from django.contrib.auth.models import User
 @method_decorator(csrf_exempt, name='dispatch')
 class AutoSaveView(View):
     def post(self, request):
         data = json.loads(request.body)
+        print(data)
         email_description = data.get('emailDescription')
         print("email",email_description)
-        tenant=User.objects.filter(email=request.user.email).first()
+        tenant=User.objects.filter(username=request.user.username,email=request.user.email).first()
         print(tenant)
-        desc=TenantModel.objects.get(name=tenant)
-        print(desc)
-        desc.email_template=email_description
-        desc.save()
+        k=data.get('templateName')
+        o=k.split('emailDescription')[1]
+        print(k.split('emailDescription'))
+        user_=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        temp=TemplateModel.objects.filter(name=user_,templateName=o).first()
+        print(temp)
+        temp.templateDescription=email_description
+        temp.save()
         print("saved")
         return JsonResponse({'status': 'success', 'message': 'Auto-saved successfully.'})
 
@@ -426,6 +568,10 @@ def loginUser(request):
 
 def update_customer(request, customer_id):
     customer = get_object_or_404(UserModels, id=customer_id)
+    currentCustomer=get_object_or_404(UserModels, id=customer_id)
+    currentTickets=TicketsModel.objects.filter(user=currentCustomer)
+    currentTicketStatus=TicketsStatusModel.objects.filter(user=currentCustomer)
+    currentConverstaion=ConversationModel.objects.filter(user=currentCustomer)
     if request.method == 'POST':
         name = request.POST.get('name')
         email = request.POST.get('email')
@@ -434,11 +580,19 @@ def update_customer(request, customer_id):
         customer.email = email
         customer.phone = phone
         customer.save()
+        for ticket in currentTickets:
+            ticket.user=customer
+            ticket.save()
+        for ticketStatus in currentTicketStatus:
+            ticketStatus.user=customer
+            ticketStatus.save()
+        for conversation in currentConverstaion:
+            conversation.user=customer
+            conversation.save()
 
         messages.success(request, 'Customer updated successfully!')
-        return redirect('/customer_detail/' + str(customer.id))
+        return redirect('/customer/' + str(customer.id))
 
-    return render(request, 'customer_update_form.html', {'customer': customer})
 def delete_customer(request, customer_id):
     customer = get_object_or_404(UserModels, id=customer_id)
     if request.method == 'POST':
@@ -462,24 +616,124 @@ def createUser(request):
 
     context = {'action': action, 'form': form}
     return render(request, 'accounts/t.html', context)
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+import os
+def email(ticket,email_,path):
 
+    # Hostinger's SMTP settings
+    #
+    smtp_server = "smtp.hostinger.com"
+    smtp_port = 587  # Use 465 if you want SSL
+    sender_email = "notifications@fixm8.com"  # Your email address
+    receiver_email = email_  # Recipient's email
+    password = "Vlookup@2024"  # Your email account password
+
+    # Create the email message
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = "Ticket with number " + str(ticket['ticket_number'])+" was created "
+
+    # Email body with an HTML table
+    body = f"""
+<html>
+    <body>
+        <h3>Hello, A user has reported an issue. You can get more details here:</h3>
+
+        <table border="4" cellpadding="15" cellspacing="10">
+            <tr>
+                <td>Username</td>
+                <td>{ticket['username']}</td>
+            </tr>
+            <tr>
+                <td>Phone Number</td>
+                <td>{ticket['phone']}</td>
+            </tr>
+
+            <tr>
+                <td>Ticket Number</td>
+                <td>{ticket['ticket_number']}</td>
+            </tr>
+            <tr>
+                <td>Ticket Status</td>
+                <td>{ticket['status']}</td>
+            </tr>
+        </table>
+
+        <br>
+        <hr>
+        <b>Issue Description</b>
+        <br>
+        <p>Description: {ticket['des']}.</p>
+
+        <br>
+
+"""
+    if path!="no path":
+        body += f"""
+            <p>Provided image:</p>
+            <p><img src="cid:image1" alt="Issue Image" />  <!-- Referencing the image by its CID --></p>
+        """
+    else:
+        body += "<p>No image provided.</p>"
+
+    body += "</body></html>"
+
+    # Attach the HTML body to the email message
+    message.attach(MIMEText(body, "html"))
+    if(path!="no path"):
+        # Open and attach the image
+        with open(path, 'rb') as img_file:
+            img = MIMEImage(img_file.read())
+            img.add_header('Content-ID', '<image1>')  # This matches the 'cid:image1' in the HTML body
+            img.add_header('Content-Disposition', 'inline', filename=os.path.basename(path))
+            message.attach(img)
+
+    # Attach the HTML body to the email message
+    message.attach(MIMEText(body, "html"))
+
+
+    # Sending the email
+    try:
+        # Connect to the SMTP server
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Secure the connection with TLS
+
+        # Log in to the server
+        server.login(sender_email, password)
+
+        # Send the email
+        server.sendmail(sender_email, receiver_email, message.as_string())
+        print("Email sent successfully!")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    finally:
+        # Close the connection
+        server.quit()
+@login_required
 def updateCredentials(request):
     action = 'credentials'
-    form = Credentials()
+    user = TenantModel.objects.filter(name=request.user).first()
+    data = FacebookCredentials.objects.filter(user=user).first()
+
     if request.method == "POST":
-        form = Credentials(request.POST)
-
+        form = Credentials(request.POST, instance=data)  # Bind the POST data to the form
         if form.is_valid():
-            credentials = form.save(commit=False
-                            )
-            user=TenantModel.objects.filter(name=request.user).first()
-            print(user)
+            credentials = form.save(commit=False)
             credentials.user = user
-                # Assign the excluded user field
-            credentials.save()                     # Save the form with the user included
+            credentials.save()  # Save the updated credentials
             return redirect("/dashboard")
+    else:
+        form = Credentials(instance=data)  # Prepopulate the form with existing data
 
-    context = {'action': action, 'form': form}
+    context = {'action': action, 'form': form, 'data': data}
     return render(request, 'accounts/t.html', context)
 
 def deleteUser(request,pk):
@@ -498,8 +752,8 @@ message_dict = {}
 
 
 # Download necessary datasets for nltk
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+# nltk.download('wordnet')
+# nltk.download('omw-1.4')
 
 # Initialize sentiment-analysis pipeline
 model_name = "distilbert-base-uncased-finetuned-sst-2-english"
@@ -573,45 +827,60 @@ def get_support_keywords(base_keywords):
     return synonyms
 
 # Define base support request keywords
-base_support_keywords = ["help", "support", "assist", "team"]
+base_support_keywords = [  "raise", "raise a support request", "support", "assist", "trouble", "can't", "error", "help please",
+    "raise a request", "request support", "help me", "assist me"]
 SUPPORT_REQUEST_KEYWORDS = get_support_keywords(base_support_keywords)
-
+media_dict=dict()
 # Updated function to check if user is requesting support
 def check_support_needed(message):
     """
     Check if the user is explicitly asking for support using keywords.
     """
     message_lower = message.lower()
+    print("message",message_lower,message)
+    if "raise" in message:
+
+        return "request"
     return any(keyword in message_lower for keyword in SUPPORT_REQUEST_KEYWORDS)
 
 # Updated get_gemini_response function
 def  get_gemini_response(input_message, recipient,caption, media=None):
+
     if is_acknowledgment(input_message):
         message_dict[recipient] = []
         return ACKNOWLEDGMENT_RESPONSE
-    print(input_message)
+
     if(len(caption)):
         input_message=caption
     if recipient not in message_dict:
         message_dict[recipient] = []
+        media_dict[recipient]='no path'
     # if (mes)
     print("input message",input_message)
     message_dict[recipient].append(input_message)
 
     # Check if the user is explicitly asking for support
     support_needed = check_support_needed(input_message)
-    print("support needed",support_needed)
+
     # Initialize support count if recipient is not already tracked
     if recipient not in support_count_dict:
         support_count_dict[recipient] = 0
-
+    if "raise" in input_message:
+        support_count_dict[recipient]+=3
     if support_needed:
         support_count_dict[recipient] += 1
 
-    # Check if the user explicitly requested external help
     if support_count_dict[recipient] >= 3:  # Change the threshold to 1
-        message_dict[recipient] = []
+
         support_count_dict[recipient]=0
+        full_input = " ".join(message_dict[recipient])
+        print(full_input)
+        message_dict[recipient] = []
+        summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
+
+        thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
+        thread.start()
+        media_dict[recipient]='no path'
         return ("It looks like you need additional help. I've raised a support request, "
                 "and our team will reach out to you soon.")
 
@@ -619,13 +888,14 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
 
     if media:
         image = Image.open(media['file_path'])
+        media_dict[recipient]=media['file_path']
         # media_response = process_media_with_model(media['file_path'])
         response = model.generate_content([full_input, image])
 
     else:
-        response = model.generate_content(full_input )
+        response = model.generate_content(full_input)
 
-    message_dict[recipient].append(response.text[:150])
+    message_dict[recipient].append(response.text[:100])
     response=model.generate_content('''Analyzing Support Need:
 
 Analyze the provided response and determine if it needs the additional phrase: "I can raise a request for support if needed."
@@ -639,11 +909,67 @@ If the user asks for support more than 2 times, return "I've raised a request, a
 Return the final text, ensuring no other changes are made to the original response unless the phrase or support escalation is added.
 the text is
 ''' + response.text)
-    print(message_dict)
+
     if(response.text =="I've raised a request, and our support team will reach out to you soon."):
+        full_input = " ".join(message_dict[recipient])
+
+        summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         message_dict[recipient]=[]
+
+        thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
+        thread.start()
+        media_dict[recipient]='no path'
         print("triggered a email")
+    user=UserModels.objects.filter(phone=recipient).first()
+    con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
+    con.save()
     return response.text
+# import phonenumbers
+# from phonenumbers import geocoder, carrier, is_valid_number, parse
+
+# def get_phone_number_info(phone_number):
+#     try:
+#         # Parse the phone number based on the region (e.g., 'US', 'IN', 'GB')
+#         region = phonenumbers.region_code_for_number(phonenumbers.parse(phone_number))
+
+#         parsed_number = phonenumbers.parse(phone_number,region)
+
+#         # Get the country code
+#         country_code = parsed_number.country_code
+#         # Get the national number
+#         national_number = parsed_number.national_number
+#         # Get the country name
+#         country_name = geocoder.country_name_for_number(parsed_number, 'en')
+#         # Get the carrier informationTenantModel
+#         carrier_name = carrier.name_for_number(parsed_number, 'en')
+
+#         # Check if the number is valid
+#         if is_valid_number(parsed_number):
+#             return {
+#                 "country_code": country_code,
+#                 "national_number": national_number,
+#                 "country_name": country_name,
+#                 "carrier": carrier_name,
+#                 "valid": True
+#             }
+#         else:
+#             return {"valid": False, "message": "Invalid phone number"}
+
+#     except phonenumbers.phonenumberutil.NumberParseException as e:
+#         return {"valid": False, "message": str(e)}
+
+def create_ticket_from_summary(summary,phonenumber,path):
+    user=UserModels.objects.filter(phone=phonenumber).first()
+    ticket_created=TicketsModel(user=user,ticket_number=timezone.now().timestamp(),Description=summary)
+    ticket_created.save()
+    ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary)
+    ticket_status.save()
+    mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
+               'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
+    print("triggering a email to client and tenant")
+    email(mail_body,user.email,path)
+    email(mail_body,user.tenant_to.email,path)
+
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
     # Implement the actual model's media processing logic here.
@@ -725,7 +1051,7 @@ def save_media_file(media_content, media_type):
         temp_file.close()  # Close the file to ensure data is flushed to disk
 
     # Start a thread to delete the file after 2 minutes (120 seconds)
-    deletion_thread = threading.Thread(target=delayed_file_deletion, args=(temp_file_path, 30))
+    deletion_thread = threading.Thread(target=delayed_file_deletion, args=(temp_file_path, 900))
     deletion_thread.start()
     return temp_file_path
 
@@ -745,7 +1071,7 @@ def process_whatsapp_message(body):
     print('body',body)
     message_data = body["entry"][0]["changes"][0]["value"]["messages"][0]
     message_id = message_data.get("id")
-    receipient_number=message_data.get("from")[2:]
+    receipient_number=message_data.get("from")
     print(receipient_number)
     userData=UserModels.objects.filter(phone=receipient_number).first()
     print(userData)
@@ -765,8 +1091,8 @@ def process_whatsapp_message(body):
     caption=""
     if "image" in message_data:
         media_id = message_data["image"]["id"]
-        if message_data["image"]["caption"]:
-            caption=message_data["image"]["caption"]
+        if message_data["image"].get("caption"):
+            caption = message_data["image"]["caption"]
         media = process_media(media_id,caption,facebookData)
     elif "document" in message_data:
         media_id = message_data["document"]["id"]
@@ -788,7 +1114,7 @@ def send_message(data,facebookData):
         "Authorization": "Bearer " + facebookData.accessToken,
         "Content-Type": "application/json",
     }
-    print("data",data,facebookData)
+
     response = requests.post(url, headers=headers, data=data)
     try:
             pass
@@ -823,6 +1149,8 @@ from django.http import JsonResponse
 def send_whatsapp_message(request):
     if request.method == 'POST':
         print("here")
+
+
         handle_message(request)
         return JsonResponse({'status': 'Message sent successfully'}, status=200)
     elif request.method == 'GET':
@@ -1050,13 +1378,13 @@ def delete_facebook_credential(request, credential_id):
         return JsonResponse({'success': True})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
-@superuser_required
+@login_required
 def ticket_status_list(request):
-    tickets = TicketsStatusModel.objects.all()
-    # Assuming you have models for User, Tenant, and Ticket
-    users = UserModels.objects.all()
-    tenants = TenantModel.objects.all()
-    ticket_numbers = TicketsModel.objects.all()
+    user=User.objects.filter(username=request.user.username,email=request.user.email)
+    tenants = TenantModel.objects.filter(name=user.first())
+    tickets = TicketsStatusModel.objects.filter(tenant_to=tenants.first())
+    users = UserModels.objects.filter(tenant_to=tenants.first())
+    ticket_numbers = TicketsModel.objects.filter(user__tenant_to=tenants.first())
     print(ticket_numbers)
     issues=IssueModel.objects.all()
     print(issues)
@@ -1098,13 +1426,13 @@ def create_ticket_status(request):
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 
-@superuser_required
+@login_required
 @csrf_exempt
 def update_ticket_status(request):
     print("int his ",request.method)
     if request.method == 'POST':
         print("in post")
-        ticket_id = request.POST.get('ticket_id')
+        ticket_id = request.POST.get('id')
         print(ticket_id)
         ticket = get_object_or_404(TicketsStatusModel, id=ticket_id)
         form = TicketsStatusForm(request.POST, instance=ticket)
@@ -1113,7 +1441,7 @@ def update_ticket_status(request):
             form.save()
             return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid data'})
-@superuser_required
+@login_required
 @csrf_exempt
 def delete_ticket_status(request, ticket_id):
     if request.method == 'DELETE':
@@ -1205,10 +1533,12 @@ def delete_ticket(request, ticket_id):
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 from django.shortcuts import render
 from .models import TicketsModel, UserModels
-@superuser_required
+@login_required
 def list_tickets(request):
-    tickets = TicketsModel.objects.all()
-    users = UserModels.objects.all()  # Assuming this is where your users come from
+    user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    tenant=TenantModel.objects.filter(name=user).first()
+    tickets = TicketsModel.objects.filter(user__tenant_to=tenant)
+    users = UserModels.objects.filter(tenant_to=tenant) # Assuming this is where your users come from
     return render(request, 'accounts/tickets.html', {'tickets': tickets, 'users': users})
 @superuser_required
 
@@ -1246,9 +1576,11 @@ def adashboard(request):
                         'month': month,
                         'count': count
                     })
-    # Convert QuerySet objects to lists for JSON serialization
-    years = list(set(conversation.date_queried.year for conversation in ConversationModel.objects.all()))
-    months = list(set(conversation.date_queried.month for conversation in ConversationModel.objects.all()))
+    conversations = ConversationModel.objects.all()
+
+# Get distinct years and months
+    years = list(set(conversation.date_queried.year for conversation in conversations if conversation.date_queried))
+    months = list(set(conversation.date_queried.month for conversation in conversations if conversation.date_queried))
     days = list(range(1, 32))  # Static list of days
 
     context = {
@@ -1283,7 +1615,8 @@ def create_user_(request):
         is_superuser = request.POST.get('is_superuser') == 'true'
         password=request.POST.get('password')
 
-        user = User.objects.create(username=username, email=email, is_superuser=is_superuser,password=password)
+        user = User.objects.create(username=username, email=email, is_superuser=is_superuser)
+        user.set_password(password)
         user.save()
         return JsonResponse({'success': True})
 
@@ -1311,10 +1644,16 @@ def update_user_(request):
         is_superuser = request.POST.get('is_superuser') == 'true'
 
         user = User.objects.get(id=user_id)
+        tenant_update=TenantModel.objects.filter(name=user).first()
+
         user.username = username
         user.email = email
         user.is_superuser = is_superuser
         user.save()
+        tenant_update.name=user
+        tenant_update.email=email
+        tenant_update.save()
+
 
         return JsonResponse({'success': True})
 
@@ -1322,7 +1661,7 @@ def update_user_(request):
 
 # Delete user
 @csrf_exempt
-def delete_user(request):
+def delete_user_(request):
     if request.method == 'DELETE':
         user_id = request.GET.get('id')
         User.objects.get(id=user_id).delete()
@@ -1335,9 +1674,9 @@ from .models import UserModels
 from django.views.decorators.csrf import csrf_exempt
 
 def user_list(request):
-
-    tenant=TenantModel.objects.filter(email=request.user.email).first()
-    users = UserModels.objects.filter(tenant_to=tenant)
+    tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()  # Get the tenant object
+    tenant_=TenantModel.objects.filter(name=tenant).first()
+    users = UserModels.objects.filter(tenant_to=tenant_)
     return render(request, 'accounts/utenant.html', {'users': users})
 
 @csrf_exempt
@@ -1368,11 +1707,153 @@ def update_user_tenant(request):
         user.tenant_to_id = tenant_id
         user.save()
         return JsonResponse({'success': True})
-
+from django.views.decorators.http import require_POST
 @csrf_exempt
 def delete_user_tenant(request, user_id):
     if request.method == 'DELETE':
         user = UserModels.objects.get(id=user_id)
         user.delete()
         return JsonResponse({'success': True})
+@login_required
+def add_template(request):
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        body_data = json.loads(body_unicode)
+        # Access the templateName and templateContent
+        template_name = body_data.get('templateName')
+        template_content = body_data.get('templateContent')
+        # You can now use template_name and template_content as needed
+        print(f'Template Name: {template_name}')
+        print(f'Template Content: {template_content}')
+        tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()  # Get the tenant object
+        # Create a new template object and save it
+        new_template = TemplateModel(name=tenant,templateName=template_name, templateDescription=template_content)
+        new_template.save()
+        print("template saved")
 
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False})
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+import json
+
+@csrf_exempt  # Only use this for testing purposes; CSRF protection should be enabled in production
+def save_template(request):
+    if request.method == 'POST':
+        try:
+            # Get the JSON data from the request
+            data = json.loads(request.body)
+
+            template_name = data.get('templateName')
+            temp=template_name.split(" ")
+            template_name="_".join(temp)
+            template_content = data.get('templateContent')
+
+            if not template_name or not template_content:
+                return JsonResponse({'error': 'Both fields are required'}, status=400)
+
+            # Save the template to the database
+            tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()  # Get the tenant object
+            new_template = TemplateModel(name=tenant,templateName=template_name, templateDescription=template_content)
+            new_template.save()
+            # Return a success response
+            print("saved")
+            return JsonResponse({'message': 'Template saved successfully!'}, status=200)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=405)
+def check_template_name(request):
+    if request.method == "GET":
+        template_name = request.GET.get('templateName', '').strip()
+        tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()
+        # Check if the template name already exists in the database
+        if TemplateModel.objects.filter(name=tenant,templateName=template_name).exists():
+            return JsonResponse({'exists': True}, status=400)  # Template name exists
+        return JsonResponse({'exists': False}, status=200)
+from django.http import JsonResponse, HttpResponseNotAllowed
+@login_required
+def delete_template(request, template_name):
+
+    if request.method == "DELETE":
+        # Get the template by name
+        tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()
+        template = get_object_or_404(TemplateModel, templateName=template_name,name=tenant)
+
+        # Delete the template
+        template.delete()
+
+        return JsonResponse({'success': True}, status=200)
+
+    # If method is not DELETE, return an error
+    return HttpResponseNotAllowed(['DELETE'])
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+from django.shortcuts import render
+from django.http import JsonResponse
+from .forms import UserProfileForm
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+from django.shortcuts import render
+from django.http import JsonResponse
+from .forms import UserProfileForm
+
+@login_required
+def update_user_profile(request):
+    if request.method == "POST" :
+        # Initialize the form with the POST data and the current user's data
+        form = UserProfileForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            # Save profile fields (first name, last name, email)
+            user = form.save()
+            username=form.cleaned_data.get('username')
+            email=form.cleaned_data.get('email')
+            new_password = form.cleaned_data.get('new_password')
+            print(username,email,new_password)
+            if username!=request.user.username  or email!=request.user.email:
+                currentUser=User.objects.filter(username=request.user.username,email=request.user.email).first()
+                updatedUser=User.objects.filter(username=request.user.username,email=request.user.email).first()
+                updatedUser.username=username
+                updatedUser.email=email
+                updatedUser.save()
+                currentTenantData=TenantModel.objects.filter(name=currentUser).first()
+                currentUsersDataToTenant=UserModels.objects.filter(tenant_to=currentTenantData)
+                currentTicketsStatusData=TicketsStatusModel.objects.filter(tenant_to=currentTenantData)
+                currentFacebookData=FacebookCredentials.objects.filter(user=currentTenantData)
+                updatedTenantData=TenantModel.objects.filter(name=currentUser).first()
+                updatedTenantData.name=updatedUser
+                updatedTenantData.save()
+                for userData in currentUsersDataToTenant:
+                    userData.tenant_to=updatedTenantData
+                    userData.save()
+                for ticket in currentTicketsStatusData:
+                    ticket.tenant_to=updatedTenantData
+                    ticket.save()
+                currentFacebookData.user=updatedTenantData
+                currentFacebookData.save()
+            if new_password:
+                current_password = form.cleaned_data.get('current_password')
+
+                # Validate the current password
+                if not request.user.check_password(current_password):
+                    return JsonResponse({'status': 'error', 'message': 'Current password is incorrect.'})
+
+                # Set the new password
+
+                user.set_password(new_password)
+                user.save()
+                update_session_auth_hash(request, user)  # Keep the user logged in after password change
+
+            return JsonResponse({'status': 'success', 'message': 'Profile updated successfully!'})
+
+        return JsonResponse({'status': 'error', 'message': form.errors})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request.'})

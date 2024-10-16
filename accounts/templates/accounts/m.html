@@ -1,4 +1,4 @@
-{% extends 'accounts/base.html' %} {% load static %} {% block content %}
+{% extends 'accounts/main_template.html' %} {% load static %} {% block content %}
 
 <head>
     <meta charset="UTF-8">
@@ -10,33 +10,33 @@
         body {
             background-color: #f8f9fa;
         }
-
+        
         .table-responsive {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
         }
-
+        
         table thead {
             background-color: #343a40;
             color: white;
         }
-
+        
         table tbody tr:hover {
             background-color: #f1f3f5;
         }
-
+        
         .btn-primary,
         .btn-warning,
         .btn-danger {
             border-radius: 50px;
             padding: 5px 15px;
         }
-
+        
         .form-control {
             border-radius: 50px;
         }
-
+        
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
@@ -299,7 +299,7 @@
             const issue = button.getAttribute('data-issue');
             const status = button.getAttribute('data-status');
             const comments = button.getAttribute('data-comments');
-
+            console.log(id, user, tenant, ticketNumber, status)
             const modal = editModal.querySelector('.modal-body');
             modal.querySelector('#editTicketId').value = id;
             modal.querySelector('#editUserSelect').value = user;
@@ -314,7 +314,8 @@
         function saveChanges() {
             const form = document.getElementById('editTicketStatusForm');
             const formData = new FormData(form);
-
+            console.log(
+                formData, form)
             fetch(form.action, {
                     method: 'POST',
                     body: formData,

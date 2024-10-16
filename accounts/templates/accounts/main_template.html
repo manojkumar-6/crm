@@ -15,13 +15,13 @@
         .navbar-toggler {
             border-color: rgba(255, 255, 255, 0.1);
         }
-
+        
         .offcanvas {
             width: 300px;
             background-color: white;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
         }
-
+        
         @media (min-width: 992px) {
             .navbar-collapse {
                 display: none !important;
@@ -30,7 +30,7 @@
                 display: block !important;
             }
         }
-
+        
         .scrollable-chat {
             max-height: 550px;
             overflow-y: auto;
@@ -64,9 +64,19 @@
                 <li class="nav-item"><a class="nav-link active" aria-current="page" href="/dashboard">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="/users_/">Tenant Management</a></li>
                 <li class="nav-item"><a class="nav-link" href="/update_facebook_credentials">Update My Facebook Data</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#updateProfileModal">Update My Profile</a></li>
+                <!-- Link to update profile modal -->
                 <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a></li>
+                <li class="nav-item"></li>
+                <a class="nav-link" href="{% url 'list_tickets' %}">Tickets Created For Tenant Issues</a>
+                </li>
                 <li class="nav-item">
-                    <!-- Logout Form (replacing the logout link) -->
+                    <a class="nav-link" href="/tickets_status/">Ticket Status For Tenant Issues</a>
+                </li>
+                <!-- <li class="nav-item"></li>
+                <a class="nav-link" href="/user_dashboard"> Tenant Dashboard</a>
+                </li> -->
+                <li class="nav-item">
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="nav-link btn btn-link">Logout</button>
@@ -76,13 +86,71 @@
         </div>
     </div>
 
+    <!-- Main content area -->
     <div class="container my-4">
         <main>
-            {% block content %} {% endblock %}
+            {% block content %}
+            <!-- The content will be injected dynamically in the modal -->
+            {% endblock %}
         </main>
     </div>
 
-    <!-- Upload Modal -->
+    <!-- Update Profile Modal -->
+    <div class="modal fade" id="updateProfileModal" tabindex="-1" aria-labelledby="updateProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateProfileModalLabel">Update Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="update-profile-form" method="POST" action="{% url 'update_user_profile' %}">
+                        {% csrf_token %}
+
+                        <!-- First Name -->
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+
+                        <!-- Current Password -->
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" placeholder="update password if requried enter current password" class="form-control" id="current_password" name="current_password">
+                        </div>
+
+                        <!-- New Password -->
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" placeholder="Enter New Password" class="form-control" id="new_password" name="new_password">
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" placeholder="Confirm Password" class="form-control" id="confirm_password" name="confirm_password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <div id="form-result" class="mt-2"></div>
+                        <!-- For showing result messages -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional: You can trigger this modal from a button -->
+
+
+    <!-- Upload Modal (unchanged) -->
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -105,6 +173,8 @@
             </div>
         </div>
     </div>
+
+    <!-- AJAX Script for updating profile -->
     <script>
         document.getElementById('csv-upload-form').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent the default form submission
@@ -151,6 +221,37 @@
             // Reset form and clear result when modal is closed
             document.getElementById('csv-upload-form').reset();
             document.getElementById('upload-result').innerText = '';
+        });
+        $(document).ready(function() {
+            // When the form is submitted
+            $('#update-profile-form').submit(function(e) {
+                e.preventDefault(); // Prevent default form submission
+
+                var formData = $(this).serialize(); // Serialize form data
+
+                // Send the AJAX request
+                $.ajax({
+                    url: "{% url 'update_user_profile' %}", // URL to Django view
+                    type: "POST",
+                    data: formData, // The data to send (form data)
+                    success: function(response) {
+                        console.log(response)
+                        if (response.status === "success") {
+                            // Show success message
+                            $('#form-result').html('<div class="alert alert-success">' + response.message + '</div>');
+                            setTimeout(function() {
+                                $('#updateProfileModal').modal('hide'); // Hide the modal after a delay
+                            }, 1000);
+                        } else {
+                            // Show error message
+                            $('#form-result').html('<div class="alert alert-danger">' + response.message + '</div>');
+                        }
+                    },
+                    error: function() {
+                        $('#form-result').html('<div class="alert alert-danger">Error updating profile. Please try again.</div>');
+                    }
+                });
+            });
         });
     </script>
 

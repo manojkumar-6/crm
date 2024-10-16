@@ -13,5 +13,6 @@ admin.site.register(IssueReported)
 admin.site.register(IssueModel)
 admin.site.register(TicketsStatusModel)
 admin.site.register(FacebookCredentials)
+admin.site.register(TemplateModel)
 
 
