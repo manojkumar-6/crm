@@ -752,8 +752,8 @@ message_dict = {}
 
 
 # Download necessary datasets for nltk
-# nltk.download('wordnet')
-# nltk.download('omw-1.4')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 # Initialize sentiment-analysis pipeline
 model_name = "distilbert-base-uncased-finetuned-sst-2-english"
