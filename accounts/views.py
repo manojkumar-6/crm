@@ -1154,6 +1154,7 @@ def send_whatsapp_message(request):
         handle_message(request)
         return JsonResponse({'status': 'Message sent successfully'}, status=200)
     elif request.method == 'GET':
+        print("received response")
         verify(request)
         return JsonResponse({'status': 'Verification successful'}, status=200)
 
