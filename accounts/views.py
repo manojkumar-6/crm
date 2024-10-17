@@ -157,7 +157,7 @@ def upload_csv(request):
 
     return JsonResponse({'error': 'The form was not submitted successfully. Please try again.'}, status=400)
 
-@login_required(login_url='/')
+
 def verify(request):
     # Parse params from the webhook verification request
     print(request,request.method)
@@ -165,23 +165,16 @@ def verify(request):
     mode = request.GET.get("hub.mode")
     token = request.GET.get("hub.verify_token")
     challenge = request.GET.get("hub.challenge")
-
+    print("token",token,mode,challenge,HttpResponse(challenge,content_type="text/plain", status=200))
     # Check if a token and mode were sent
-    if mode and token:
-        # Check the mode and token sent are correct
-        if mode == "subscribe" and token == "12345":
-            # Respond with 200 OK and challenge token from the request
+    if mode == "subscribe" and token == '12345':
+        # Log the verification success
+        print("suvess")
+        # Respond with 200 OK and challenge token from the request
+        return HttpResponse(challenge,content_type="text/plain",status=200)
 
-            return HttpResponse(challenge, status=200)
-        else:
-            # Responds with '403 Forbidden' if verify tokens do not match
-
-            return HttpResponse(str({"status": "error", "message": "Verification failed"}), status=403)
-    else:
-        # Responds with '400 Bad Request' if verify tokens do not match
-
-        return HttpResponse(str({"status": "error", "message": "Missing parameters"}), status=400)
-
+    # Handle other cases (optional, depending on your needs)
+    return HttpResponse("Verification failed", status=403)
 
 def group_messages(messages):
     """
@@ -1155,10 +1148,10 @@ def send_whatsapp_message(request):
         return JsonResponse({'status': 'Message sent successfully'}, status=200)
     elif request.method == 'GET':
         print("received response")
-        verify(request)
-        return JsonResponse({'status': 'Verification successful'}, status=200)
+        return verify(request)
+        # return JsonResponse({'status': 'Verification successful'}, status=200)
 
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
+    # return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 from django.shortcuts import render, get_object_or_404, redirect
 
