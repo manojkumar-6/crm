@@ -29,24 +29,15 @@
         .btn-primary,
         .btn-warning,
         .btn-danger {
-            border-radius: 50px;
+            border-radius: 40px;
             padding: 5px 15px;
-        }
-        
-        .btn-danger {
-            margin-top: 12px;
-            /* Adjust spacing as needed */
         }
         
         .description-column {
             max-height: 100px;
-            /* Set the maximum height for the description */
             overflow-y: auto;
-            /* Enable vertical scrolling if content exceeds the max height */
             word-wrap: break-word;
-            /* Ensure long words wrap to the next line */
             width: 300px;
-            /* Optionally, set a fixed width if needed */
         }
         
         .form-control {
@@ -63,6 +54,7 @@
             </div>
             <div class="col-auto text-end">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTicketModal">Add New Ticket</button>
+                <button class="btn btn-danger" onclick="deleteSelectedTickets()">Delete Selected Tickets</button>
             </div>
         </div>
 
@@ -76,6 +68,7 @@
             <table class="table table-hover" id="ticketsTable">
                 <thead class="table-dark">
                     <tr>
+                        <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
                         <th>ID</th>
                         <th>Tenant</th>
                         <th>Ticket Number</th>
@@ -86,17 +79,17 @@
                 <tbody>
                     {% for ticket in tickets %}
                     <tr>
+                        <td><input type="checkbox" class="ticket-checkbox" data-id="{{ ticket.id }}"></td>
                         <td>{{ ticket.id }}</td>
                         <td>{{ ticket.user.name }}</td>
-
                         <td>{{ ticket.ticket_number }}</td>
-                        <td>{{ticket.Description}}</td>
+                        <td class="description-column">{{ ticket.Description }}</td>
                         <td>
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editTicketModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-ticketnumber="{{ ticket.ticket_number }}">
                                 Edit
                             </button>
                             <br>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">Delete</button>
+                            <!-- <button class="btn btn-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">Delete</button> -->
                         </td>
                     </tr>
                     {% endfor %}
@@ -125,12 +118,18 @@
                         </div>
                         <div class="mb-3">
                             <label for="create-ticketnumber" class="form-label">Ticket Number</label>
-                            <input type="text" class="form-control" id="create-ticketnumber" name="ticket_number">
+                            <select class="form-select" id="ticket_number" name="ticket_id" onchange="updateDescription()">
+                                <option value="">Select a Ticket</option> <!-- Default option -->
+                                {% for ticket in tickets %}
+                                    <option value="{{ ticket.ticket_number }}" data-description="{{ ticket.Description }}">{{ ticket.ticket_number }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label for="create-description" class="form-label">Ticket Description</label>
-                            <input type="text" class="form-control" id="create-description" name="ticket_des">
+                            <input type="text" class="form-control" id="create-description" name="ticket_des" readonly>
                         </div>
+
                         <button type="button" class="btn btn-primary" onclick="createTicket()">Create</button>
                     </form>
                 </div>
@@ -159,7 +158,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="edit-ticketnumber" class="form-label">Ticket Number</label>
-                            <input type="text" class="form-control" id="edit-ticketnumber" name="ticket_number">
+                            <input type="text" class="form-control" id="edit-ticketnumber" name="ticket_number" readonly>
                         </div>
                         <button type="button" class="btn btn-primary" onclick="updateTicket()">Save Changes</button>
                     </form>
@@ -225,16 +224,40 @@
                 });
         }
 
-        // Delete Ticket
-        function deleteTicket(id) {
-            if (confirm('Are you sure you want to delete this ticket?')) {
-                fetch("{% url 'delete_ticket' ticket_id=0 %}".replace('0', id), {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token }}',
-                        }
+        function updateDescription() {
+            const ticketSelect = document.getElementById('ticket_number');
+            const selectedOption = ticketSelect.options[ticketSelect.selectedIndex];
+            const descriptionInput = document.getElementById('create-description');
+
+            // Set the description input to the data-description attribute of the selected option
+            descriptionInput.value = selectedOption.getAttribute('data-description') || '';
+        }
+
+
+        // Delete Selected Tickets
+        function deleteSelectedTickets() {
+            const selectedCheckboxes = document.querySelectorAll('.ticket-checkbox:checked');
+            const ids = Array.from(selectedCheckboxes).map(cb => cb.getAttribute('data-id'));
+
+            if (ids.length === 0) {
+                alert('No tickets selected for deletion.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete these tickets?')) {
+                fetch("{% url 'delete_ticket' %}", { // Adjust the URL as necessary for bulk deletion
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ids: ids
                     })
-                    .then(response => response.json())
+                })
+
+
+                .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             window.location.reload();
@@ -243,6 +266,14 @@
                         }
                     });
             }
+        }
+
+        // Toggle select all checkboxes
+        function toggleSelectAll(selectAllCheckbox) {
+            const checkboxes = document.querySelectorAll('.ticket-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
         }
 
         // Filter Table

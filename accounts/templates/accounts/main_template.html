@@ -15,13 +15,13 @@
         .navbar-toggler {
             border-color: rgba(255, 255, 255, 0.1);
         }
-        
+
         .offcanvas {
             width: 300px;
             background-color: white;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
         }
-        
+
         @media (min-width: 992px) {
             .navbar-collapse {
                 display: none !important;
@@ -30,7 +30,7 @@
                 display: block !important;
             }
         }
-        
+
         .scrollable-chat {
             max-height: 550px;
             overflow-y: auto;
@@ -64,9 +64,9 @@
                 <li class="nav-item"><a class="nav-link active" aria-current="page" href="/dashboard">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="/users_/">Tenant Management</a></li>
                 <li class="nav-item"><a class="nav-link" href="/update_facebook_credentials">Update My Facebook Data</a></li>
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#updateProfileModal">Update My Profile</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#updateProfileModal">Update My Profile</a></li>
                 <!-- Link to update profile modal -->
-                <li class="nav-item"><a class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a></li>
                 <li class="nav-item"></li>
                 <a class="nav-link" href="{% url 'list_tickets' %}">Tickets Created For Tenant Issues</a>
                 </li>
@@ -108,7 +108,6 @@
                         {% csrf_token %}
 
                         <!-- First Name -->
-                        <!-- Username -->
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
@@ -120,22 +119,31 @@
                             <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
                         </div>
 
-                        <!-- Current Password -->
-                        <div class="mb-3">
-                            <label for="current_password" class="form-label">Current Password</label>
-                            <input type="password" placeholder="update password if requried enter current password" class="form-control" id="current_password" name="current_password">
+                        <!-- Update Password Toggle -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="updatePasswordToggle">
+                            <label class="form-check-label" for="updatePasswordToggle">Update Password</label>
                         </div>
 
-                        <!-- New Password -->
-                        <div class="mb-3">
-                            <label for="new_password" class="form-label">New Password</label>
-                            <input type="password" placeholder="Enter New Password" class="form-control" id="new_password" name="new_password">
-                        </div>
+                        <!-- Password Fields (initially hidden) -->
+                        <div id="passwordFields" style="display: none;">
+                            <!-- Current Password -->
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">Current Password</label>
+                                <input type="password" placeholder="Enter current password " class="form-control" id="current_password" name="current_password">
+                            </div>
 
-                        <!-- Confirm Password -->
-                        <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirm New Password</label>
-                            <input type="password" placeholder="Confirm Password" class="form-control" id="confirm_password" name="confirm_password">
+                            <!-- New Password -->
+                            <div class="mb-3">
+                                <label for="new_password" class="form-label">New Password</label>
+                                <input type="password" placeholder="Enter new password" class="form-control" id="new_password" name="new_password">
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                <input type="password" placeholder="Confirm new password" class="form-control" id="confirm_password" name="confirm_password">
+                            </div>
                         </div>
 
                         <button type="submit" class="btn btn-primary">Update</button>
@@ -146,7 +154,6 @@
             </div>
         </div>
     </div>
-
     <!-- Optional: You can trigger this modal from a button -->
 
 
@@ -176,6 +183,19 @@
 
     <!-- AJAX Script for updating profile -->
     <script>
+        document.getElementById('updatePasswordToggle').addEventListener('change', function() {
+            const passwordFields = document.getElementById('passwordFields');
+            if (this.checked) {
+                passwordFields.style.display = 'block'; // Show password fields
+            } else {
+                passwordFields.style.display = 'none'; // Hide password fields
+                // Optionally, clear the fields when hiding
+                document.getElementById('current_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+            }
+        });
+
         document.getElementById('csv-upload-form').addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent the default form submission
 

@@ -51,6 +51,8 @@
             </div>
             <div class="col-auto">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Credential</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">Delete Selected</button>
+
             </div>
         </div>
 
@@ -64,6 +66,9 @@
             <table class="table table-bordered table-hover" id="credentialsTable">
                 <thead class="table-dark">
                     <tr>
+                        <th>
+                            <input type="checkbox" id="selectAll" />
+                        </th>
                         <th>ID</th>
                         <th>Client</th>
                         <th>App ID</th>
@@ -76,6 +81,9 @@
                 <tbody>
                     {% for credential in credentials %}
                     <tr>
+                        <td>
+                            <input type="checkbox" class="credential-checkbox" value="{{ credential.id }}" />
+                        </td>
                         <td>{{ credential.id }}</td>
                         <td>{{ credential.user.name }}</td>
                         <td>{{ credential.appId }}</td>
@@ -85,180 +93,136 @@
                         <td>
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ credential.id }}" data-appid="{{ credential.appId }}" data-phonenumberid="{{ credential.phoneNumberId }}" data-version="{{ credential.version }}" data-accesstoken="{{ credential.accessToken }}">
                                 Edit
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteCredential({{ credential.id }})">Delete</button>
-                        </td>
+                            </button> </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Create Facebook Credential Modal -->
-    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createModalLabel">Add New Facebook Credential</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="createCredentialForm">
-                        <div class="mb-3">
-                            <label for="tenant-select" class="form-label">Client</label>
-                            <select class="form-select" id="tenant-select" name="tenant_id" required>
+        <!-- Create Facebook Credential Modal -->
+        <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createModalLabel">Add New Facebook Credential</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="createCredentialForm">
+                            <div class="mb-3">
+                                <label for="tenant-select" class="form-label">Client</label>
+                                <select class="form-select" id="tenant-select" name="tenant_id" required>
                                 {% for tenant in tenants %}
                                 <option value="{{ tenant.id }}">{{ tenant.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new-appid" class="form-label">App ID</label>
-                            <input type="text" class="form-control" id="new-appid" name="appId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new-phonenumberid" class="form-label">Phone Number ID</label>
-                            <input type="text" class="form-control" id="new-phonenumberid" name="phoneNumberId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new-version" class="form-label">Version</label>
-                            <input type="text" class="form-control" id="new-version" name="version" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="new-access-token" class="form-label">Access Token</label>
-                            <input type="text" class="form-control" id="new-access-token" name="accessToken" required>
-                        </div>
-                        <button type="button" class="btn btn-primary" onclick="createCredential()">Create</button>
-                    </form>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-appid" class="form-label">App ID</label>
+                                <input type="text" class="form-control" id="new-appid" name="appId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-phonenumberid" class="form-label">Phone Number ID</label>
+                                <input type="text" class="form-control" id="new-phonenumberid" name="phoneNumberId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-version" class="form-label">Version</label>
+                                <input type="text" class="form-control" id="new-version" name="version" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-access-token" class="form-label">Access Token</label>
+                                <input type="text" class="form-control" id="new-access-token" name="accessToken" required>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="createCredential()">Create</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Edit Facebook Credential Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Edit Facebook Credential</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editCredentialForm">
-                        <input type="hidden" id="credential-id" name="credential_id">
-                        <div class="mb-3">
-                            <label for="tenant-select" class="form-label">Client</label>
-                            <select class="form-select" id="tenant-select" name="tenant_id" required>
+        <!-- Edit Facebook Credential Modal -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Edit Facebook Credential</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editCredentialForm">
+                            <input type="hidden" id="credential-id" name="credential_id">
+                            <div class="mb-3">
+                                <label for="tenant-select" class="form-label">Client</label>
+                                <select class="form-select" id="tenant-select" name="tenant_id" required>
                                 {% for tenant in tenants %}
                                 <option value="{{ tenant.id }}">{{ tenant.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-appid" class="form-label">App ID</label>
-                            <input type="text" class="form-control" id="edit-appid" name="appId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-phonenumberid" class="form-label">Phone Number ID</label>
-                            <input type="text" class="form-control" id="edit-phonenumberid" name="phoneNumberId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-version" class="form-label">Version</label>
-                            <input type="text" class="form-control" id="edit-version" name="version" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-access-token" class="form-label">Access Token</label>
-                            <input type="text" class="form-control" id="edit-access-token" name="accessToken" required>
-                        </div>
-                        <button type="button" class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
-                    </form>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-appid" class="form-label">App ID</label>
+                                <input type="text" class="form-control" id="edit-appid" name="appId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-phonenumberid" class="form-label">Phone Number ID</label>
+                                <input type="text" class="form-control" id="edit-phonenumberid" name="phoneNumberId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-version" class="form-label">Version</label>
+                                <input type="text" class="form-control" id="edit-version" name="version" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-access-token" class="form-label">Access Token</label>
+                                <input type="text" class="form-control" id="edit-access-token" name="accessToken" required>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Populate edit modal with credential data
-        document.getElementById('editModal').addEventListener('show.bs.modal', function(event) {
-            var button = event.relatedTarget;
-            document.getElementById('credential-id').value = button.getAttribute('data-id');
-            document.getElementById('edit-appid').value = button.getAttribute('data-appid');
-            document.getElementById('edit-phonenumberid').value = button.getAttribute('data-phonenumberid');
-            document.getElementById('edit-version').value = button.getAttribute('data-version');
-            document.getElementById('edit-access-token').value = button.getAttribute('data-accesstoken');
-        });
-
-        // Truncate Access Token Function
-        function truncateAccessToken(token) {
-            const maxLength = 20; // Set your desired max length
-            if (token.length > maxLength) {
-                return token.substring(0, maxLength) + '...'; // Truncate and add ellipsis
-            }
-            return token; // Return the original token if it's within the length
-        }
-
-        // Truncate access tokens on page load
-        window.onload = function() {
-            const tokens = document.querySelectorAll('.access-token');
-            tokens.forEach(token => {
-                const fullToken = token.getAttribute('title');
-                token.innerText = truncateAccessToken(fullToken);
+        <script>
+            // Populate edit modal with credential data
+            document.getElementById('editModal').addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                document.getElementById('credential-id').value = button.getAttribute('data-id');
+                document.getElementById('edit-appid').value = button.getAttribute('data-appid');
+                document.getElementById('edit-phonenumberid').value = button.getAttribute('data-phonenumberid');
+                document.getElementById('edit-version').value = button.getAttribute('data-version');
+                document.getElementById('edit-access-token').value = button.getAttribute('data-accesstoken');
             });
-        };
 
-        // Create Credential
-        function createCredential() {
-            var form = document.getElementById('createCredentialForm');
-            var formData = new FormData(form);
+            // Truncate Access Token Function
+            function truncateAccessToken(token) {
+                const maxLength = 20; // Set your desired max length
+                if (token.length > maxLength) {
+                    return token.substring(0, maxLength) + '...'; // Truncate and add ellipsis
+                }
+                return token; // Return the original token if it's within the length
+            }
 
-            fetch("{% url 'create_facebook_credential' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
+            // Truncate access tokens on page load
+            window.onload = function() {
+                const tokens = document.querySelectorAll('.access-token');
+                tokens.forEach(token => {
+                    const fullToken = token.getAttribute('title');
+                    token.innerText = truncateAccessToken(fullToken);
                 });
-        }
+            };
 
-        // Save Changes (Update Credential)
-        function saveChanges() {
-            var form = document.getElementById('editCredentialForm');
-            var formData = new FormData(form);
+            // Create Credential
+            function createCredential() {
+                var form = document.getElementById('createCredentialForm');
+                var formData = new FormData(form);
 
-            fetch("{% url 'update_facebook_credential' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert('Error: ' + data.error);
-                    }
-                });
-        }
-
-        // Delete Credential
-        function deleteCredential(id) {
-            if (confirm('Are you sure you want to delete this credential?')) {
-                fetch("{% url 'delete_facebook_credential' 0 %}".replace('0', id), {
-                        method: 'DELETE',
+                fetch("{% url 'create_facebook_credential' %}", {
+                        method: 'POST',
                         headers: {
                             'X-CSRFToken': '{{ csrf_token }}'
-                        }
+                        },
+                        body: formData
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -269,28 +233,95 @@
                         }
                     });
             }
-        }
 
-        // Filter table rows
-        function filterTable() {
-            const input = document.getElementById("search-filter");
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById("credentialsTable");
-            const tr = table.getElementsByTagName("tr");
+            // Save Changes (Update Credential)
+            function saveChanges() {
+                var form = document.getElementById('editCredentialForm');
+                var formData = new FormData(form);
 
-            for (let i = 1; i < tr.length; i++) {
-                const td = tr[i].getElementsByTagName("td");
-                let found = false;
-                for (let j = 0; j < td.length; j++) {
-                    if (td[j] && td[j].innerText.toLowerCase().includes(filter)) {
-                        found = true;
-                        break;
-                    }
-                }
-                tr[i].style.display = found ? "" : "none";
+                fetch("{% url 'update_facebook_credential' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    });
             }
-        }
-    </script>
+
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.credential-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+
+            function deleteSelected() {
+                const selectedIds = Array.from(document.querySelectorAll('.credential-checkbox:checked')).map(cb => cb.value);
+
+                if (selectedIds.length === 0) {
+                    alert('No credentials selected.');
+                    return;
+                }
+
+                // Confirm deletion
+                if (confirm('Are you sure you want to delete the selected credentials?')) {
+                    // Make an API call to delete the selected credentials
+                    fetch("{% url 'delete_facebook_credential' %}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ids: selectedIds
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Selected credentials deleted successfully.');
+                                location.reload(); // Reload the page to reflect changes
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error deleting credentials:', error);
+                            alert('An error occurred while deleting credentials.');
+                        });
+                }
+            }
+
+
+
+            // Filter table rows
+            function filterTable() {
+                const input = document.getElementById("search-filter");
+                const filter = input.value.toLowerCase();
+                const table = document.getElementById("credentialsTable");
+                const tr = table.getElementsByTagName("tr");
+
+                for (let i = 1; i < tr.length; i++) {
+                    const td = tr[i].getElementsByTagName("td");
+                    let found = false;
+                    for (let j = 0; j < td.length; j++) {
+                        if (td[j] && td[j].innerText.toLowerCase().includes(filter)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    tr[i].style.display = found ? "" : "none";
+                }
+            }
+        </script>
 
 </body>
 {% endblock %}

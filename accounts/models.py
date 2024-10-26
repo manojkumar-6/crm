@@ -41,14 +41,13 @@ class IssueModel(models.Model):
 
 class TicketsStatusModel(models.Model):
     class TicketStatusChoices(models.TextChoices):
-        PENDING = "PENDING", "Pending"
-        INPROGRESS = "INPROGRESS", "In Progress"
-        COMPLETED = "COMPLETED", "Completed"
+        PENDING = "PENDING", "PENDING"
+        INPROGRESS = "INPROGRESS", "INPROGRESS"
+        COMPLETED = "COMPLETED", "COMPLETED"
 
     user = models.ForeignKey(UserModels, on_delete=models.CASCADE)
     tenant_to = models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     ticket_number = models.ForeignKey(TicketsModel, on_delete=models.CASCADE)
-    issue = models.ForeignKey(IssueModel, on_delete=models.CASCADE,null=True,blank=True)  # Use the dynamic issue model
     ticket_status = models.CharField(
         max_length=20,
         choices=TicketStatusChoices.choices,
@@ -56,6 +55,7 @@ class TicketsStatusModel(models.Model):
     )
     date_reported = models.DateField(auto_now_add=True)
     comments = models.CharField(max_length=800)
+    commentHistory=models.CharField(max_length=15000)
     description=models.CharField(max_length=10000)
 
     def __str__(self):

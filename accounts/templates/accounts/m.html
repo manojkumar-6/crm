@@ -7,39 +7,143 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        
-        .table-responsive {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        .table {
             border-radius: 8px;
             overflow: hidden;
+            /* Ensures rounded corners work */
         }
-        
+
+        .modal-body_ {
+            max-height: 600px;
+            /* Set your desired height */
+            overflow-y: auto;
+            /* Enable vertical scrolling */
+        }
+
+        .table th,
+        .table td {
+            vertical-align: middle;
+            /* Center align content */
+            padding: 1rem;
+            /* Add padding for better spacing */
+        }
+        /* Alternate row color for better readability */
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
+            /* Light gray for odd rows */
+        }
+        /* Hover effect for rows */
+
+        .table-hover tbody tr:hover {
+            background-color: #e2e6ea;
+            /* Light hover color */
+        }
+        /* Responsive adjustments */
+
+        @media (max-width: 768px) {
+            .table thead {
+                display: none;
+                /* Hide headers on small screens */
+            }
+            .table,
+            .table tbody,
+            .table tr,
+            .table td {
+                display: block;
+                /* Make each row block */
+                width: 100%;
+                /* Full width for each row */
+            }
+            .table tr {
+                margin-bottom: 1rem;
+                /* Space between rows */
+            }
+            .table td {
+                text-align: left;
+                /* Align text to the left */
+                position: relative;
+                /* Positioning for pseudo elements */
+                padding-left: 50%;
+                /* Indent content for label */
+            }
+            .table td::before {
+                content: attr(data-label);
+                /* Use data-label for responsive headers */
+                position: absolute;
+                left: 0;
+                width: 50%;
+                /* Label width */
+                padding-left: 1rem;
+                /* Space from left */
+                font-weight: bold;
+                /* Bold for emphasis */
+            }
+            body {
+                background-color: #f8f9fa;
+            }
+            .table-responsive {
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            table {
+                font-size: 0.9rem;
+                /* Adjust font size for smaller screens */
+            }
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 0.8rem;
+                /* Further reduce font size on smaller screens */
+            }
+        }
+
+        .comments-column {
+            max-height: 90px;
+            /* Set a max height for the comments area */
+            width: 70px;
+            /* Fixed width */
+        }
+
         table thead {
             background-color: #343a40;
             color: white;
         }
-        
+
         table tbody tr:hover {
             background-color: #f1f3f5;
         }
-        
+
         .btn-primary,
         .btn-warning,
-        .btn-danger {
+        .btn-danger,
+        .btn-success,
+        .btn-info {
             border-radius: 50px;
             padding: 5px 15px;
         }
-        
+
         .form-control {
             border-radius: 50px;
         }
-        
+
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
+        }
+
+        .modal-content {
+            border-radius: 10px;
+            /* Rounded corners for modals */
+        }
+
+        @media (max-width: 576px) {
+            .btn {
+                width: 100%;
+                /* Make buttons full width on small screens */
+            }
         }
     </style>
 </head>
@@ -50,8 +154,9 @@
             <div class="col">
                 <h1 class="display-6 text-dark">Ticket Status Management</h1>
             </div>
-            <div class="col-auto">
+            <div class="col-auto d-flex flex-column flex-sm-row gap-2">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Ticket Status</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">Delete Selected Ticket(s)</button>
             </div>
         </div>
 
@@ -65,42 +170,49 @@
             <table class="table table-bordered table-hover" id="ticketsTable">
                 <thead class="table-dark">
                     <tr>
+                        <th><input type="checkbox" onchange="selectAll(this)"></th>
                         <th>ID</th>
                         <th>Tenant</th>
                         <th>Client</th>
                         <th>Ticket Number</th>
-                        <th>Issue</th>
+
                         <th>Status</th>
-                        <th>Comments</th>
+                        <th class="comments-column">Comments</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for ticket in tickets %}
                     <tr>
+                        <td><input type="checkbox" data-id="{{ ticket.id }}"></td>
                         <td>{{ ticket.id }}</td>
                         <td>{{ ticket.user.name }}</td>
                         <td>{{ ticket.tenant_to.name }}</td>
                         <td>{{ ticket.ticket_number.ticket_number }}</td>
-                        <td>{{ ticket.issue }}</td>
+
                         <td>{{ ticket.ticket_status }}</td>
-                        <td>{{ ticket.comments }}</td>
+                        <td class="comments-column">{{ ticket.comments }}</td>
                         <td>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.tenant_to.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-issue="{{ ticket.issue }}"
-                                data-status="{{ ticket.ticket_status }}" data-comments="{{ ticket.comments }}">
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.tenant_to.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-status="{{ ticket.ticket_status }}"
+                                data-comments="{{ ticket.comments }}">
                                 Edit
                             </button>
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-description="{{ ticket.description }}" data-status="{{ ticket.ticket_status }}"
+                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-description="{{ ticket.description }}" data-status="{{ ticket.ticket_status }}"
                                 data-date-reported="{{ ticket.date_reported }}">
                                 Show Description
                             </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">Delete</button>
+                            <button class="btn btn-info btn-sm bi bi-clock-history" data-bs-toggle="modal" data-bs-target="#showModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-comment-history="{{ ticket.commentHistory }}">
+                                History
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+
+
     </div>
 
     <!-- Create Ticket Status Modal -->
@@ -141,14 +253,14 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="issue" class="form-label">Issue:</label>
                             <select name="issue" id="issue" class="form-select" required>
                                 {% for issue in issues %}
                                 <option value="{{ issue.id }}">{{ issue.issue_name }}</option>
                                 {% endfor %}
-                            </select>
-                        </div>
+                            </select> -->
+                        <!-- </div> -->
 
                         <div class="mb-3">
                             <label for="ticket_status" class="form-label">Ticket Status:</label>
@@ -174,7 +286,6 @@
     <!-- Show Description Modal -->
     <div class="modal fade" id="showDescriptionModal" tabindex="-1" aria-labelledby="showDescriptionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
-            <!-- Set larger size -->
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="showDescriptionModalLabel">Ticket Description</h5>
@@ -188,6 +299,21 @@
                         <label for="modalDescription" class="form-label">Description:</label>
                         <textarea id="modalDescription" class="form-control scrollable-textarea" readonly></textarea>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="showModal" tabindex="-1" aria-labelledby="showDescriptionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="showDescriptionModalLabel">Ticket Status History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body_">
+                    <p><span id="modalHistory"></span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -232,14 +358,14 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="editIssueSelect" class="form-label">Issue</label>
                             <select class="form-select" id="editIssueSelect" name="issue" required>
                                 {% for issue in issues %}
                                 <option value="{{ issue.id }}">{{ issue.issue_name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
+                        </div> -->
 
                         <div class="mb-3">
                             <label for="editTicketStatusSelect" class="form-label">Ticket Status</label>
@@ -261,104 +387,150 @@
             </div>
         </div>
     </div>
+</body>
 
-    <script>
-        function submitForm() {
-            const form = document.getElementById('ticketStatusForm');
-            form.submit();
-        }
+<script>
+    function submitForm() {
+        const form = document.getElementById('ticketStatusForm');
+        form.submit();
+    }
 
-        // Show Description Modal Data Population
-        const showDescriptionModal = document.getElementById('showDescriptionModal');
-        showDescriptionModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const ticketNumber = button.getAttribute('data-ticket-number');
-            const description = button.getAttribute('data-description');
-            const ticketStatus = button.getAttribute('data-status');
-            const dateReported = button.getAttribute('data-date-reported');
+    // Show Description Modal Data Population
+    const showDescriptionModal = document.getElementById('showDescriptionModal');
+    showDescriptionModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const ticketNumber = button.getAttribute('data-ticket-number');
+        const description = button.getAttribute('data-description');
+        const ticketStatus = button.getAttribute('data-status');
+        const dateReported = button.getAttribute('data-date-reported');
 
-            const modalTicketNumber = showDescriptionModal.querySelector('#modalTicketNumber');
-            const modalDescription = showDescriptionModal.querySelector('#modalDescription');
-            const modalTicketStatus = showDescriptionModal.querySelector('#modalTicketStatus');
-            const modalDateReported = showDescriptionModal.querySelector('#modalDateReported');
+        const modalTicketNumber = showDescriptionModal.querySelector('#modalTicketNumber');
+        const modalDescription = showDescriptionModal.querySelector('#modalDescription');
+        const modalTicketStatus = showDescriptionModal.querySelector('#modalTicketStatus');
+        const modalDateReported = showDescriptionModal.querySelector('#modalDateReported');
+        modalTicketNumber.textContent = ticketNumber;
+        modalDescription.value = description;
+        modalTicketStatus.textContent = ticketStatus;
+        modalDateReported.textContent = dateReported;
 
-            modalTicketNumber.textContent = ticketNumber;
-            modalDescription.value = description;
-            modalTicketStatus.textContent = ticketStatus;
-            modalDateReported.textContent = dateReported;
-        });
+    });
+    const showModal = document.getElementById('showModal');
+    showModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
 
-        // Edit Modal Data Population
-        const editModal = document.getElementById('editModal');
-        editModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const id = button.getAttribute('data-id');
-            const user = button.getAttribute('data-user');
-            const tenant = button.getAttribute('data-tenant');
-            const ticketNumber = button.getAttribute('data-ticket-number');
-            const issue = button.getAttribute('data-issue');
-            const status = button.getAttribute('data-status');
-            const comments = button.getAttribute('data-comments');
-            console.log(id, user, tenant, ticketNumber, status)
-            const modal = editModal.querySelector('.modal-body');
-            modal.querySelector('#editTicketId').value = id;
-            modal.querySelector('#editUserSelect').value = user;
-            modal.querySelector('#editTenantSelect').value = tenant;
-            modal.querySelector('#editTicketNumberSelect').value = ticketNumber;
-            modal.querySelector('#editIssueSelect').value = issue;
-            modal.querySelector('#editTicketStatusSelect').value = status;
-            modal.querySelector('#editComments').value = comments;
-        });
+        const history = button.getAttribute('data-comment-history')
+        const modalHistory = showModal.querySelector("#modalHistory")
+        console.log(modalHistory)
+        const formattedHistory = history.replace(/\n/g, '<br>');
+        modalHistory.innerHTML = formattedHistory; // Use innerHTML to insert HTML
+    });
 
-        // Save Changes AJAX Submission
-        function saveChanges() {
-            const form = document.getElementById('editTicketStatusForm');
-            const formData = new FormData(form);
-            console.log(
-                formData, form)
-            fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                })
-                .then(response => {
-                    console.log(response)
-                    if (response.ok) {
-                        alert('Changes saved successfully.');
-                        location.reload(); // Refresh the page to show updates
-                    } else {
-                        alert('Error saving changes.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                });
-        }
+    // Edit Modal Data Population
+    const editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const id = button.getAttribute('data-id');
+        const user = button.getAttribute('data-user');
+        const tenant = button.getAttribute('data-tenant');
+        const ticketNumber = button.getAttribute('data-ticket-number');
+        // const issue = button.getAttribute('data-issue');
+        const status = button.getAttribute('data-status');
+        const comments = button.getAttribute('data-comments');
+        console.log(id, user, tenant, ticketNumber, status)
+        const modal = editModal.querySelector('.modal-body');
+        modal.querySelector('#editTicketId').value = id;
+        modal.querySelector('#editUserSelect').value = user;
+        modal.querySelector('#editTenantSelect').value = tenant;
+        modal.querySelector('#editTicketNumberSelect').value = ticketNumber;
+        // modal.querySelector('#editIssueSelect').value = issue;
+        modal.querySelector('#editTicketStatusSelect').value = status;
+        modal.querySelector('#editComments').value = comments;
+    });
 
-        // Table Search Filter
-        function filterTable() {
-            const filter = document.getElementById('search-filter').value.toUpperCase();
-            const table = document.getElementById('ticketsTable');
-            const rows = table.getElementsByTagName('tr');
-
-            for (let i = 1; i < rows.length; i++) {
-                const cells = rows[i].getElementsByTagName('td');
-                let match = false;
-
-                for (let j = 0; j < cells.length; j++) {
-                    const cell = cells[j];
-                    if (cell && cell.innerText.toUpperCase().indexOf(filter) > -1) {
-                        match = true;
-                        break;
-                    }
+    // Save Changes AJAX Submission
+    function saveChanges() {
+        const form = document.getElementById('editTicketStatusForm');
+        const formData = new FormData(form);
+        console.log(
+            formData, form)
+        fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
+            })
+            .then(response => {
+                console.log(response)
+                if (response.ok) {
+                    alert('Changes saved successfully.');
+                    location.reload(); // Refresh the page to show updates
+                } else {
+                    alert('Error saving changes.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+    }
 
-                rows[i].style.display = match ? '' : 'none';
+    // Table Search Filter
+    function filterTable() {
+        const filter = document.getElementById('search-filter').value.toUpperCase();
+        const table = document.getElementById('ticketsTable');
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName('td');
+            let match = false;
+
+            for (let j = 0; j < cells.length; j++) {
+                const cell = cells[j];
+                if (cell && cell.innerText.toUpperCase().indexOf(filter) > -1) {
+                    match = true;
+                    break;
+                }
             }
+
+            rows[i].style.display = match ? '' : 'none';
         }
-    </script>
+    }
+
+    function selectAll(source) {
+        const checkboxes = document.querySelectorAll('#ticketsTable tbody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = source.checked;
+        });
+    }
+
+    function deleteSelected() {
+        const selectedIds = Array.from(document.querySelectorAll('#ticketsTable tbody input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.dataset.id);
+
+        if (selectedIds.length === 0) {
+            alert('No tickets selected for deletion.');
+            return;
+        }
+
+        if (confirm('Are you sure you want to delete the selected tickets?')) {
+            fetch('{% url "delete_ticket_status_tenant" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ids: selectedIds
+                }),
+            }).then(response => {
+                // Handle success, e.g., reload the table or remove deleted rows
+                location.reload();
+            }).catch(error => {
+                console.error(error);
+            });
+        }
+    }
+</script>
 </body>
 {% endblock %}

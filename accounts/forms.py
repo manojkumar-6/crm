@@ -45,7 +45,7 @@ class TicketsForm(forms.ModelForm):
 class TicketsStatusForm(forms.ModelForm):
     class Meta:
         model = TicketsStatusModel
-        fields = ['user', 'tenant_to', 'ticket_number', 'issue', 'ticket_status', 'comments']
+        fields = ['user', 'tenant_to', 'ticket_number', 'ticket_status', 'comments']
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password

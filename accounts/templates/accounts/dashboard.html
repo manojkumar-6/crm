@@ -131,16 +131,26 @@
                             <div class="accordion-body">
                                 <form id="emailTemplateForm{{ template.templateName }}" method="POST">
                                     {% csrf_token %}
-                                    <div class="mb-3">
-                                        <label for="emailDescription{{ template.templateName }}" class="form-label">Message</label>
-                                        <div id="emailDescription{{ template.templateName }}" style="height: 200px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;">
-                                            {{ template.templateDescription|safe }}
-                                        </div>
-                                        <input type="hidden" name="emailDescription" id="emailDescriptionInput{{ template.templateName }}">
+                                    <div class="mb-3 d-flex justify-content-between align-items-start">
+                                        <label for="emailDescription{{ template.templateName }}" class="form-label me-2">template message</label>
+
+                                        <div>
+                                            <input type="checkbox" onchange="added('{{ template.templateName }}')" id="sendMessageToAll{{ template.templateName }}" name="sendMessageToAll">
+                                            <label for="sendMessageToAll{{ template.templateName }}" class="form-check-label me-2">Send message to everyone</label>
+
+                                            <input type="checkbox" id="selectUsers{{ template.templateName }}" name="selectUsers" onchange="toggleButtonVisibility('{{ template.templateName }}')">
+                                            <label for="selectUsers{{ template.templateName }}" class="form-check-label me-2">Select Specific users</label>
+
+                                            <button id="userSelectButton{{ template.templateName }}" class="btn btn-primary" type="button" style="font-size: 0.8em; display: none;" data-template-name="{{ template.templateName }}" onclick="add('{{ template.templateName }}')">Add users to send template message</button></div>
                                     </div>
+
+                                    <div id="emailDescription{{ template.templateName }}" style="height: 200px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;">
+                                        {{ template.templateDescription|safe }}
+                                    </div>
+
+                                    <input type="hidden" name="emailDescription" id="emailDescriptionInput{{ template.templateName }}">
+
                                     <div class="mb-3">
-                                        <label for="userSelect{{ template.templateName }}" class="form-label">Select Users</label>
-                                        <button class="btn btn-primary openUserSelect" type="button" data-template-name="{{ template.templateName }}" style="font-size: 0.8em;" onclick="add('{{ template.templateName }}')">Select Users</button>
                                         <div id="selectedUsersContainer{{ template.templateName }}" class="mt-2" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f9f9f9; max-height: 100px; overflow-y: auto;">
                                             <h6>Selected Users:</h6>
                                             <div id="selectedUsers{{ template.templateName }}"></div>
@@ -160,7 +170,7 @@
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="userSelectModalLabel">Select Users</h5>
+                                <h5 class="modal-title" id="userSelectModalLabel">Select Users to send the template message</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -202,8 +212,7 @@
                 </div>
 
 
-                <!-- User Selection Modal -->
-                <!-- User Selection Modal -->
+
                 <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
@@ -244,26 +253,38 @@
                         <div class="accordion-body">
                             <div class="row">
                                 <!-- Data Table (75%) -->
-                                <div class="col-md-9 mb-3">
+                                <div class="col-md-12 mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm">Export as CSV</a>
                                         <button type="button" class="btn btn-secondary btn-sm" id="toggleFilterButton">Show Filter</button>
                                     </div>
-                                    <form id="filterForm" method="GET" class="form-inline mb-3">
-                                        <label for="status" class="mr-2">Filter by Status:</label>
-                                        <select name="status" id="status" class="form-control mr-2">
-                                            <option value="">All</option>
-                                            <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
-                                            <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
-                                            <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
-                                        </select>
-                                        <label for="start_date" class="mr-2">From:</label>
-                                        <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
-                                        <label for="end_date" class="mr-2">To:</label>
-                                        <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
-                                        <button type="submit" class="btn btn-primary mr-2">Filter</button>
-                                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
+                                    <form id="filterForm" method="GET" class="form-inline mb-3" style="display: none;">
+                                        <div class="form-row align-items-center">
+                                            <div class="form-group mb-2">
+                                                <label for="status" class="mr-2">Filter by Status:</label>
+                                                <select name="status" id="status" class="form-control mr-2">
+                                                    <option value="">All</option>
+                                                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                                                    <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
+                                                    <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label for="start_date" class="mr-2">From:</label>
+                                                <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <label for="end_date" class="mr-2">To:</label>
+                                                <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
+                                            </div>
+                                            <div class="form-group mb-2">
+                                                <button type="submit" class="btn btn-primary mr-2">Filter</button>
+                                                <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
+                                            </div>
+                                        </div>
                                     </form>
+
+
 
 
                                     <div class="table-responsive mt-3" style="border: 1px solid #ddd; border-radius: 4px; padding: 1px; max-height: 400px; overflow-y: auto;">
@@ -302,7 +323,7 @@
                                                         <td>{{ item.ticket.comments }}</td>
                                                         <td>{{ item.days_reported }}</td>
                                                         <td>
-                                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#ticketInfoModal{{ item.ticket.id }}">View</button>
+                                                            <button type="button" class="btn btn-info btn-sm"><a href="/tickets_status/">Manage</a></button>
                                                         </td>
                                                     </tr>
 
@@ -338,43 +359,7 @@
                                 </div>
 
                                 <!-- Ticket Status Summary (25%) -->
-                                <div class="col-md-3 d-flex flex-column justify-content-between mb-3" style="height: 100%;">
-                                    <div class="card shadow-sm border-primary" style="border-width: 2px; background-color: #f9fafb; border-radius: 12px; padding: 10px;">
-                                        <div class="card-body text-center">
-                                            <h5 class="card-title mb-4" style="font-size: 1.25rem; color: #007bff;">Ticket Status Summary</h5>
 
-                                            <div class="status-item d-flex justify-content-between align-items-center mb-3">
-                                                <div class="status-label d-flex align-items-center">
-                                                    <div class="status-icon" style="background-color: #f0ad4e; width: 8px; height: 8px; border-radius: 40%; margin-right: 8px;"></div>
-                                                    <p class="mb-0" style="font-size: 1rem;">Pending Tickets</p>
-                                                </div>
-                                                <span class="status-count badge bg-warning text" style="font-size: 1rem; padding: 0.5rem 1rem; border-radius: 5px;">
-                                                    {{ pending_count|default:"0" }}
-                                                </span>
-                                            </div>
-
-                                            <div class="status-item d-flex justify-content-between align-items-center mb-3">
-                                                <div class="status-label d-flex align-items-center">
-                                                    <div class="status-icon" style="background-color: #5bc0de; width: 8px; height: 8px; border-radius: 40%;margin-right: 8px;"></div>
-                                                    <p class="mb-0" style="font-size: 1rem;">In Progress</p>
-                                                </div>
-                                                <span class="status-count badge bg-info text" style="font-size: 1rem; padding: 0.5rem 1rem; border-radius: 5px;">
-                                                    {{ inprogress_count|default:"0" }}
-                                                </span>
-                                            </div>
-
-                                            <div class="status-item d-flex justify-content-between align-items-center mb-3">
-                                                <div class="status-label d-flex align-items-center">
-                                                    <div class="status-icon" style="background-color: #5cb85c; width: 8px; height: 8px; border-radius: 40%; margin-right: 8px;"></div>
-                                                    <p class="mb-0" style="font-size: 1rem;">Completed Tickets</p>
-                                                </div>
-                                                <span class="status-count badge bg-success text" style="font-size: 1rem; padding: 0.5rem 1rem; border-radius: 5px;">
-                                                    {{ completed_count|default:"0" }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -387,6 +372,7 @@
 </div>
 <script>
     const selectedUsersMap = new Map();
+    const checkmap_ = new Map()
 
     function add(templateName) {
         console.log("clicked")
@@ -426,6 +412,9 @@
                 }
             });
         }
+
+
+
 
         // Filter logic
         const userFilter = document.getElementById('userFilter');
@@ -743,9 +732,16 @@
 
         // Optional: Toggle filter section visibility
         document.getElementById('toggleFilterButton').addEventListener('click', function() {
-            const filterSection = document.getElementById('filterSection');
-            filterSection.style.display = filterSection.style.display === 'none' ? 'block' : 'none';
+            const filterSection = document.getElementById('filterForm');
+            if (filterSection.style.display === 'none' || filterSection.style.display === '') {
+                filterSection.style.display = 'block';
+                this.textContent = 'Hide Filter'; // Change button text to "Hide Filter"
+            } else {
+                filterSection.style.display = 'none';
+                this.textContent = 'Show Filter'; // Change button text back to "Show Filter"
+            }
         });
+
     });
 
     // Delete template function (Ensure it works on dynamically rendered delete buttons)
@@ -815,14 +811,37 @@
         };
     }
 
+    function toggleButtonVisibility(templateName) {
+        const checkbox = document.getElementById(`selectUsers${templateName}`);
+        const button = document.getElementById(`userSelectButton${templateName}`);
+        button.style.display = checkbox.checked ? 'inline-block' : 'none';
+    }
+
+    function added(templateName) {
+
+        if (checkmap_.get(templateName) === undefined) {
+            checkmap_.set(templateName, 'true');
+        } else {
+            // Toggle between 'true' and 'false'
+            const currentValue = checkmap_.get(templateName);
+            checkmap_.set(templateName, currentValue === 'true' ? 'false' : 'true');
+        }
+
+
+
+    }
     // Function to send the message to selected users
     function sendMessageTemplate(templateName, selectedUsers) {
         const selectedUsers_ = selectedUsersMap.get(templateName);
 
         // Check if there are selected users
+
         if (!selectedUsers_ || selectedUsers_.length === 0) {
-            alert('Please select at least one user to send the message.');
-            return;
+            if (checkmap_.get(templateName) == 'false' || checkmap_.get(templateName) == undefined) {
+                alert('Please select user(s) to send the message.');
+                return;
+            }
+
         }
 
         // Log the selected users
@@ -837,7 +856,8 @@
                 },
                 body: JSON.stringify({
                     templateName: templateName,
-                    userIds: selectedUsers_ // Send the selected user IDs
+                    userIds: selectedUsers_, // Send the selected user IDs
+                    check: checkmap_.get(templateName)
                 })
             })
             .then(response => response.json())
@@ -845,6 +865,7 @@
                 if (data.success) {
                     alert('Template message sent successfully!');
                     selectedUsersMap.set(templateName, []);
+                    checkmap_.set(templateName, undefined)
                     location.reload(); // Reload the page to reflect changes
                 } else {
                     console.error('Error sending message:', data.message || 'Unknown error');

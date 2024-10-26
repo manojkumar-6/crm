@@ -50,13 +50,28 @@ def superuser_required(view_func):
             return HttpResponseRedirect(reverse('login'))  # Redirect to your login URL
     return _wrapped_view
 
+def client_access_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated:
+            user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+            if ((TenantModel.objects.filter(name=user)).first()):
+                return view_func(request, *args, **kwargs)
+            else:
+                print("doesnt have required permissions")
+                return HttpResponseRedirect(reverse('login'))
+        else:
+                print("doesnt have required permissions")
+                return HttpResponseRedirect(reverse('login'))  # Redirect to your login URL
+    return _wrapped_view
+
 def delete_conversation(request, message_id):
     if request.method == 'POST':
         conversation = get_object_or_404(ConversationModel, id=message_id)
         conversation.delete()
         return redirect('dashboard')  # Adjust as needed
     return HttpResponse(status=405)  # Method not allowed
-def send_onbarding_mail(username,email_,link):
+def send_onbarding_mail(username,email_,link,password=None):
     smtp_server = "smtp.hostinger.com"
     smtp_port = 587  # Use 465 if you want SSL
     sender_email = "notifications@fixm8.com"  # Your email address
@@ -79,6 +94,7 @@ def send_onbarding_mail(username,email_,link):
 
         <br>
         <p> username :{username}</p>
+
         <br>temp password :12345678@A</p>
     Thanks
 """
@@ -254,7 +270,7 @@ def issue_detail_view(request, issue_id):
 @login_required(login_url='/')
 def get_detailed_export_issue_csv(request):
     # Retrieve data from your model
-    tenant=TenantModel.objects.filter(name=request.user)
+    tenant=TenantModel.objects.filter(name=request.user,email=request.user.email)
     print(tenant)
     tickets = TicketsStatusModel.objects.filter(tenant_to=tenant[0])  # Adjust this query to fit your data retrieval needs
 
@@ -279,7 +295,7 @@ def get_detailed_export_issue_csv(request):
 @login_required(login_url='/')
 def export_issue_csv(request):
     # Retrieve data from your model
-    tenant=TenantModel.objects.filter(name=request.user)
+    tenant=TenantModel.objects.filter(name=request.user,email=request.user.email)
     print(tenant)
     tickets = TicketsStatusModel.objects.filter(tenant_to=tenant[0])  # Adjust this query to fit your data retrieval needs
 
@@ -301,7 +317,7 @@ def export_issue_csv(request):
         ])
 
     return response
-@login_required(login_url='/')
+@client_access_required
 def dashBoard(request):
     # Fetch all orders and customers (if needed for other parts of your dashboard)
     orders = MessageModel.objects.all()
@@ -314,14 +330,15 @@ def dashBoard(request):
     sort_by = request.GET.get('sort_by', '')  # Default sorting by date
 
     # Fetch all tickets for the given issue
-    tenant = TenantModel.objects.filter(name=request.user).first()
+    tenant = TenantModel.objects.filter(name=request.user,email=request.user.email).first()
     print(tenant)
     tickets_ = TicketsStatusModel.objects.filter(tenant_to=tenant)
-
+    t_tickets_=TicketsStatusModel.objects.filter(tenant_to=tenant)
+    print(tickets_)
     # Apply status filter
     if status_filter:
         tickets_ = tickets_.filter(ticket_status=status_filter)
-
+        print(tickets_)
     # Apply username search
     if username_search:
         tickets_ = tickets_.filter(user__user_name__icontains=username_search)  # Adjust to your actual field name
@@ -340,27 +357,28 @@ def dashBoard(request):
     page_obj = paginator.get_page(page_number)
 
     # Count ticket statuses for the pie chart
-    pending_count = tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.PENDING).count()
-    in_progress_count = tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS).count()
-    completed_count = tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.COMPLETED).count()
+    pending_count = t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.PENDING).count()
+    in_progress_count = t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS).count()
+    print(in_progress_count,t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS))
+    completed_count = t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.COMPLETED).count()
     print(pending_count)
-    issues_count = TicketsStatusModel.objects.values('issue').annotate(
-        total=Count('id'),  # Total number of tickets for each issue
-        pending_count=Count(Case(  # Count only pending tickets
-            When(ticket_status=TicketsStatusModel.TicketStatusChoices.PENDING, then=1),
-            output_field=IntegerField()
-        )),
-        inprogress_count=Count(Case(  # Count only pending tickets
-            When(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS, then=1),
-            output_field=IntegerField()
-        )),
-        completed_count=Count(Case(  # Count only pending tickets
-            When(ticket_status=TicketsStatusModel.TicketStatusChoices.COMPLETED, then=1),
-            output_field=IntegerField()
-        )),
-        users_count=Count('user', distinct=True)  # Count distinct users who reported the issue
-    )
-    print(issues_count)
+    # issues_count = TicketsStatusModel.objects.values('issue').annotate(
+    #     total=Count('id'),  # Total number of tickets for each issue
+    #     pending_count=Count(Case(  # Count only pending tickets
+    #         When(ticket_status=TicketsStatusModel.TicketStatusChoices.PENDING, then=1),
+    #         output_field=IntegerField()
+    #     )),
+    #     inprogress_count=Count(Case(  # Count only pending tickets
+    #         When(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS, then=1),
+    #         output_field=IntegerField()
+    #     )),
+    #     completed_count=Count(Case(  # Count only pending tickets
+    #         When(ticket_status=TicketsStatusModel.TicketStatusChoices.COMPLETED, then=1),
+    #         output_field=IntegerField()
+    #     )),
+    #     users_count=Count('user', distinct=True)  # Count distinct users who reported the issue
+    # )
+    # print(issues_count)
     user_conversated = ConversationModel.objects.all()
     print("user",request.user.username)
     username=User.objects.filter(username=request.user.username).first()
@@ -388,7 +406,7 @@ def dashBoard(request):
     if tenant:
         tickets = TicketsStatusModel.objects.filter(tenant_to=tenant)
         ticket_list_ = []
-        for ticket in tickets:
+        for ticket in tickets_:
             days_reported = (today - ticket.date_reported).days  # Calculate days reported
             ticket_list_.append({
                 'ticket': ticket,
@@ -406,7 +424,7 @@ def dashBoard(request):
         'users':users,
         "i_count":m_count,
         "a_count":a_count,
-        "issues_count":issues_count,
+        # "issues_count":issues_count,
         'page_obj': tickets_,
         'status_filter': status_filter,
         'username_search': username_search,
@@ -477,6 +495,7 @@ def html_to_whatsapp_text(html_content):
 from django.views.decorators.csrf import csrf_protect
 @csrf_protect
 @login_required
+@client_access_required
 @csrf_exempt  # You can use CSRF exemption for API-like views if needed
 def send_email_view(request):
     if request.method == 'POST':
@@ -489,13 +508,23 @@ def send_email_view(request):
             print(facebookData,data.get('userIds'),data)
             message = html_to_whatsapp_text(template.templateDescription)
             json_string=data.get('userIds')
-            # user_ids = json.loads(json_string.replace("'", '"'))
-            for user in UserModels.objects.filter(tenant_to=tenant, id__in=data.get('userIds')):
-                message = get_text_message_input(user.phone,message)
-                conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
-                conv.save()
-                print("sent",message)
-                send_message(message,facebookData)
+            check=data.get('check')
+
+            if(check):
+                for user in UserModels.objects.all():
+                    message = get_text_message_input(user.phone,message)
+                    conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
+                    conv.save()
+                    print("sent",message)
+                    send_message(message,facebookData)
+            else:
+                user_ids = json.loads(json_string.replace("'", '"'))
+                for user in UserModels.objects.filter(tenant_to=tenant, id__in=data.get('userIds')):
+                    message = get_text_message_input(user.phone,message)
+                    conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
+                    conv.save()
+                    print("sent",message)
+                    send_message(message,facebookData)
 
             return JsonResponse({'message': 'messages successfully!','success': True}, status=200)
 
@@ -546,16 +575,18 @@ def loginUser(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         login_user = authenticate(request, username=username, password=password)
-
+        print(login_user,TenantModel.objects.filter(name=login_user).first())
         if login_user is not None:
             login(request, login_user)
             print(login(request,login_user))
             if request.user.is_superuser:
                 return redirect("/adashboard")
-            return redirect("/dashboard")
-        else:
-            error_message = "Invalid username or password."
-            return render(request, "accounts/login.html", {'error_message': error_message})
+            # if TenantModel.objects.filter()
+            if  TenantModel.objects.filter(name=login_user).first():
+                return redirect("/dashboard")
+
+        error_message = "Invalid username or password."
+        return render(request, "accounts/login.html", {'error_message': error_message})
 
     return render(request, "accounts/login.html")
 
@@ -596,6 +627,7 @@ def delete_customer(request, customer_id):
     return render(request, 'customer_detail.html', {'customer': customer})
 def createUser(request):
     action = 'create_user'
+
     form = UserModelForm()
     tenant=TenantModel.objects.filter(name=request.user.username)
     if request.method == "POST":
@@ -696,10 +728,10 @@ def email(ticket,email_,path):
         # Connect to the SMTP server
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()  # Secure the connection with TLS
-
+        print("started")
         # Log in to the server
         server.login(sender_email, password)
-
+        print("logined")
         # Send the email
         server.sendmail(sender_email, receiver_email, message.as_string())
         print("Email sent successfully!")
@@ -769,7 +801,7 @@ def get_acknowledgment_keywords(base_keywords):
     return synonyms
 
 # Get synonyms for the base acknowledgment words
-base_acknowledgment_words = ["thank", "thanks","fine", "cool", "got it", "understand"]
+base_acknowledgment_words = [ "thanks","fine", "cool"]
 ACKNOWLEDGMENT_KEYWORDS = get_acknowledgment_keywords(base_acknowledgment_words)
 ACKNOWLEDGMENT_RESPONSE = "You're welcome! Feel free to reach out if you need more help."
 
@@ -824,17 +856,17 @@ base_support_keywords = [  "raise", "raise a support request", "support", "assis
     "raise a request", "request support", "help me", "assist me"]
 SUPPORT_REQUEST_KEYWORDS = get_support_keywords(base_support_keywords)
 media_dict=dict()
-# Updated function to check if user is requesting support
-def check_support_needed(message):
-    """
-    Check if the user is explicitly asking for support using keywords.
-    """
-    message_lower = message.lower()
-    print("message",message_lower,message)
-    if "raise" in message:
+# # Updated function to check if user is requesting support
+# def check_support_needed(message):
+#     """
+#     Check if the user is explicitly asking for support using keywords.
+#     """
+#     message_lower = message.lower()
+#     print("message",message_lower,message)
+#     if "raise" in message:
 
-        return "request"
-    return any(keyword in message_lower for keyword in SUPPORT_REQUEST_KEYWORDS)
+#         return "request"
+#     return any(keyword in message_lower for keyword in SUPPORT_REQUEST_KEYWORDS)
 
 # Updated get_gemini_response function
 def  get_gemini_response(input_message, recipient,caption, media=None):
@@ -883,25 +915,25 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         image = Image.open(media['file_path'])
         media_dict[recipient]=media['file_path']
         # media_response = process_media_with_model(media['file_path'])
-        response = model.generate_content([full_input, image])
+        response = model.generate_content([full_input , image])
 
     else:
         response = model.generate_content(full_input)
 
     message_dict[recipient].append(response.text[:100])
-    response=model.generate_content('''Analyzing Support Need:
+    response=model.generate_content('''Analyzing Support Need :
 
-Analyze the provided response and determine if it needs the additional phrase: "I can raise a request for support if needed."
+Analyze the provided response  and determine if it needs the additional phrase: "I can raise a request for support for an issue your facing if needed."
 If the response already covers support or additional help, return the same text with no changes.
 If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
 If the response cannot be handled, return "Our support team will reach out to you."
 User Asking for Support Multiple Times:
 
-If the user asks for support the first or second time, respond with troubleshooting steps (for example, asking for more details about the problem).
-If the user asks for support more than 2 times, return "I've raised a request, and our support team will reach out to you soon."
-Return the final text, ensuring no other changes are made to the original response unless the phrase or support escalation is added.
+If the user asks for support the first or second time, respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps if needed (for example, asking for   details about the problem andproviding trouble shooting steps to it).
+If the user asks for support more than 3 times, return "I've raised a request, and our support team will reach out to you soon."
+Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.
 the text is
-''' + response.text)
+''' + response.text )
 
     if(response.text =="I've raised a request, and our support team will reach out to you soon."):
         full_input = " ".join(message_dict[recipient])
@@ -913,12 +945,13 @@ the text is
         thread.start()
         media_dict[recipient]='no path'
         print("triggered a email")
+    response=model.generate_content('''make the response to a short 100 words if response length exceeds by 120 words with same meaning and add the phrase i can raise a support request on your behalf to the response if you think it is needed to response and  the response is: '''+response.text)
     user=UserModels.objects.filter(phone=recipient).first()
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
     return response.text
 # import phonenumbers
-# from phonenumbers import geocoder, carrier, is_valid_number, parse
+# from phonenumbers import`` geocoder, carrier, is_valid_number, parse
 
 # def get_phone_number_info(phone_number):
 #     try:
@@ -960,8 +993,17 @@ def create_ticket_from_summary(summary,phonenumber,path):
     mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
                'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
     print("triggering a email to client and tenant")
-    email(mail_body,user.email,path)
-    email(mail_body,user.tenant_to.email,path)
+    # email(mail_body,user.email,path)
+    # email(mail_body,user.tenant_to.email,path)
+    userData=UserModels.objects.filter(phone=phonenumber).first()
+    print(userData)
+    name=User.objects.filter(username=userData.tenant_to).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+    print(facebookData)
+    # data="A support ticket had been created for the issue you had raised this is the ticket id "+str(ticket_created)+" further info will be shared to your email"
+    # send_message(data,facebookData)
+
 
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
@@ -1140,6 +1182,7 @@ from django.http import JsonResponse
 
 @csrf_exempt
 def send_whatsapp_message(request):
+    print("inloop",request.method)
     if request.method == 'POST':
         print("here")
 
@@ -1182,9 +1225,10 @@ def tenant_page(request):
 def create_tenant(request):
     if request.method == 'POST':
 
-        email = request.POST.get('email')
+        data = json.loads(request.body)  # Parse the JSON body
+        email = data.get('email')  # Get the email from the parsed data
         user_=User.objects.filter(email=email).first()
-
+        print(email,user_)
         tenant = TenantModel(name=user_, email=email)
         tenant.save()
         return JsonResponse({'success': True})
@@ -1235,6 +1279,7 @@ def update_tenant(request):
 @superuser_required
 @csrf_exempt
 def delete_tenant(request, tenant_id):
+    print(request)
     if request.method == 'DELETE':
         tenant = get_object_or_404(TenantModel, id=tenant_id)
         tenant.delete()
@@ -1260,16 +1305,19 @@ def dashboard_(request):
     return render(request, 'accounts/d.html', context)
 
 # Create a new user
-@superuser_required
+
 @csrf_exempt
-def create_user(request):
+def create_user_tenant_(request):
+    print("yed",request,request.method)
     if request.method == 'POST':
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         email = request.POST.get('email')
-        tenant_id = request.POST.get('tenant_to')
-
-        tenant = get_object_or_404(TenantModel, id=tenant_id)
+        print(name,email,phone)
+        user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        print(user)
+        tenant =TenantModel.objects.filter(name=user).first()
+        print(tenant)
         user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant)
         user.save()
         return JsonResponse({'success': True, 'user_id': user.id})
@@ -1297,14 +1345,29 @@ def update_user(request):
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 # Delete a user
-@superuser_required
+@login_required
+
+@csrf_exempt  # Only if you aren't using CSRF tokens; otherwise, ensure it's handled correctly.
 def delete_user(request, user_id):
-    user = get_object_or_404(UserModels, id=user_id)
-    user.delete()
-    return JsonResponse({'success': True})
+    if request.method == 'DELETE':
+        try:
+            # Load the JSON body
+            data = json.loads(request.body)
+            print(data)
+            ids = data.get('ids', [])
+            print(data)
+            # Delete users based on the provided IDs
+            UserModels.objects.filter(id__in=ids).delete()  # Assuming UserModels is your user model
+
+            return JsonResponse({'success': True})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
 
 # Create a new ticket
-@superuser_required
+@login_required
 def create_ticket(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
@@ -1364,14 +1427,19 @@ def update_facebook_credential(request):
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 @superuser_required
 @csrf_exempt
-def delete_facebook_credential(request, credential_id):
-    if request.method == 'DELETE':
-        credential = get_object_or_404(FacebookCredentials, id=credential_id)
-        credential.delete()
-
-        return JsonResponse({'success': True})
+def delete_facebook_credentials(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            ids = data.get('ids', [])
+            # Delete credentials with the given IDs
+            FacebookCredentials.objects.filter(id__in=ids).delete()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 @login_required
 def ticket_status_list(request):
     user=User.objects.filter(username=request.user.username,email=request.user.email)
@@ -1429,8 +1497,13 @@ def update_ticket_status(request):
         ticket_id = request.POST.get('id')
         print(ticket_id)
         ticket = get_object_or_404(TicketsStatusModel, id=ticket_id)
+
+        history=ticket.commentHistory+"\n"+"Ticket status is: "+request.POST.get('ticket_status')+"\n"+"comments :"+request.POST.get('comments')+"\n"+"updated at: "+str(datetime.now())+"\n"+"========================"+"\n"
+        print(history)
+        ticket.commentHistory=history
+
         form = TicketsStatusForm(request.POST, instance=ticket)
-        print("form",form)
+
         if form.is_valid():
             form.save()
             return JsonResponse({'success': True})
@@ -1444,6 +1517,26 @@ def delete_ticket_status(request, ticket_id):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
+@login_required
+@csrf_exempt
+def delete_ticket_status_tenant(request):
+    if request.method == 'POST':
+        try:
+            # Load the JSON data from the request body
+            data = json.loads(request.body)
+            ticket_ids = data.get('ids', [])
+
+            # Ensure ticket_ids is a list
+            if isinstance(ticket_ids, list):
+                # Delete all tickets with the provided IDs
+                TicketsStatusModel.objects.filter(id__in=ticket_ids).delete()
+                return JsonResponse({'success': True, 'deleted_count': len(ticket_ids)})
+
+            return JsonResponse({'success': False, 'error': 'Invalid ticket IDs format'})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON'})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 @superuser_required
 def issue_list(request):
@@ -1478,7 +1571,7 @@ def delete_issue(request, issue_id):
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Error deleting the issue'})
 
-@superuser_required
+@login_required
 @csrf_exempt  # Allow AJAX requests without CSRF token verification
 def create_ticket(request):
     if request.method == 'POST':
@@ -1512,19 +1605,26 @@ def update_ticket(request, ticket_id):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
-@superuser_required
+@login_required
 @csrf_exempt
-def delete_ticket(request, ticket_id):
+def delete_ticket(request):
     if request.method == 'DELETE':
-        ticket = get_object_or_404(TicketsModel, id=ticket_id)
-
         try:
-            ticket.delete()
+            data = json.loads(request.body)  # Parse the JSON body
+            ticket_ids = data.get('ids', [])  # Get the list of ticket IDs
+
+            if not ticket_ids:
+                return JsonResponse({'success': False, 'error': 'No ticket IDs provided'})
+
+            # Delete tickets with the provided IDs
+            TicketsModel.objects.filter(id__in=ticket_ids).delete()
+
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
+
 from django.shortcuts import render
 from .models import TicketsModel, UserModels
 @login_required
@@ -1598,20 +1698,32 @@ from django.shortcuts import render
 # Get all users
 def get_users(request):
     users = User.objects.all()
-    return render(request, 'accounts/u.html', {'users': users})
+    user_to_tenant_ids = {tenant.name.id: tenant.id for tenant in TenantModel.objects.all()}
+    user_to_tenant_email = {tenant.id: tenant.email for tenant in User.objects.all()}
+
+    return render(request, 'accounts/u.html', {
+        'users': users,
+        'user_to_tenant_ids': user_to_tenant_ids,
+        'user_to_tenant_email':user_to_tenant_email
+    })
 
 # Create a user
 @csrf_exempt
-def create_user_(request):
+def create_user(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         email = request.POST.get('email')
         is_superuser = request.POST.get('is_superuser') == 'true'
         password=request.POST.get('password')
-
+        is_tenant=request.POST.get('is_tenant') =='true'
         user = User.objects.create(username=username, email=email, is_superuser=is_superuser)
         user.set_password(password)
         user.save()
+        if(is_tenant):
+            make_tenant=TenantModel(name=user,email=email,email_template='hello')
+            make_tenant.save()
+            home_directory_link = request.build_absolute_uri('/')
+            send_onbarding_mail(username,email,home_directory_link)
         return JsonResponse({'success': True})
 
     return JsonResponse({'success': False, 'error': 'Invalid method'})
@@ -1639,14 +1751,15 @@ def update_user_(request):
 
         user = User.objects.get(id=user_id)
         tenant_update=TenantModel.objects.filter(name=user).first()
-
+        print(tenant_update)
         user.username = username
         user.email = email
         user.is_superuser = is_superuser
         user.save()
-        tenant_update.name=user
-        tenant_update.email=email
-        tenant_update.save()
+        if tenant_update!=None:
+            tenant_update.name=user
+            tenant_update.email=email
+            tenant_update.save()
 
 
         return JsonResponse({'success': True})
@@ -1656,11 +1769,27 @@ def update_user_(request):
 # Delete user
 @csrf_exempt
 def delete_user_(request):
+    print("here in thsi")
     if request.method == 'DELETE':
-        user_id = request.GET.get('id')
-        User.objects.get(id=user_id).delete()
-        return JsonResponse({'success': True})
+        try:
+            body = json.loads(request.body)  # Load the JSON body
+            print("body",request.body,body)
+            user_ids = body.get('ids', [])  # Get a list of user IDs from the body
+            print(user_ids)
+            deleted_count = 0
+            for user_id in user_ids:
+                print(user_id)  # Debugging: print the user ID being processed
+                try:
+                    user = get_object_or_404(User, id=user_id)  # Get the user
+                    print(user)  # Debugging: print the user object
+                    user.delete()  # Delete the user
+                    deleted_count += 1
+                except User.DoesNotExist:
+                    continue  # If user does not exist, continue with the next ID
 
+            return JsonResponse({'success': True, 'deleted_count': deleted_count})
+        except (ValueError, json.JSONDecodeError):
+            return JsonResponse({'success': False, 'error': 'Invalid request body.'})
     return JsonResponse({'success': False, 'error': 'Invalid method'})
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
@@ -1709,6 +1838,7 @@ def delete_user_tenant(request, user_id):
         user.delete()
         return JsonResponse({'success': True})
 @login_required
+@client_access_required
 def add_template(request):
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
