@@ -64,10 +64,17 @@ urlpatterns = [
     path('users_/create/', views.create_user_tenant, name='create_user_tenant'),
     path('users_/update/', views.update_user_tenant, name='update_user_tenant'),
     path('users_/delete/<int:user_id>/', views.delete_user_tenant, name='delete_user_tenant'),
-    path('logout/', LogoutView.as_view(), name='logout'),
+    path('logout/', UserLogoutView.as_view(), name='logout'),
     path('add-template/', views.add_template, name='add_template'),
   path('save-template/', views.save_template, name='save_template'),
    path('delete-template/<str:template_name>/', views.delete_template, name='delete_template'),
    path('create/tenant_/', views.create_user_tenant_, name='create_tenant_'),
+      path('create-access/', views.create_access, name='create_access'),
+    path('get-access/', views.client_dashboard_access, name='get_access'),
+    path('update-access/', views.update_access, name='update_access'),
+    path('delete-access/', views.delete_access, name='delete_access'),
+     path('api/dashboard-access/', DashboardAccessView.as_view(), name='dashboard_access'),
+     path('api/get-existing-users/', views.get_user_data, name='userdata'),
+    path('api/dashboard-access/update/<int:entry_id>/', DashboardAccessUpdateView.as_view(), name='update_dashboard_access'),
 
 ]

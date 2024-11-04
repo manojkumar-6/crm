@@ -23,9 +23,13 @@ class UserModels(models.Model):
     email = models.CharField(max_length=200, null=True)
     tenant_to=models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-
     def __str__(self):
 	    return self.name
+class DashboardAccessProvidedByClientModel(models.Model):
+     user=models.ForeignKey(User,on_delete=models.CASCADE)
+     access_provided_by=models.ForeignKey(TenantModel,on_delete=models.CASCADE)
+     def __str__(self):
+          return self.access_provided_by.name.username
 class TicketsModel(models.Model):
     user = models.ForeignKey(UserModels, on_delete=models.CASCADE)  # Use Django's User model or your custom User model
     ticket_number = models.CharField(max_length=45, unique=True)  # Optional: Ensure ticket numbers are unique

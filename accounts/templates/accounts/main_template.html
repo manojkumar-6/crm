@@ -73,9 +73,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/tickets_status/">Ticket Status For Tenant Issues</a>
                 </li>
-                <!-- <li class="nav-item"></li>
-                <a class="nav-link" href="/user_dashboard"> Tenant Dashboard</a>
-                </li> -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/get-access/">Dashboard access management</a>
+                </li>
                 <li class="nav-item">
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
@@ -273,6 +273,41 @@
                 });
             });
         });
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+            // Function to get a cookie value by name
+
+
+            // Check for the 'parent_client_id' cookie
+            if (getCookie('client')) {
+                // Hide the links if the cookie exists
+                const facebookLink = document.querySelector('a[href="/update_facebook_credentials"]');
+                const profileLink = document.querySelector('a[data-bs-toggle="modal"][data-bs-target="#updateProfileModal"]');
+
+                const tenantDashboardLink = document.querySelector('a[href="/get-access/"]'); // Update as needed
+
+                if (facebookLink) facebookLink.closest('.nav-item').style.display = 'none';
+                if (profileLink) profileLink.closest('.nav-item').style.display = 'none';
+                if (tenantDashboardLink) tenantDashboardLink.closest('.nav-item').style.display = 'none';
+                setInterval(check, 1000)
+            }
+
+        });
+
+        function check() {
+
+            if (!getCookie('client')) {
+                // Redirect to login if the cookie is not found
+                window.location.href = "/";
+            }
+
+
+        }
     </script>
 
 </body>

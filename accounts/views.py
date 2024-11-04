@@ -39,6 +39,9 @@ import pandas as pd
 
 issue_dict={}
 
+reslove_dict=dict()
+
+user_data_dict=dict()
 
 def superuser_required(view_func):
     @wraps(view_func)
@@ -320,17 +323,19 @@ def export_issue_csv(request):
 @client_access_required
 def dashBoard(request):
     # Fetch all orders and customers (if needed for other parts of your dashboard)
-    orders = MessageModel.objects.all()
-    customers = UserModels.objects.all()
-     # Get filters from the GET parameters
+
     status_filter = request.GET.get('status', '')
     username_search = request.GET.get('username', '')  # Could be user_name or email, depending on your User model
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
     sort_by = request.GET.get('sort_by', '')  # Default sorting by date
-
+    user_logged_in=User.objects.filter(username=request.user,email=request.user.email).first()
+    check_user_dashboard_access=DashboardAccessProvidedByClientModel.objects.filter(user=user_logged_in).first()
     # Fetch all tickets for the given issue
-    tenant = TenantModel.objects.filter(name=request.user,email=request.user.email).first()
+    if(check_user_dashboard_access):
+        tenant=check_user_dashboard_access.access_provided_by
+    else:
+        tenant = TenantModel.objects.filter(name=request.user,email=request.user.email).first()
     print(tenant)
     tickets_ = TicketsStatusModel.objects.filter(tenant_to=tenant)
     t_tickets_=TicketsStatusModel.objects.filter(tenant_to=tenant)
@@ -575,16 +580,33 @@ def loginUser(request):
         username = request.POST.get('username')
         password = request.POST.get('password')
         login_user = authenticate(request, username=username, password=password)
-        print(login_user,TenantModel.objects.filter(name=login_user).first())
+        print(login_user,TenantModel.objects.filter(name=login_user).first(),DashboardAccessProvidedByClientModel.objects.filter(user=login_user).first())
         if login_user is not None:
             login(request, login_user)
+
             print(login(request,login_user))
+
             if request.user.is_superuser:
                 return redirect("/adashboard")
             # if TenantModel.objects.filter()
             if  TenantModel.objects.filter(name=login_user).first():
                 return redirect("/dashboard")
+            if DashboardAccessProvidedByClientModel.objects.filter(user=login_user).first():
+                print("user is authenticated")
+                print("logging as the client who had provided the access")
 
+                child_client = DashboardAccessProvidedByClientModel.objects.filter(user=login_user).first()
+                get_user = child_client.access_provided_by.name
+                # print("logging in as parent client",get_user,child_client.access_provided_by,get_user.name.username)
+                # Authenticate the parent client
+                print(get_user)
+                    # Log the parent client in
+                login(request, get_user)
+    # Set a cookie
+                response = redirect("/dashboard")
+                response.set_cookie('client', 'child')  # Example cookie
+
+                return response
         error_message = "Invalid username or password."
         return render(request, "accounts/login.html", {'error_message': error_message})
 
@@ -801,7 +823,7 @@ def get_acknowledgment_keywords(base_keywords):
     return synonyms
 
 # Get synonyms for the base acknowledgment words
-base_acknowledgment_words = [ "thanks","fine", "cool"]
+base_acknowledgment_words = [ "thanks", "cool"]
 ACKNOWLEDGMENT_KEYWORDS = get_acknowledgment_keywords(base_acknowledgment_words)
 ACKNOWLEDGMENT_RESPONSE = "You're welcome! Feel free to reach out if you need more help."
 
@@ -856,22 +878,11 @@ base_support_keywords = [  "raise", "raise a support request", "support", "assis
     "raise a request", "request support", "help me", "assist me"]
 SUPPORT_REQUEST_KEYWORDS = get_support_keywords(base_support_keywords)
 media_dict=dict()
-# # Updated function to check if user is requesting support
-# def check_support_needed(message):
-#     """
-#     Check if the user is explicitly asking for support using keywords.
-#     """
-#     message_lower = message.lower()
-#     print("message",message_lower,message)
-#     if "raise" in message:
-
-#         return "request"
-#     return any(keyword in message_lower for keyword in SUPPORT_REQUEST_KEYWORDS)
-
 # Updated get_gemini_response function
 def  get_gemini_response(input_message, recipient,caption, media=None):
 
     if is_acknowledgment(input_message):
+        print("message",input_message,ACKNOWLEDGMENT_KEYWORDS)
         message_dict[recipient] = []
         return ACKNOWLEDGMENT_RESPONSE
 
@@ -896,18 +907,18 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         support_count_dict[recipient] += 1
 
     if support_count_dict[recipient] >= 3:  # Change the threshold to 1
-
         support_count_dict[recipient]=0
         full_input = " ".join(message_dict[recipient])
         print(full_input)
         message_dict[recipient] = []
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
 
-        thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
-        thread.start()
+        # thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
+        # thread.start()
         media_dict[recipient]='no path'
-        return ("It looks like you need additional help. I've raised a support request, "
-                "and our team will reach out to you soon.")
+        reslove_dict[recipient]="feedback"
+        user_data_dict[recipient]=[summary,media_dict[recipient]]
+        return send_message_interaction(recipient)
 
     full_input = " ".join(message_dict[recipient])
 
@@ -941,48 +952,18 @@ the text is
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         message_dict[recipient]=[]
 
-        thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
-        thread.start()
+        # thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
+        # thread.start()
         media_dict[recipient]='no path'
         print("triggered a email")
+        user_data_dict[recipient]=[summary,media_dict[recipient]]
+        reslove_dict[recipient]="feedback"
+        return  send_message_interaction(recipient)
     response=model.generate_content('''make the response to a short 100 words if response length exceeds by 120 words with same meaning and add the phrase i can raise a support request on your behalf to the response if you think it is needed to response and  the response is: '''+response.text)
     user=UserModels.objects.filter(phone=recipient).first()
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
     return response.text
-# import phonenumbers
-# from phonenumbers import`` geocoder, carrier, is_valid_number, parse
-
-# def get_phone_number_info(phone_number):
-#     try:
-#         # Parse the phone number based on the region (e.g., 'US', 'IN', 'GB')
-#         region = phonenumbers.region_code_for_number(phonenumbers.parse(phone_number))
-
-#         parsed_number = phonenumbers.parse(phone_number,region)
-
-#         # Get the country code
-#         country_code = parsed_number.country_code
-#         # Get the national number
-#         national_number = parsed_number.national_number
-#         # Get the country name
-#         country_name = geocoder.country_name_for_number(parsed_number, 'en')
-#         # Get the carrier informationTenantModel
-#         carrier_name = carrier.name_for_number(parsed_number, 'en')
-
-#         # Check if the number is valid
-#         if is_valid_number(parsed_number):
-#             return {
-#                 "country_code": country_code,
-#                 "national_number": national_number,
-#                 "country_name": country_name,
-#                 "carrier": carrier_name,
-#                 "valid": True
-#             }
-#         else:
-#             return {"valid": False, "message": "Invalid phone number"}
-
-#     except phonenumbers.phonenumberutil.NumberParseException as e:
-#         return {"valid": False, "message": str(e)}
 
 def create_ticket_from_summary(summary,phonenumber,path):
     user=UserModels.objects.filter(phone=phonenumber).first()
@@ -1001,8 +982,9 @@ def create_ticket_from_summary(summary,phonenumber,path):
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
-    # data="A support ticket had been created for the issue you had raised this is the ticket id "+str(ticket_created)+" further info will be shared to your email"
-    # send_message(data,facebookData)
+    text="A support ticket had been created for the issue you had raised this is the ticket id "+str(ticket_created.ticket_number)+" further info will be shared to your email"
+    data = get_text_message_input(phonenumber, text)
+    send_message(data,facebookData)
 
 
 def process_media_with_model(file_path):
@@ -1107,56 +1089,196 @@ def process_whatsapp_message(body):
     message_data = body["entry"][0]["changes"][0]["value"]["messages"][0]
     message_id = message_data.get("id")
     receipient_number=message_data.get("from")
-    print(receipient_number)
     userData=UserModels.objects.filter(phone=receipient_number).first()
     print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
-    wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
-
-    if message_id in processed_messages:
-        print(f"Message {message_id} already processed.")
-        return
-
-    processed_messages.add(message_id)
-
-    media = None
-    caption=""
-    if "image" in message_data:
-        media_id = message_data["image"]["id"]
-        if message_data["image"].get("caption"):
-            caption = message_data["image"]["caption"]
-        media = process_media(media_id,caption,facebookData)
-    elif "document" in message_data:
-        media_id = message_data["document"]["id"]
-        media = process_media(media_id,caption,facebookData)
-    elif "video" in message_data:
-        media_id = message_data["video"]["id"]
-        media = process_media(media_id,caption,facebookData)
-
-    message_body = message_data.get("text", {}).get("body", "")
-    response = get_gemini_response(message_body, wa_id,caption, media)
-    data = get_text_message_input(wa_id, response)
-    send_message(data,facebookData)
-
-# Function to send messages via WhatsApp
+    print(receipient_number,reslove_dict,reslove_dict.get(receipient_number)=='feedback',reslove_dict.get(receipient_number))
+    if message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="Resloved_team" or message_data.get('interactive').get('button_reply').get('id')=="No_team"):
+        selected_option_id = message_data['interactive']['button_reply']['id']
+        selected_option_title = message_data['interactive']['button_reply']['title']
+        print("the data",selected_option_id,selected_option_title,selected_option_id=="Resloved_")
+        if selected_option_id=="No_team":
+            print("triggering a mail to team")
+            data = get_text_message_input(receipient_number, "A mail is sent to the team reagrding the issue they will reach out to you Thanks")
+            send_message(data,facebookData)
+        elif selected_option_id=="Resloved_team":
+            if receipient_number in reslove_dict:
+                del reslove_dict[receipient_number]
+            data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+            send_message(data,facebookData)
+    elif message_data.get('interactive') and reslove_dict.get(receipient_number)=='feedback':
+        selected_option_id = message_data['interactive']['button_reply']['id']
+        selected_option_title = message_data['interactive']['button_reply']['title']
+        print("the data",selected_option_id,selected_option_title,selected_option_id=="Resloved_")
+        if selected_option_id=="No_":
+            reslove_dict[receipient_number]="issue"
+            data=user_data_dict[receipient_number]
+            create_ticket_from_summary(data[0],receipient_number,data[1])
+        elif selected_option_id=="Resloved_":
+            print("hereb in the loop dkjghqsdkja")
+            del reslove_dict[receipient_number]
+            data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+            send_message(data,facebookData)
+    elif receipient_number not in reslove_dict or reslove_dict.get('receipient_number')=='feedback':
+            wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+            if message_id in processed_messages:
+                print(f"Message {message_id} already processed.")
+                return
+            processed_messages.add(message_id)
+            media = None
+            caption=""
+            if "image" in message_data:
+                media_id = message_data["image"]["id"]
+                if message_data["image"].get("caption"):
+                    caption = message_data["image"]["caption"]
+                media = process_media(media_id,caption,facebookData)
+            elif "document" in message_data:
+                media_id = message_data["document"]["id"]
+                media = process_media(media_id,caption,facebookData)
+            elif "video" in message_data:
+                media_id = message_data["video"]["id"]
+                media = process_media(media_id,caption,facebookData)
+            message_body = message_data.get("text", {}).get("body", "")
+            response = get_gemini_response(message_body, wa_id,caption, media)
+            data = get_text_message_input(wa_id, response)
+            send_message(data,facebookData)
+            # send_message_interaction(receipient_number)
+    else:
+        data = get_text_message_input(receipient_number, "A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well")
+        send_message(data,facebookData)
+        # Function to send messages via WhatsApp
 def send_message(data,facebookData):
 
+            url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+            headers = {
+                "Authorization": "Bearer " + facebookData.accessToken,
+                "Content-Type": "application/json",
+            }
+
+            response = requests.post(url, headers=headers, data=data)
+
+            return response
+
+
+def send_message_interaction(receipient_number):
+    userData=UserModels.objects.filter(phone=receipient_number).first()
+    print(userData)
+    name=User.objects.filter(username=userData.tenant_to).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+    print(facebookData)
+    options = {
+    'header': 'Did The Troubleshooting Steps Helped In Resloving The Issue',
+    'button': 'Options',
+    'section_title': 'Menu',
+    'rows': [
+        {'id': 'Resloved_', 'title': 'Issue Resloved'},
+        {'id': 'No_', 'title': 'Request Support'},
+    ]
+}
     url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
     headers = {
         "Authorization": "Bearer " + facebookData.accessToken,
         "Content-Type": "application/json",
     }
 
-    response = requests.post(url, headers=headers, data=data)
-    try:
-            pass
-    except ValueError:
-        print("Response is not in JSON format")
+    data = {
+    "messaging_product": "whatsapp",
+    "to": receipient_number,
+    "type": "interactive",
+    "interactive": {
+        "type": "button",
+        "header": {
+            "type": "text",
+            "text": options['header']
+        },
+         "body": {  # Adding the body
+            "text": 'Select the button to move forward'  # Ensure 'body' is a key in options
+        },
+        "action": {
+            "buttons": [
+                {
+                    "type": "reply",
+                    "reply": {
+                        "id": opt['id'],
+                        "title": opt['title']
+                    }
+                } for opt in options['rows']  # Adjust the rows to fit button format
+            ]
+        }
+    }
+}
 
-    return response
+
+    # Send the request
+    con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    con.save()
+    response = requests.post(url, headers=headers, json=data)
+
+    # Handle response
+
+    # response.raise_for_status()  # Raises an HTTPError for bad responses
+    # return response.text # Return the JSON response if successful
+
+def send_message_interaction_by_team(receipient_number):
+    print("here i n interatcion by team",receipient_number)
+    userData=UserModels.objects.filter(phone=receipient_number).first()
+    print(userData)
+    name=User.objects.filter(username=userData.tenant_to).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+    print(facebookData)
+    options = {
+    'header': 'Our team has closed your ticket. Please confirm if resolved',
+    'button': 'Options',
+    'section_title': 'Menu',
+    'rows': [
+        {'id': 'Resloved_team', 'title': 'Yes , Issue resloved'},
+        {'id': 'No_team', 'title': 'No, need support'},
+    ]
+}
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    data = {
+    "messaging_product": "whatsapp",
+    "to": receipient_number,
+    "type": "interactive",
+    "interactive": {
+        "type": "button",
+        "header": {
+            "type": "text",
+            "text": options['header']
+        },
+         "body": {  # Adding the body
+            "text": 'Select the button to move forward'  # Ensure 'body' is a key in options
+        },
+        "action": {
+            "buttons": [
+                {
+                    "type": "reply",
+                    "reply": {
+                        "id": opt['id'],
+                        "title": opt['title']
+                    }
+                } for opt in options['rows']  # Adjust the rows to fit button format
+            ]
+        }
+    }
+}
+
+    con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    con.save()
+    # Send the request
+    response = requests.post(url, headers=headers, json=data)
+    print(response,response.text,response.json())
+    return response.json()
 
 # View to handle incoming WhatsApp messages
 @csrf_exempt
@@ -1501,11 +1623,20 @@ def update_ticket_status(request):
         history=ticket.commentHistory+"\n"+"Ticket status is: "+request.POST.get('ticket_status')+"\n"+"comments :"+request.POST.get('comments')+"\n"+"updated at: "+str(datetime.now())+"\n"+"========================"+"\n"
         print(history)
         ticket.commentHistory=history
-
         form = TicketsStatusForm(request.POST, instance=ticket)
-
         if form.is_valid():
             form.save()
+
+            userData=UserModels.objects.filter(phone=ticket.user.phone).first()
+            print(userData)
+            name=User.objects.filter(username=userData.tenant_to).first()
+            tenant=TenantModel.objects.filter(name=name).first()
+            facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+            print(facebookData)
+            data = get_text_message_input(ticket.user.phone, "The Ticket with id"+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory )
+            send_message(data,facebookData)
+            if request.POST.get('ticket_status')=="COMPLETED":
+                send_message_interaction_by_team(ticket.user.phone)
             return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid data'})
 @login_required
@@ -1707,6 +1838,23 @@ def get_users(request):
         'user_to_tenant_email':user_to_tenant_email
     })
 
+@csrf_exempt
+def client_dashboard_access(request):
+    user_logged_in=User.objects.filter(username=request.user,email=request.user.email).first()
+    check_user_dashboard_access=DashboardAccessProvidedByClientModel.objects.filter(user=user_logged_in).first()
+    if(check_user_dashboard_access):
+        tenant=check_user_dashboard_access.access_provided_by
+    else:
+        tenant=TenantModel.objects.filter(name=user_logged_in,email=request.user.email).first()
+    users = DashboardAccessProvidedByClientModel.objects.filter(access_provided_by=tenant)
+    # user_to_tenant_ids = {tenant.name.id: tenant.id for tenant in TenantModel.objects.all()}
+    # user_to_tenant_email = {tenant.id: tenant.email for tenant in User.objects.all()}
+
+    return render(request, 'accounts/cleint_access_provided.html', {
+        'users': users,
+        # 'user_to_tenant_ids': user_to_tenant_ids,
+        # 'user_to_tenant_email':user_to_tenant_email
+    })
 # Create a user
 @csrf_exempt
 def create_user(request):
@@ -1948,6 +2096,8 @@ def update_user_profile(request):
                 updatedUser.username=username
                 updatedUser.email=email
                 updatedUser.save()
+                currentTemplatedata=TemplateModel.objects.filter(user=currentUser)
+                currentDashboardClient=DashboardAccessProvidedByClientModel.objects.filter(access_provided_by=currentUser)
                 currentTenantData=TenantModel.objects.filter(name=currentUser).first()
                 currentUsersDataToTenant=UserModels.objects.filter(tenant_to=currentTenantData)
                 currentTicketsStatusData=TicketsStatusModel.objects.filter(tenant_to=currentTenantData)
@@ -1955,12 +2105,18 @@ def update_user_profile(request):
                 updatedTenantData=TenantModel.objects.filter(name=currentUser).first()
                 updatedTenantData.name=updatedUser
                 updatedTenantData.save()
+                for template in currentTemplatedata:
+                    template.user=updatedUser
+                    template.save()
                 for userData in currentUsersDataToTenant:
                     userData.tenant_to=updatedTenantData
                     userData.save()
                 for ticket in currentTicketsStatusData:
                     ticket.tenant_to=updatedTenantData
                     ticket.save()
+                for access in currentDashboardClient:
+                    access.access_provided_by=updatedUser
+                    access.save()
                 currentFacebookData.user=updatedTenantData
                 currentFacebookData.save()
             if new_password:
@@ -1981,3 +2137,155 @@ def update_user_profile(request):
         return JsonResponse({'status': 'error', 'message': form.errors})
 
     return JsonResponse({'status': 'error', 'message': 'Invalid request.'})
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import DashboardAccessProvidedByClientModel
+import json
+
+@csrf_exempt
+def create_access(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_id = data.get('user')
+        access_provided_by_id = data.get('access_provided_by')
+        access = DashboardAccessProvidedByClientModel.objects.create(
+            user_id=user_id,
+            access_provided_by_id=access_provided_by_id
+        )
+        return JsonResponse({'success': True, 'id': access.id})
+
+@csrf_exempt
+def get_access(request):
+    access_id = request.GET.get('id')
+    access = DashboardAccessProvidedByClientModel.objects.get(id=access_id)
+    return JsonResponse({
+        'id': access.id,
+        'user': {'id': access.user.id, 'username': access.user.username},
+        'access_provided_by': {'id': access.access_provided_by.id, 'name': access.access_provided_by.name}
+    })
+
+@csrf_exempt
+def update_access(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        access_id = data.get('id')
+        user_id = data.get('user')
+        access_provided_by_id = data.get('access_provided_by')
+        access = DashboardAccessProvidedByClientModel.objects.get(id=access_id)
+        access.user_id = user_id
+        access.access_provided_by_id = access_provided_by_id
+        access.save()
+        return JsonResponse({'success': True})
+
+@csrf_exempt
+def delete_access(request):
+    if request.method == 'DELETE':
+        data = json.loads(request.body)
+        access_id = data.get('id')
+        access = DashboardAccessProvidedByClientModel.objects.get(id=access_id)
+        access.delete()
+        return JsonResponse({'success': True})
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+
+def get_user_data(request):
+        usernames = list(User.objects.values_list('username', flat=True))  # Get all existing usernames
+        return JsonResponse({'usernames': usernames})
+@method_decorator(csrf_exempt, name='dispatch')
+class DashboardAccessView( View):
+    def get(self, request):
+        # Filter entries where access_provided_by is the current user
+        user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        tenant=TenantModel.objects.filter(name=user,email=request.user.email).first()
+        entries = DashboardAccessProvidedByClientModel.objects.filter(access_provided_by=tenant).select_related('access_provided_by')
+        data = []
+        total_users_=User.objects.all()
+        total_user=[]
+        for user_ in total_users_:
+            total_user.append(user_.username)
+
+        for entry in entries:
+            user_data = {
+                'id': entry.user.id,
+                'username': entry.user.username,
+                'email': entry.user.email,  # Include email if needed
+            }
+
+            data.append({
+                'user': user_data,
+
+            })
+
+        return JsonResponse({'entries': data,'user_name_check':total_user})
+
+    @csrf_exempt
+    def post(self, request):
+        body = json.loads(request.body)
+        user= body.get('user_id')
+        password = body.get('password')
+        email=body.get('email')
+        print("here iurehtwkjrhjds")
+        user_=User(username=user,email=email)
+        user_.set_password(password)
+        user_.save()
+        user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        tenant=TenantModel.objects.filter(name=user,email=request.user.email).first()
+        create_client=DashboardAccessProvidedByClientModel(user=user_,access_provided_by=tenant)
+        create_client.save()
+        print("triggering a email to created client")
+        # Create a new entry with the provided user and the logged-in user as access provided by
+
+        return JsonResponse({'success': True,'id': "2"})
+
+    @csrf_exempt
+    def delete(self, request):
+        body = json.loads(request.body)
+        ids = body.get('ids', [])
+        if not ids:
+            return JsonResponse({'success': False, 'error': 'No IDs provided.'}, status=400)
+
+        # Delete users with the provided IDs
+        User.objects.filter(id__in=ids).delete()
+        return JsonResponse({'success': True})
+
+
+class DashboardAccessUpdateView(View):
+    @csrf_exempt
+    def post(self,request,entry_id):
+        body = json.loads(request.body)
+        print(body)
+
+        # Fetch the user based on entry_id
+        user = User.objects.filter(id=entry_id).first()  # Use .first() to avoid multiple results
+
+        if not user:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        # Update user fields
+        user.username = body.get("user", user.username)  # Default to current username if not provided
+        user.email = body.get("email", user.email)  # Default to current email if not provided
+
+        # Update password only if provided
+        if body.get("password"):
+            user.set_password(body.get("password"))  # Correct way to set the password
+
+        user.save()
+        return JsonResponse({'success': True})
+
+from django.contrib.auth.views import LogoutView
+from django.shortcuts import redirect
+
+class UserLogoutView(LogoutView):
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        # Delete all cookies
+        for cookie in request.COOKIES:
+            print(cookie)
+            response.delete_cookie(cookie)
+
+        return response
+
