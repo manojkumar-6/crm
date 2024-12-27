@@ -80,12 +80,15 @@ class MessageModel(models.Model):
 	def __str__(self):
 		return str(self.customer)
 class ConversationModel(models.Model):
-	user=models.ForeignKey(UserModels,on_delete=models.CASCADE)
-	date_queried = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-	ai_model_reply=models.CharField(max_length=7000)
-	user_query=models.CharField(max_length=5000)
-	def __str__(self):
-		return self.user.name
+    user = models.ForeignKey('UserModels', on_delete=models.CASCADE)
+    date_queried = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    ai_model_reply = models.CharField(max_length=7000)
+    user_query = models.CharField(max_length=5000)
+    is_seen = models.BooleanField(default=False)  # New field to mark if the message has been seen
+
+    def __str__(self):
+        return self.user.name
+
 class IssueReported(models.Model):
     class IssueChoices(models.TextChoices):
         WATERISSUE = "water", "Water"

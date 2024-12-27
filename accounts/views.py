@@ -516,9 +516,9 @@ def send_email_view(request):
             check=data.get('check')
 
             if(check):
-                for user in UserModels.objects.all():
-                    message = get_text_message_input(user.phone,message)
-                    conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
+                for user_ in UserModels.objects.all():
+                    message = get_text_message_input(user_.phone,message)
+                    conv=ConversationModel(user=user_,ai_model_reply="welcome message",user_query=data)
                     conv.save()
                     print("sent",message)
                     send_message(message,facebookData)
@@ -1103,11 +1103,15 @@ def process_whatsapp_message(body):
         if selected_option_id=="No_team":
             print("triggering a mail to team")
             data = get_text_message_input(receipient_number, "A mail is sent to the team reagrding the issue they will reach out to you Thanks")
+            s=ConversationModel(user=userData,ai_model_reply="A mail is sent to the team reagrding the issue they will reach out to you Thanks",user_query="issue_persist")
+            s.save()
             send_message(data,facebookData)
         elif selected_option_id=="Resloved_team":
             if receipient_number in reslove_dict:
                 del reslove_dict[receipient_number]
             data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+            s=ConversationModel(user=userData,ai_model_reply="I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue",user_query="resloved")
+            s.save()
             send_message(data,facebookData)
     elif message_data.get('interactive') and reslove_dict.get(receipient_number)=='feedback':
         selected_option_id = message_data['interactive']['button_reply']['id']
@@ -1147,7 +1151,10 @@ def process_whatsapp_message(body):
             send_message(data,facebookData)
             # send_message_interaction(receipient_number)
     else:
+        message_body = message_data.get("text", {}).get("body", "")
         data = get_text_message_input(receipient_number, "A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well")
+        s=ConversationModel(user=userData,ai_model_reply="A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well",user_query=message_body)
+        s.save()
         send_message(data,facebookData)
         # Function to send messages via WhatsApp
 def send_message(data,facebookData):
@@ -1171,7 +1178,7 @@ def send_message_interaction(receipient_number):
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
     options = {
-    'header': 'Did The Troubleshooting Steps Helped In Resloving The Issue',
+    'header': 'Did The Conversation Helped In Resloving The Issue',
     'button': 'Options',
     'section_title': 'Menu',
     'rows': [
@@ -1633,7 +1640,7 @@ def update_ticket_status(request):
             tenant=TenantModel.objects.filter(name=name).first()
             facebookData=FacebookCredentials.objects.filter(user=tenant).first()
             print(facebookData)
-            data = get_text_message_input(ticket.user.phone, "The Ticket with id"+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory )
+            data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory+"     Please dont not reply to this message" )
             send_message(data,facebookData)
             if request.POST.get('ticket_status')=="COMPLETED":
                 send_message_interaction_by_team(ticket.user.phone)
@@ -2288,4 +2295,411 @@ class UserLogoutView(LogoutView):
             response.delete_cookie(cookie)
 
         return response
+def chat(request):
+    return render(request,"accounts/whatsapp.html")
+
+from django.http import JsonResponse
+
+def getContacts(request):
+    login_user = User.objects.filter(username=request.user.username, email=request.user.email).first()
+    tenant = TenantModel.objects.filter(name=login_user).first()
+
+    # users = UserModels.objects.filter(tenant_to=tenant)
+    # user_data = []
+    # for user in users:
+    #     # Count the number of unseen messages for each user
+    #     unseen_count = ConversationModel.objects.filter(
+    #         user=user, is_seen=False).count()
+
+    #     # Get the latest message time for sorting (optional, based on latest activity)
+    #     latest_message = ConversationModel.objects.filter(user=user).order_by('-date_queried').first()
+    #     latest_message_time = latest_message.date_queried if latest_message else None
+
+    #     user_data.append({
+    #         'user': user.name,
+    #         'phone': user.phone,
+    #         'unseen_count': unseen_count,
+    #         'latest_message_time': latest_message_time,
+    #     })
+    data = ConversationModel.objects.all()
+    number_list = []
+
+    for userData in data:
+        # Check if the user is related to the tenant
+        if userData.user.tenant_to.id == tenant.id:
+            # Avoid duplicates by checking if the phone number is already in the list
+            if not any(contact["phone"] == userData.user.phone for contact in number_list):
+                number_list.append({"phone": userData.user.phone, "user": str(userData.user)})
+    user_data=[]
+    for contact in number_list:
+        phone = contact["phone"]
+        user = UserModels.objects.filter(phone=phone).first()
+
+        if user:
+            # Count the number of unseen messages for the user
+            unseen_count = ConversationModel.objects.filter(
+                user=user, is_seen=False).count()
+
+            # Get the latest message time for the user
+            latest_message = ConversationModel.objects.filter(user=user).order_by('-date_queried').first()
+            latest_message_time = latest_message.date_queried if latest_message else None
+
+            # Append the user details including unseen count and latest message time
+            user_data.append({
+                'user': user.name,
+                'phone': user.phone,
+                'unseen_count': unseen_count,
+                'latest_message_time': latest_message_time,
+            })
+
+    # Sort user_data by unseen message count (descending) and latest message time
+    user_data.sort(key=lambda x: (x['unseen_count'], x['latest_message_time']), reverse=True)
+
+    return JsonResponse(user_data, safe=False)
+
+from django.http import JsonResponse
+from django.core.serializers import serialize
+from django.utils.dateformat import DateFormat
+
+def getChat(request, number):
+    # Filter conversation data based on the provided phone number
+    data = ConversationModel.objects.filter(user__phone=number).order_by('date_queried')
+    chat_data = []
+
+    # Format the chat data
+    for userData in data:
+        chat_data.append({
+            "date_queried": DateFormat(userData.date_queried).format('Y-m-d H:i:s'),
+            "ai_model_reply": userData.ai_model_reply,
+            "user_query": userData.user_query
+        })
+    print((chat_data))
+    return JsonResponse(chat_data, safe=False)
+
+# consumers.py
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+class ChatConsumer(AsyncWebsocketConsumer):
+    print("received")
+    async def connect(self):
+        self.phone = self.scope['url_route']['kwargs']['phone']
+        self.room_group_name = f'chat_{self.phone}'
+
+        # Join room group
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        print("kjoined")
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+        phone = text_data_json['phone']
+
+        # Send message to room group
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'phone': phone,
+                'message': message,
+                'date_queried': text_data_json['date_queried'],
+                'ai_model_reply': text_data_json['ai_model_reply'],
+            }
+        )
+
+    # Receive message from room group
+    async def chat_message(self, event):
+        await self.send(text_data=json.dumps(event))
+
+
+def send_message_from_socket(request):
+    if request.method == "POST":
+        try:
+            # Get the JSON data from the request body
+            data = json.loads(request.body)
+            print("data",data,request.body)
+            phone_number = data.get('phone_number')
+            message_content = data.get('message')
+            userData=UserModels.objects.filter(phone=phone_number).first()
+            data_ = get_text_message_input(phone_number,message_content)
+            name=User.objects.filter(username=request.user.username,email=request.user.email).first()
+            tenant=TenantModel.objects.filter(name=name).first()
+            facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+            print("sending message from template")
+            send_message(data_,facebookData)
+            s=ConversationModel(user=userData,ai_model_reply=message_content)
+            s.save()
+            # Respond back with a success message
+            return JsonResponse({'status': 'success', 'message': message_content})
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'})
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+from .models import ConversationModel
+
+# Function to mark all conversations for a user as seen
+def mark_messages_as_seen(request,phone):
+    users = UserModels.objects.filter(phone=phone).first()
+
+    if not users:
+        # If no user is found with the provided phone number, return an error response
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    # Fetch conversations related to this user
+    conversations = ConversationModel.objects.filter(user=users)
+
+    if not conversations.exists():
+        # If no conversations exist for the user, return a message
+        return JsonResponse({'message': 'No conversations found for this user'}, status=200)
+
+    # Mark all conversations as seen
+    updated_count = 0
+    for c in conversations:
+        if not c.is_seen:  # Update only if the message is not already marked as seen
+            c.is_seen = True
+            c.save()
+            updated_count += 1
+
+    # Return a success response with the count of messages marked as seen
+    return JsonResponse({'message': f'{updated_count} messages marked as seen'}, status=200)
+
+# Function to mark a specific conversation as seen
+def mark_single_message_as_seen(conversation_id):
+    try:
+        conversation = ConversationModel.objects.get(id=conversation_id)
+        conversation.is_seen = True
+        conversation.save()
+        return True
+    except ConversationModel.DoesNotExist:
+        return False
+
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+
+class VideoChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.room_group_name = f'video_chat_{self.room_name}'
+
+        # Join the WebSocket group
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        # Accept the WebSocket connection
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        # Leave the WebSocket group
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        # Receive a message from the WebSocket
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+
+        # Send the message to the WebSocket group (broadcasting)
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'video_chat_message',
+                'message': message
+            }
+        )
+
+    async def video_chat_message(self, event):
+        # Send the message to WebSocket
+        message = event['message']
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
+import os
+import requests
+from django.conf import settings
+from django.http import JsonResponse
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import mimetypes
+
+
+def upload_media(request):
+    """ Handle the media file upload, validate size, and send via WhatsApp. """
+
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']
+        number=request.POST.get('number')
+        print("number",number)
+
+        # Check file size (max 16MB for video/audio)
+        max_size = 16 * 1024 * 1024  # 16MB
+        if file.size > max_size:
+            return JsonResponse({'status': 'error', 'message': 'File size exceeds the limit of 16MB.'}, status=400)
+
+        # Get file type
+        file_type, _ = mimetypes.guess_type(file.name)
+        print(file_type)
+        # Check if file is image, video, or audio
+        if file_type :
+            # Save the file to the media directory temporarily
+            file_name = os.path.join('uploads', file.name)
+            file_path = default_storage.save(file_name, ContentFile(file.read()))
+            print("in loop",file_path)
+            name=User.objects.filter(username=request.user.username,email=request.user.email).first()
+            tenant=TenantModel.objects.filter(name=name).first()
+            facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+            # Upload the media to WhatsApp
+            media_id = upload_and_send_to_whatsapp(file_path, file_type,number,facebookData)
+
+            if media_id:
+                # Send media to a specified user via WhatsApp
+                # phone_number = request.POST.get('phone_number')
+                send_media_to_user(number, media_id,facebookData,file_type)
+
+                return JsonResponse({'status': 'success', 'media_url': file_path, 'media_id': 'media_id'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Failed to upload media to WhatsApp.'}, status=500)
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Invalid file type. Only images, videos, and audios are allowed.'}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'No file uploaded.'}, status=400)
+
+import requests
+
+def upload_and_send_to_whatsapp(file_path, file_type, phone_number, facebookData):
+    """ Upload file to WhatsApp and send it to a user """
+
+    # Step 1: Upload Media to WhatsApp API
+    upload_url = f"https://graph.facebook.com/v21.0/{facebookData.phoneNumberId}/media"
+
+    headers = {
+        "Authorization": f"Bearer {facebookData.accessToken}"
+    }
+
+    # Open the file and prepare it for uploading
+    with open(file_path, 'rb') as file:
+        files = {
+            'file': (file_path, file, file_type)  # The file to upload
+        }
+
+        # Include the required messaging_product parameter
+        data = {
+            "messaging_product": "whatsapp",  # Specify the product (WhatsApp)
+        }
+
+        print(f"Uploading file {file_path} to WhatsApp...")
+
+        try:
+            # Send POST request to upload the media file
+            response = requests.post(upload_url, headers=headers, files=files, data=data)
+            response.raise_for_status()  # Raise an error for non-2xx status codes
+
+            # Step 2: Extract Media ID from the response and send the media to the user
+            media_id = response.json().get('id')
+            if not media_id:
+                print("Error: No media ID returned from upload.")
+                return None
+
+            print(f"Media uploaded successfully. Media ID: {media_id}")
+
+            # Send media to the user
+            # send_media_to_user(phone_number, media_id, facebookData, file_type)
+            return media_id
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error uploading media: {e}")
+            print("Response:", response.text)
+            return "Error uploading media."
+
+def send_media_to_user(phone_number, media_id, facebookData, file_type):
+    """ Send media to a specified user via WhatsApp """
+
+    # Send Media API endpoint
+    send_url = f"https://graph.facebook.com/v21.0/{facebookData.phoneNumberId}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {facebookData.accessToken}"
+    }
+
+    # Construct the message data with the media ID
+    message_data = {
+        "messaging_product": "whatsapp",
+        "to": phone_number,
+    }
+    print("medis",media_id,file_type)
+    # Determine the correct type based on the file_type
+    if file_type.startswith('image'):
+        message_data["type"] = "IMAGE"  # Set the correct type
+        message_data["image"] = {
+            "id": media_id,
+            "caption": "Here is your requested media."  # Optional caption
+        }
+    elif file_type.startswith('text') or file_type == 'application/pdf' or file_type == 'text/plain':
+            print("here in message")
+            message_data["type"] = "DOCUMENT"
+            message_data["document"] = {
+                "id": media_id,
+                "caption": "Here is your requested file."  # Optional caption
+            }
+
+
+    elif file_type.startswith('video'):
+        message_data["type"] = "VIDEO"  # Set the correct type
+        message_data["video"] = {
+            "id": media_id,
+            "caption": "Here is your requested media."
+        }
+    elif file_type.startswith('audio'):
+        message_data["type"] = "AUDIO"  # Set the correct type
+        message_data["audio"] = {
+            "id": media_id
+        }
+    else:
+        message_data["type"] = "FILE"
+        message_data["file"] = {
+                "id": media_id,
+                "caption": "Here is your requested file."  # Optional caption
+            }
+
+        print("Error: Unsupported file type.")
+        print("sendtyhg")
+        return False
+
+    print(f"Sending media to {phone_number}...")
+
+    try:
+        # Send the POST request to send the media
+        response = requests.post(send_url, headers=headers, json=message_data)
+        print("respone",response.json(),response,"respomse")
+        # response.raise_for_status()  # Raise an error for non-2xx status codes
+
+        if response.status_code == 200:
+            print(f"Media sent successfully to {phone_number}")
+            return True
+        else:
+            print(f"Error sending media: {response.status_code}")
+            print("Response:", response.text)
+            return False
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending media: {e}")
+        print("Response:", response.text)
+        return False
 

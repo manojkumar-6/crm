@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Styling for the popup window */
+        
+        .popup-window {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            height: 240px;
+            background: #000;
+            display: none;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #1f1f1f;
+        }
+        
+        .container-fluid {
+            height: 100%;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 24%;
+            background-color: #2c2f33;
+            overflow-y: auto;
+            border-right: 2px solid #404040;
+            max-height: 100vh;
+        }
+        
+        .sidebar-header {
+            background-color: #23272a;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+        /* Search Bar Styling */
+        
+        .search-bar {
+            padding: 10px;
+            background-color: #23272a;
+            margin: 0 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background-color: #2c2f33;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .contact-list {
+            padding: 0;
+            list-style: none;
+            margin: 0;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #3b3f43;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .contact-item:hover {
+            background-color: #3a4a54;
+        }
+        
+        .contact-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .chat-section {
+            flex-grow: 1;
+            display: none;
+            flex-direction: column;
+            background-color: #121212;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background-color: #23272a;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 160px);
+            position: fixed;
+        }
+        /* Container for messages */
+        /* Wrapper for each message (both user and AI) */
+        
+        .message-wrapper {
+            display: flex;
+            /* Use flex to position both sides */
+            justify-content: space-between;
+            /* Ensure both messages are on opposite sides */
+            margin-bottom: 15px;
+            /* Space between different message entries */
+        }
+        /* Message box for both user and AI */
+        
+        .message {
+            max-width: 45%;
+            /* Limit the width of each message box */
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        /* User's message styling */
+        
+        .message.user {
+            background-color: #056162;
+            ;
+            /* Light green background for user messages */
+            /* Align user message to the left */
+            margin-right: 10px;
+            /* Space between user and AI message */
+        }
+        /* AI's message styling */
+        
+        .message.ai {
+            background-color: #056162;
+            /* Light gray background for AI messages */
+            /* Align AI message to the right */
+            margin-left: 0px;
+            /* Space between user and AI message */
+        }
+        /* Time label styling */
+        
+        .time-label {
+            font-size: 12px;
+            color: #888;
+            text-align: right;
+            margin-top: 5px;
+        }
+        /* Message box styling for both user and AI messages */
+        /* User message styling */
+        
+        .sent {
+            background-color: #056162;
+            align-self: flex-end;
+            text-align: right;
+            color: white;
+            position: relative;
+        }
+        
+        .sents {
+            background-color: #056162;
+            color: white;
+            text-align: right;
+            /* Align text to the right */
+            padding: 10px;
+            /* Add padding to give some space inside the message box */
+            border-radius: 8px;
+            /* Rounded corners */
+            margin-bottom: 10px;
+            /* Space between messages */
+            max-width: 80%;
+            /* Limit the width so it doesn’t fill the whole container */
+            word-wrap: break-word;
+            /* Ensure long words break to the next line if they are too long */
+            position: relative;
+            /* Positioning within the container */
+            float: right;
+            /* Ensure it aligns to the right */
+        }
+        
+        .received {
+            background-color: #2c2f33;
+            align-self: flex-start;
+            text-align: left;
+            color: white;
+            position: relative;
+        }
+        
+        .time-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .date-separator {
+            text-align: center;
+            color: #aaa;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .message-input {
+            display: flex;
+            padding: 5px;
+            background-color: #23272a;
+            position: fixed;
+            bottom: 0;
+            z-index: 10;
+            width: 76%;
+        }
+        
+        .message-input input {
+            flex-grow: 1;
+            border: none;
+            border-radius: 20px;
+            padding: 10px;
+            outline: none;
+            background-color: #2c2f33;
+            color: white;
+            font-size: 14px;
+            height: 30px;
+            /* Fixed height */
+            overflow-x: auto;
+            /* Enables vertical scroll */
+            resize: none;
+            /* Disable resizing of input */
+        }
+        
+        .message-input textarea {
+            flex-grow: 1;
+            border: none;
+            border-radius: 10px;
+            padding: 10px;
+            outline: none;
+            background-color: #2c2f33;
+            color: white;
+            font-size: 14px;
+            height: auto;
+            /* Allows the textarea to grow with content */
+            min-height: 30px;
+            /* Minimum height to show at least a few lines */
+            resize: vertical;
+            /* Allow vertical resizing but not horizontal */
+            overflow-y: auto;
+            /* Allow vertical scrolling if content overflows */
+            max-height: 50px;
+            /* Max height after which scrolling will happen */
+        }
+        /* Styling the scrollbar for better aesthetics */
+        
+        .message-input textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .message-input textarea::-webkit-scrollbar-thumb {
+            background-color: #056162;
+            border-radius: 3px;
+            border: 2px solid #23272a;
+            /* Optional: adds a border around the scrollbar */
+        }
+        
+        .message-input textarea::-webkit-scrollbar-track {
+            background: #2c2f33;
+            border-radius: 10px;
+        }
+        /* Style the modal background */
+        
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            z-index: 1;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+        /* Modal content */
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            /* Reduced width */
+            border-radius: 8px;
+            /* Rounded corners */
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        /* Close button (top-right corner) */
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        /* Style for the select input and button */
+        
+        select,
+        #upload_ {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        /* File upload message styling */
+        
+        #file-upload-message,
+        #upload_message {
+            font-size: 14px;
+            color: #333;
+            padding-top: 10px;
+        }
+        
+        #chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            max-height: calc(100vh - 160px);
+            /* Ensure it fills the space correctly */
+        }
+        /* Styling for chat box scrollbar */
+        
+        #chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #chat-box::-webkit-scrollbar-thumb {
+            background-color: #056162;
+            border-radius: 10px;
+            border: 2px solid #23272a;
+        }
+        
+        #chat-box::-webkit-scrollbar-track {
+            background: #121212;
+            border-radius: 10px;
+        }
+        
+        .message-input button {
+            margin-left: 9px;
+            border: none;
+            background-color: #056162;
+            color: white;
+            padding: 10px 10px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .message-input button:hover {
+            background-color: #074d56;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                Contacts
+            </div>
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Search Contacts...">
+            </div>
+
+            <ul class="contact-list" id="contact-list">
+                <!-- Contacts will be loaded dynamically -->
+            </ul>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section" id="chat-section">
+            <div class="chat-header" id="chat-contact-name">
+                <img src="https://via.placeholder.com/40" alt="User Icon">
+                <span>Select a Contact</span>
+            </div>
+            <div id="chat-box" class="chat-box">
+                <!-- Chat messages will load dynamically -->
+            </div>
+            <div class="message-input">
+                <textarea id="message-input" placeholder="Type a message..." rows="3"></textarea>
+
+                <div class="send-container">
+                    <!-- Plus icon for opening the file upload modal -->
+                    <button id="plus-icon" onclick="openModal()">Send Media</button>
+                    <button id="send-message-btn">&gt;</button>
+
+                </div>
+            </div>
+
+            <!-- Modal for file upload -->
+            <div id="file-upload-modal" class="modal" style="display:none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    <h3 id="upload_message">Select file type to upload </h3>
+                    <select id="file-type-select">
+
+                            <option value="jpeg">JPEG</option>
+                            <option value="png">PNG</option>
+                            <option value="mp3">MP3</option>
+                            <option value="mp4">MP4</option>
+                            <option value="audio">Audio</option>
+                            <option value="pdf">PDF</option>
+                            <option value="textfile">Text File</option>
+
+                    </select>
+                    <button id="upload_" onclick="triggerFileInput()">Select File To Send</button>
+                    <!-- Hidden file input -->
+
+                    <input type="file" id="file-input" accept="*/*" onchange="handleFileUpload(event)" style="display:none;">
+
+                    <div id="file-upload-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to open the modal
+        function openModal() {
+            document.getElementById('file-upload-modal').style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            document.getElementById('file-upload-modal').style.display = 'none';
+        }
+
+        // Trigger the file input based on dropdown selection
+        function triggerFileInput() {
+            document.getElementById('file-input').click();
+        }
+
+
+        // Handle the file upload process
+
+
+        // Simulate the file upload (for demonstration purposes)
+        function simulateFileUpload(file) {
+            // Simulate a successful upload with an 80% chance
+            return Math.random() > 0.2; // 80% chance of success
+        }
+
+        function fetchPhoneNumber(number) {
+            if (number != "get") {
+                currentPhoneNumber = number
+            }
+
+            return currentPhoneNumber
+        }
+
+        function handleFileUpload(event) {
+            console.log('here')
+            const file = event.target.files[0];
+            const fileType = file.type.split('/')[0]; // "image", "video", or "audio"
+            const fileSize = file.size / 1024 / 1024; // Convert to MB
+            let m = fetchPhoneNumber("get")
+            console.log("m", m)
+                // Display a message if file size is too large
+            if (fileSize > 16) { // Max file size 16MB for video/audio
+                document.getElementById('file-upload-message').innerText = "File size exceeds the limit of 16MB.";
+                return;
+            }
+
+            // Proceed to upload the file
+            document.getElementById('file-upload-message').innerText = "Uploading...";
+
+            // Prepare form data to send to the backend
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append("number", fetchPhoneNumber('get'))
+
+            // Send the file to the backend
+            fetch('/upload-media/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}', // CSRF protection in Django
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('file-upload-message').innerText = "File uploaded successfully.";
+                    } else {
+                        document.getElementById('file-upload-message').innerText = "Error uploading file.";
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('file-upload-message').innerText = "An error occurred.";
+                });
+        }
+
+        // Function to get the CSRF token for Django
+
+        $(document).ready(function() {
+
+
+            let currentPhoneNumber = '';
+
+
+
+            function fetchContacts() {
+                $.ajax({
+                    url: "/getContacts", // Django URL for fetching contacts
+                    method: "GET",
+                    success: function(data) {
+                        const contacts = data;
+                        const contactList = $("#contact-list");
+                        contactList.empty();
+
+                        contacts.sort(function(a, b) {
+                            // Sort primarily by unseen messages, then by latest message time
+                            const unseenA = a.unseen_count || 0;
+                            const unseenB = b.unseen_count || 0;
+
+                            // If unseen counts are equal, sort by latest message time
+                            if (unseenA === unseenB) {
+                                return new Date(b.latest_message_time) - new Date(a.latest_message_time);
+                            }
+                            return unseenB - unseenA; // Unseen message count in descending order
+                        });
+
+                        $.each(contacts, function(key, contact) {
+                            const contactItem = $(`[data-phone="${contact.phone}"]`);
+
+                            if (contactItem.length === 0) {
+                                // If the contact doesn't exist, create a new one and append to the list
+                                contactList.append(`
+    <li class="contact-item" data-phone="${contact.phone}" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <img src="https://via.placeholder.com/40" alt="User Icon" style="margin-right: 10px;">
+            <span>${contact.user}</span>
+        </div>
+        <span class="unseen-count" style="display: ${contact.unseen_count > 0 ? 'inline' : 'none'};
+            background-color: green; color: white; border-radius: 12px; padding: 5px 5px; font-size: 14px; font-weight: bold;">
+            ${contact.unseen_count}
+        </span>
+    </li>
+`);
+
+                            } else {
+                                // If the contact exists, update only the unseen count or latest message time
+                                const existingItem = contactItem.find(".unseen-count");
+
+                                // Update unseen count only if it has changed
+                                if (existingItem.text() !== contact.unseen_count.toString()) {
+                                    existingItem.text(contact.unseen_count).toggle(contact.unseen_count > 0);
+                                }
+
+                                // Update the latest message time if it has changed (optional)
+                                // Here, assuming latest_message_time is available in the response
+                                const existingTime = contactItem.find(".latest-message-time");
+                                if (existingTime && existingTime.text() !== contact.latest_message_time) {
+                                    existingTime.text(contact.latest_message_time);
+                                }
+                            }
+                        });
+
+
+                    },
+                    error: function() {
+                        alert("Failed to load contacts.");
+                    }
+                });
+            }
+
+            // Load chat when a contact is clicked
+            $("#contact-list").on("click", ".contact-item", function() {
+                const phone = $(this).data("phone");
+                currentPhone = phone;
+                fetchPhoneNumber(currentPhoneNumber)
+                $("#chat-contact-name span").text(`Chat with ${phone}`);
+                $("#chat-section").fadeIn();
+                $(this).addClass("green-contact").siblings().removeClass("green-contact"); // Mark the contact as green
+                $.ajax({
+                    url: `/getChat/${phone}`,
+                    method: "GET",
+                    success: function(data) {
+                        markMessagesAsSeen(phone);
+                        fetchPhoneNumber(phone)
+                            // Clear unseen message count for this contact
+                        const countElement = $(this).find(".unseen-count");
+                        countElement.hide();
+                        const chatBox = $("#chat-box");
+                        chatBox.empty();
+                        let lastDate = null;
+                        $.each(data, function(index, message) {
+                            const date = message.date_queried.split(' ')[0];
+                            const time = message.date_queried.split(' ')[1];
+                            const messageType = message.ai_model_reply ? "sent" : "received";
+
+                            if (lastDate !== date) {
+                                chatBox.append(`<div class="date-separator">${date}</div>`);
+                                lastDate = date;
+                            }
+                            console.log(message)
+                            if (message.user_query.length >= 2) {
+                                chatBox.append(`
+    <div class="message-wrapper">
+        <div class="message user">
+            <p>${message.user_query}</p>
+           <!-- User's message -->
+        </div>
+
+
+    </div>
+`);
+                            }
+                            chatBox.append(`
+    <div >
+
+        <div class="sents">
+            <p>${message.ai_model_reply}</p>
+             <div class="time-label">${time}</div> <!-- AI's reply -->
+        </div>
+
+    </div>
+`);
+
+                        });
+                        chatBox.scrollTop(chatBox[0].scrollHeight);
+
+                    },
+                    error: function() {
+                        alert("Failed to load chat.");
+                    }
+                });
+
+
+
+                socket = new WebSocket(`ws://localhost:8000/ws/chat/${phone}/`);
+                console.log("sockert", socket)
+                socket.onmessage = function(event) {
+                    const message = JSON.parse(event.data);
+                    // If the chatbox is not open, increase the unseen message count for the contact
+                    if ($("#chat-section").css("display") === "none" || currentPhoneNumber !== phone) {
+                        updateUnseenMessageCount(phone, 1);
+                    } else {
+                        // Mark all messages as seen once the chat is open
+                        markMessagesAsSeen(phone);
+                    }
+                    if (message.phone === currentPhone) {
+                        const chatBox = $("#chat-box");
+                        const messageType = message.ai_model_reply ? "sent" : "received";
+                        const time = new Date(message.date_queried).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        chatBox.append(`
+                            <div class="message ${messageType}">
+                                <p>${message.ai_model_reply || message.user_query}</p>
+                                <div class="time-label">${time}</div>
+                            </div>
+                        `);
+                        markMessagesAsSeen(phone);
+                        chatBox.scrollTop(chatBox[0].scrollHeight);
+                    }
+                };
+            });
+
+
+
+            // Call the API when the user opens a chat
+            function markMessagesAsSeen(phone) {
+                fetch(`/mark-messages-as-seen/${phone}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                        },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(`${data.count} messages marked as seen`);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+
+            function updateUnseenMessageCount(phone, count) {
+                const contactItem = $(`[data-phone="${phone}"]`);
+                const countElement = contactItem.find(".unseen-count");
+
+                let currentCount = parseInt(countElement.text()) || 0;
+                currentCount += count;
+
+                // Update the count display
+                if (currentCount > 0) {
+                    countElement.text(currentCount);
+                    countElement.show();
+                } else {
+                    countElement.hide();
+                }
+            }
+
+            // Search functionality
+            $("#search-input").on("keyup", function() {
+                const query = $(this).val().toLowerCase();
+                $(".contact-item").each(function() {
+                    const contactName = $(this).text().toLowerCase();
+                    if (contactName.includes(query)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+
+
+            function sendMessage() {
+                const message = $("#message-input").val().trim();
+                if (!message) {
+                    alert("Type a message first.");
+                    return;
+                }
+                const currentTime = new Date().toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                let number = fetchPhoneNumber("get")
+                fetch("/send_message_from_socket/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json", // Send data as JSON
+                            'X-CSRFToken': '{{ csrf_token }}', // CSRF token for security
+                        },
+
+                        body: JSON.stringify({
+                            phone_number: number,
+                            message: message
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Message sent successfully:', data);
+                    })
+                    .catch(error => {
+                        console.error('Error sending message:', error);
+                    });
+                $("#chat-box").append(`
+                    <div class="message sent">
+                        <p>${message}</p>
+                        <div class="time-label">${currentTime}</div>
+                    </div>
+                `);
+
+                $("#message-input").val("");
+                $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+            }
+
+            // Handle 'Enter' key press
+            $("#message-input").on("keydown", function(event) {
+                // If Enter is pressed without Shift, send the message
+                if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault(); // Prevent the default newline behavior
+                    sendMessage(); // Send message
+                }
+                // If Shift + Enter is pressed, add a newline
+                else if (event.key === "Enter" && event.shiftKey) {
+                    // Insert a newline at the cursor position
+                    const input = $(this);
+                    const cursorPosition = input.prop("selectionStart");
+                    const value = input.val();
+                    input.val(value.slice(0, cursorPosition) + "\n" + value.slice(cursorPosition));
+                    input[0].setSelectionRange(cursorPosition + 1, cursorPosition + 1); // Move cursor to the new line
+                    event.preventDefault(); // Prevent the form submission behavior (newline without sending message)
+                }
+            });
+
+            let inactivityTimer;
+            const inactivityLimit = 20 * 60 * 1000; // 2 minutes in milliseconds
+
+            // Function to reset the inactivity timer
+            function resetInactivityTimer() {
+                clearTimeout(inactivityTimer);
+
+                inactivityTimer = setTimeout(closeTab, inactivityLimit);
+            }
+
+            // Function to handle tab closing (or redirection)
+            function closeTab() {
+                alert('You have been inactive for more than 1 minute. The tab will now close.');
+                window.location.href = "http://localhost:8000/"; // Redirects to a blank page
+            }
+
+            // List of events to track (user actions)
+            const events = ['click', 'mousemove', 'keydown'];
+
+            // Attach event listeners to detect activity
+            events.forEach(event => {
+                document.addEventListener(event, resetInactivityTimer);
+            });
+
+            // Initialize the timer when the page loads
+
+            // Send message on button clic
+            // Send message
+            $("#send-message-btn").click(function() {
+                const message = $("#message-input").val().trim();
+                if (!message) {
+                    alert("Type a message first.");
+                    return;
+                }
+                const currentTime = new Date().toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                $("#chat-box").append(`
+                    <div class="message sent">
+                        <p>${message}</p>
+                        <div class="time-label">${currentTime}</div>
+                    </div>
+                `);
+                $("#message-input").val("");
+                $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+            });
+
+            function startFetchingContacts() {
+
+                fetchContacts(); // Fetch contacts initially
+                setTimeout(startFetchingContacts, 4000); // Then fetch again in 60 seconds
+            }
+            resetInactivityTimer();
+            startFetchingContacts(); // Start fetching contacts
+
+
+
+
+
+        });
+    </script>
+</body>
+
+</html>

@@ -28,18 +28,17 @@ DEBUG = True
 ALLOWED_HOSTS = ["*","https://charmed-sailfish-neutral.ngrok-free.app","http://34.207.201.210","https://ec2-34-207-201-210.compute-1.amazonaws.com/"]
 
 
-# Application definition
+
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'accounts',
-
     'widget_tweaks',
 ]
 
@@ -54,6 +53,15 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'crm.urls'
+
+
+ASGI_APPLICATION = 'crm.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # Use in-memory layer
+    },
+}
 
 TEMPLATES = [
     {
@@ -75,7 +83,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://charmed-sailfish-neutral.ngrok-free.app',
     "https://notifier-1050649476.us-east-1.elb.amazonaws.com",
     "https://ec2-54-158-35-68.compute-1.amazonaws.com/",
-    "https://app.fixm8.com",
+    "https://app.fixm8.com ",
     'https://notifier-1050649476.us-east-1.elb.amazonaws.com/'
 ]
 

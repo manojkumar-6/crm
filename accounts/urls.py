@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .views import *
+from . import routing
 from django.contrib.auth.views import LogoutView
 urlpatterns = [
     path('', views.loginUser, name="login"),
@@ -66,15 +67,20 @@ urlpatterns = [
     path('users_/delete/<int:user_id>/', views.delete_user_tenant, name='delete_user_tenant'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
     path('add-template/', views.add_template, name='add_template'),
-  path('save-template/', views.save_template, name='save_template'),
-   path('delete-template/<str:template_name>/', views.delete_template, name='delete_template'),
-   path('create/tenant_/', views.create_user_tenant_, name='create_tenant_'),
-      path('create-access/', views.create_access, name='create_access'),
+    path('save-template/', views.save_template, name='save_template'),
+    path('delete-template/<str:template_name>/', views.delete_template, name='delete_template'),
+    path('create/tenant_/', views.create_user_tenant_, name='create_tenant_'),
+    path('create-access/', views.create_access, name='create_access'),
     path('get-access/', views.client_dashboard_access, name='get_access'),
     path('update-access/', views.update_access, name='update_access'),
     path('delete-access/', views.delete_access, name='delete_access'),
-     path('api/dashboard-access/', DashboardAccessView.as_view(), name='dashboard_access'),
-     path('api/get-existing-users/', views.get_user_data, name='userdata'),
+    path('api/dashboard-access/', DashboardAccessView.as_view(), name='dashboard_access'),
+    path('api/get-existing-users/', views.get_user_data, name='userdata'),
+    path('api/chat', views.chat,name='userdata'),
     path('api/dashboard-access/update/<int:entry_id>/', DashboardAccessUpdateView.as_view(), name='update_dashboard_access'),
-
+    path('getContacts', views.getContacts,name='user_'),
+    path('getChat/<str:number>', views.getChat,name='user_data'),
+    path('upload-media/', views.upload_media, name='upload_media'),
+    path('send_message_from_socket/', views.send_message_from_socket,name='user_data'),
+    path('mark-messages-as-seen/<str:phone>/', views.mark_messages_as_seen, name='mark_messages_as_seen'),
 ]
