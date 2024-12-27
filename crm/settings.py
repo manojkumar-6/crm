@@ -83,7 +83,8 @@ CSRF_TRUSTED_ORIGINS = [
     'https://charmed-sailfish-neutral.ngrok-free.app',
     "https://notifier-1050649476.us-east-1.elb.amazonaws.com",
     "https://ec2-54-158-35-68.compute-1.amazonaws.com/",
-    "https://app.fixm8.com ",
+    "https://app.fixm8.com",
+    "https://app.fixm8.com/",
     'https://notifier-1050649476.us-east-1.elb.amazonaws.com/'
 ]
 
