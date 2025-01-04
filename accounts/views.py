@@ -893,7 +893,8 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         media_dict[recipient]='no path'
     # if (mes)
     print("input message",input_message)
-    message_dict[recipient].append(input_message)
+    temp_input_message="User response : "+input_message
+    message_dict[recipient].append(temp_input_message)
 
     # Check if the user is explicitly asking for support
     support_needed = check_support_needed(input_message)
@@ -931,7 +932,7 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
     else:
         response = model.generate_content('''Analyze the entire conversation below and generate an appropriate response based on the user's latest input and the previous AI responses. Ensure the response is contextually relevant and coherent with the entire dialogue the conversation is provided as a single string. Here is the conversation string: '''+ full_input +'''Based on the above conversation, generate the next response:''')
 
-    message_dict[recipient].append(response.text[:100])
+    message_dict[recipient].append("AI model response "+" " +response.text[:100])
     response=model.generate_content('''Analyzing Support Need:
 
 Please analyze the provided response and determine if it requires the addition of the phrase: "I can raise a request for support for an issue you're facing if needed."
