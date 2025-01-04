@@ -591,9 +591,10 @@
 
         templates.forEach((templateElement) => {
             const templateName = templateElement.querySelector('.accordion-header').textContent.trim();
+            console.log("trmosakjjas", templateName)
             const quillId = `emailDescription${templateName}`; // Ensure the ID is consistent
             const descriptionElement = templateElement.querySelector(`#${quillId}`);
-            console.log(quillId);
+            console.log("id", quillId, descriptionElement);
 
             if (descriptionElement) {
                 // Initialize Quill editor
@@ -668,7 +669,6 @@
                     clearTimeout(typingTimer);
                     const updatedText = quill.root.innerHTML
                     const emailFormatSelect = templateElement.querySelector(`#emailFormat${templateName}`);
-                    console.log(updatedText, emailFormatSelect.value);
                     const editorId = quill.container.id;
                     if (emailFormatSelect == "plain") {
                         // Get the plain text content (without formatting)
