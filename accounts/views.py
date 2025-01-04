@@ -893,8 +893,7 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         media_dict[recipient]='no path'
     # if (mes)
     print("input message",input_message)
-    temp_input_message="User response : "+input_message
-    message_dict[recipient].append(temp_input_message)
+    message_dict[recipient].append(input_message)
 
     # Check if the user is explicitly asking for support
     support_needed = check_support_needed(input_message)
@@ -930,26 +929,21 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         response = model.generate_content([full_input , image])
 
     else:
-        response = model.generate_content('''Analyze the entire conversation below and generate an appropriate response based on the user's latest input and the previous AI responses. Ensure the response is contextually relevant and coherent with the entire dialogue the conversation is provided as a single string. Here is the conversation string: '''+ full_input +'''Based on the above conversation, generate the next response:''')
+        response = model.generate_content(full_input)
 
-    message_dict[recipient].append("AI model response "+" " +response.text[:100])
-    response=model.generate_content('''Analyzing Support Need:
+    message_dict[recipient].append(response.text[:100])
+    response=model.generate_content('''Analyzing Support Need :
 
-Please analyze the provided response and determine if it requires the addition of the phrase: "I can raise a request for support for an issue you're facing if needed."
-
-- If the response already includes support information or offers additional help, return the original response unchanged.
-- If the response does not mention support, add the phrase at the end, provided the message is not a greeting or acknowledgment.
-- If the response cannot be handled or is unclear, return: "Our support team will reach out to you."
-
+Analyze the provided response  and determine if it needs the additional phrase: "I can raise a request for support for an issue your facing if needed."
+If the response already covers support or additional help, return the same text with no changes.
+If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
+If the response cannot be handled, return "Our support team will reach out to you."
 User Asking for Support Multiple Times:
 
-- If the user requests support for the first or second time, provide a **full troubleshooting guide**. Include detailed steps for solving the issue (without asking the user for more information). For example, offer a clear, actionable set of instructions, such as checking system settings, resetting devices, or troubleshooting common error messages.
-- If the user requests support more than 3 times, return: "I've raised a request, and our support team will reach out to you soon."
-
-Return the final text, ensuring no other changes are made to the original response unless the phrase for support escalation or troubleshooting steps is added .**provide it in 120 word**.
-
-Text to analyze:
-
+If the user asks for support the first or second time, respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps if needed (for example, asking for   details about the problem andproviding trouble shooting steps to it).
+If the user asks for support more than 3 times, return "I've raised a request, and our support team will reach out to you soon."
+Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.
+the text is
 ''' + response.text )
 
     if(response.text =="I've raised a request, and our support team will reach out to you soon."):
@@ -965,8 +959,7 @@ Text to analyze:
         user_data_dict[recipient]=[summary.text,media_dict[recipient]]
         reslove_dict[recipient]="feedback"
         return  send_message_interaction(recipient)
-#     response=model.generate_content('''If the response exceeds 120 words, shorten it to 100 words or fewer without changing the meaning. If the response lacks support information, add the phrase: "I can raise a support request on your behalf" where appropriate.Response to shorten:
-# '''+response.text)
+    response=model.generate_content('''make the response to a short 100 words if response length exceeds by 120 words with same meaning and add the phrase i can raise a support request on your behalf to the response if you think it is needed to response and  the response is: '''+response.text)
     user=UserModels.objects.filter(phone=recipient).first()
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
