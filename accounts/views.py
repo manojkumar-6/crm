@@ -520,7 +520,7 @@ def send_email_view(request):
                     conv=ConversationModel(user=user_,ai_model_reply="welcome message",user_query=data)
                     conv.save()
 
-                    print("sent",message_)
+                    print("sent",message_,user_.name)
                     send_message(message_,facebookData)
             else:
 
@@ -529,6 +529,7 @@ def send_email_view(request):
                     conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
                     conv.save()
                     print("sent",message_)
+                    print("sent to particular user",user.name)
                     send_message(message_,facebookData)
 
             return JsonResponse({'message': 'messages successfully!','success': True}, status=200)
@@ -823,7 +824,7 @@ def get_acknowledgment_keywords(base_keywords):
     return synonyms
 
 # Get synonyms for the base acknowledgment words
-base_acknowledgment_words = [ "thanks", "cool"]
+base_acknowledgment_words = [ "thanks"]
 ACKNOWLEDGMENT_KEYWORDS = get_acknowledgment_keywords(base_acknowledgment_words)
 ACKNOWLEDGMENT_RESPONSE = "You're welcome! Feel free to reach out if you need more help."
 
@@ -893,7 +894,7 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         media_dict[recipient]='no path'
     # if (mes)
     print("input message",input_message)
-    message_dict[recipient].append(input_message)
+    message_dict[recipient].append("User Query: "+input_message+"\n")
 
     # Check if the user is explicitly asking for support
     support_needed = check_support_needed(input_message)
@@ -905,7 +906,6 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         support_count_dict[recipient]+=3
     if support_needed:
         support_count_dict[recipient] += 1
-
     if support_count_dict[recipient] >= 3:  # Change the threshold to 1
         support_count_dict[recipient]=0
         full_input = " ".join(message_dict[recipient])
@@ -929,19 +929,23 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         response = model.generate_content([full_input , image])
 
     else:
-        response = model.generate_content(full_input)
+        response = model.generate_content(
+    "Analyze the interaction between the user and the AI. The user's query is labeled as 'user query', and the AI's response is labeled as 'ai model response'. Ignore case sensitivity in the comparison.** If no AI model response is provided, assume the user has just initiated a conversation, and you act as a ai model and respond accordingly**. Carefully evaluate both strings and get an insightful analysis of the conversation and respond as as ai model to the user for further communication. The full conversation is as follows: " + full_input
+)
 
-    message_dict[recipient].append(response.text[:100])
+    # print(response,"response","fjnjk")
     response=model.generate_content('''Analyzing Support Need :
 
 Analyze the provided response  and determine if it needs the additional phrase: "I can raise a request for support for an issue your facing if needed."
 If the response already covers support or additional help, return the same text with no changes.
 If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
+
 If the response cannot be handled, return "Our support team will reach out to you."
+
 User Asking for Support Multiple Times:
 
-If the user asks for support the first or second time, respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps if needed (for example, asking for   details about the problem andproviding trouble shooting steps to it).
-If the user asks for support more than 3 times, return "I've raised a request, and our support team will reach out to you soon."
+**If the user asks for support  respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps if needed (for example, asking for   details about the problem andproviding trouble shooting steps to it).
+If the user asks for support more than 2 times, return "I've raised a request, and our support team will reach out to you soon."**
 Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.
 the text is
 ''' + response.text )
@@ -960,6 +964,7 @@ the text is
         reslove_dict[recipient]="feedback"
         return  send_message_interaction(recipient)
     response=model.generate_content('''make the response to a short 100 words if response length exceeds by 120 words with same meaning and add the phrase i can raise a support request on your behalf to the response if you think it is needed to response and  the response is: '''+response.text)
+    message_dict[recipient].append("AI model Response:  "+response.text+"\n")
     user=UserModels.objects.filter(phone=recipient).first()
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
@@ -1116,6 +1121,7 @@ def process_whatsapp_message(body):
             reslove_dict[receipient_number]="issue"
             data=user_data_dict[receipient_number]
             create_ticket_from_summary(data[0],receipient_number,data[1])
+            del user_data_dict[receipient_number]
         elif selected_option_id=="Resloved_":
             print("hereb in the loop dkjghqsdkja")
             del reslove_dict[receipient_number]
@@ -1153,17 +1159,16 @@ def process_whatsapp_message(body):
         send_message(data,facebookData)
         # Function to send messages via WhatsApp
 def send_message(data,facebookData):
-
+            print("received call for particular user")
             url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
             headers = {
                 "Authorization": "Bearer " + facebookData.accessToken,
                 "Content-Type": "application/json",
             }
-
+            print(url,data)
             response = requests.post(url, headers=headers, data=data)
             print("sejnfj",response,response.text)
-            return response
-
+            return response 
 
 def send_message_interaction(receipient_number):
     userData=UserModels.objects.filter(phone=receipient_number).first()
