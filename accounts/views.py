@@ -43,6 +43,8 @@ reslove_dict=dict()
 
 user_data_dict=dict()
 
+user_intiated_chat=dict()
+
 def superuser_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -945,7 +947,7 @@ If the response cannot be handled, return "Our support team will reach out to yo
 User Asking for Support Multiple Times:
 
 **If the user asks for support  respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps if needed (for example, asking for   details about the problem andproviding trouble shooting steps to it).
-If the user asks for support more than 2 times, return "I've raised a request, and our support team will reach out to you soon."**
+If the user asks for support more than 3 times, return "I've raised a request, and our support team will reach out to you soon."**
 Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.
 the text is
 ''' + response.text )
@@ -989,6 +991,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     print(facebookData)
     text="A support ticket had been created for the issue you had raised this is the ticket id "+str(ticket_created.ticket_number)+" further info will be shared to your email"
     data = get_text_message_input(phonenumber, text)
+    user_intiated_chat[phonenumber]="create"
     send_message(data,facebookData)
 
 
@@ -1094,6 +1097,7 @@ def process_whatsapp_message(body):
     message_data = body["entry"][0]["changes"][0]["value"]["messages"][0]
     message_id = message_data.get("id")
     receipient_number=message_data.get("from")
+    user_intiated_chat[receipient_number]="received"
     userData=UserModels.objects.filter(phone=receipient_number).first()
     name=User.objects.filter(username=userData.tenant_to).first()
     tenant=TenantModel.objects.filter(name=name).first()
@@ -1159,16 +1163,21 @@ def process_whatsapp_message(body):
         send_message(data,facebookData)
         # Function to send messages via WhatsApp
 def send_message(data,facebookData):
-            print("received call for particular user")
-            url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
-            headers = {
-                "Authorization": "Bearer " + facebookData.accessToken,
-                "Content-Type": "application/json",
-            }
-            print(url,data)
-            response = requests.post(url, headers=headers, data=data)
-            print("sejnfj",response,response.text)
-            return response 
+            data_dict = json.loads(data)
+            print(user_intiated_chat,data_dict["to"])
+            if user_intiated_chat[data_dict["to"]]=="received" or user_intiated_chat[data_dict["to"]]=="create":
+                print("received call for particular user")
+                url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+                headers = {
+                    "Authorization": "Bearer " + facebookData.accessToken,
+                    "Content-Type": "application/json",
+                }
+                print(url,data)
+                user_intiated_chat[data_dict["to"]]="sent"
+                response = requests.post(url, headers=headers, data=data)
+                print("sejnfj",response,response.text)
+                return response
+            return None
 
 def send_message_interaction(receipient_number):
     userData=UserModels.objects.filter(phone=receipient_number).first()
@@ -1641,6 +1650,7 @@ def update_ticket_status(request):
             facebookData=FacebookCredentials.objects.filter(user=tenant).first()
             print(facebookData)
             data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory+"     Please dont not reply to this message" )
+            user_intiated_chat[ticket.user.phone]="create"
             send_message(data,facebookData)
             if request.POST.get('ticket_status')=="COMPLETED":
                 send_message_interaction_by_team(ticket.user.phone)
