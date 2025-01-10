@@ -905,16 +905,14 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
     if recipient not in support_count_dict:
         support_count_dict[recipient] = 0
     if "raise" in input_message:
-        support_count_dict[recipient]+=3
+        support_count_dict[recipient]+=5
     if support_needed:
         support_count_dict[recipient] += 1
-    if support_count_dict[recipient] >= 3:  # Change the threshold to 1
+    if support_count_dict[recipient] >= 4:  # Change the threshold to 1
         support_count_dict[recipient]=0
         full_input = " ".join(message_dict[recipient])
-        print(full_input)
         message_dict[recipient] = []
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
-
         # thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
         # thread.start()
         media_dict[recipient]='no path'
@@ -930,31 +928,32 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         # media_response = process_media_with_model(media['file_path'])
         response = model.generate_content([full_input , image])
 
-    else:
-        response = model.generate_content(
-    "Analyze the interaction between the user and the AI. The user's query is labeled as 'user query', and the AI's response is labeled as 'ai model response'. Ignore case sensitivity in the comparison.** If no AI model response is provided, assume the user has just initiated a conversation, and you act as a ai model and respond accordingly**. Carefully evaluate both strings and get an insightful analysis of the conversation and respond as as ai model to the user for further communication. The full conversation is as follows: " + full_input
-)
+#     else:
+#         response = model.generate_content(
+
+# )
 
     # print(response,"response","fjnjk")
     response=model.generate_content('''Analyzing Support Need :
 
+***Objectives:
 Analyze the provided response  and determine if it needs the additional phrase: "I can raise a request for support for an issue your facing if needed."
 If the response already covers support or additional help, return the same text with no changes.
 If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
-
-If the response cannot be handled, return "Our support team will reach out to you."
+**Analyze the entire conversation the ai model should provide troubleshooting steps atleast for thrice if it didnt provide trouble shootings for more than2 times you should act as ai model and provide trouble shooting steps accordingly**
+**If you analyse that the ai model had not provided troubleshooting steps to troubleshoot the issue in the conversation for  3 times and user is reporting that issue is not fixed  act as a ai model and return the trouble shooting steps**,
+ **If you analyse in the entire conversation if the model provided troubleshooting steps for more 3 times and user reported that issue is not resloved then only you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps**
+**If the  user asks provides about the issue he is facing try to analyse it and respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps**
+***
 
 User Asking for Support Multiple Times:
-
-**If the user asks for support  respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps if needed (for example, asking for   details about the problem andproviding trouble shooting steps to it).
-If the user asks for support more than 3 times, return "I've raised a request, and our support team will reach out to you soon."**
-Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.
-the text is
-''' + response.text )
-
+**Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.**
+**Analyze the interaction between the user and the AI. The user's query is labeled as 'user query', and the AI's response is labeled as 'ai model response'. Ignore case sensitivity in the comparison.** If no AI model response is provided, assume the user has just initiated a conversation, and you act as a ai model and respond accordingly**. Carefully evaluate both strings and get an insightful analysis of the conversation and respond as as ai model to the user for further communication follow the objectives. The full conversation is as follows: "**
+''' +  full_input )
+    print("response ",response.text)
     if(response.text =="I've raised a request, and our support team will reach out to you soon."):
         full_input = " ".join(message_dict[recipient])
-
+        print("reached")
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         message_dict[recipient]=[]
 
@@ -993,7 +992,6 @@ def create_ticket_from_summary(summary,phonenumber,path):
     data = get_text_message_input(phonenumber, text)
     user_intiated_chat[phonenumber]="create"
     send_message(data,facebookData)
-
 
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
