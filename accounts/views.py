@@ -904,8 +904,8 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
     # Initialize support count if recipient is not already tracked
     if recipient not in support_count_dict:
         support_count_dict[recipient] = 0
-    if "raise" in input_message.lower():
-        support_count_dict[recipient]+=5
+    # if "raise" in input_message.lower():
+    #     support_count_dict[recipient]+=5
     if support_needed:
         support_count_dict[recipient] += 1
     if support_count_dict[recipient] >= 4:  # Change the threshold to 1
