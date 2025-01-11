@@ -950,10 +950,10 @@ User Asking for Support Multiple Times:
 **Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.**
 **Analyze the interaction between the user and the AI. The user's query is labeled as 'user query', and the AI's response is labeled as 'ai model response'. Ignore case sensitivity in the comparison.** If no AI model response is provided, assume the user has just initiated a conversation, and you act as a ai model and respond accordingly**. Carefully evaluate both strings and get an insightful analysis of the conversation and respond as as ai model to the user for further communication follow the objectives. The full conversation is as follows: "**
 ''' +  full_input )
-    print("response ",response.text)
+
     if(response.text =="I've raised a request, and our support team will reach out to you soon."):
         full_input = " ".join(message_dict[recipient])
-        print("reached")
+
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         message_dict[recipient]=[]
 
@@ -1091,7 +1091,7 @@ def get_file_extension(media_type):
 
 # Function to process WhatsApp messages
 def process_whatsapp_message(body):
-    print('body',body)
+    # print('body',body)
     message_data = body["entry"][0]["changes"][0]["value"]["messages"][0]
     message_id = message_data.get("id")
     receipient_number=message_data.get("from")
