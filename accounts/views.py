@@ -904,7 +904,7 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
     # Initialize support count if recipient is not already tracked
     if recipient not in support_count_dict:
         support_count_dict[recipient] = 0
-    if "raise" in input_message:
+    if "raise" in input_message.lower():
         support_count_dict[recipient]+=5
     if support_needed:
         support_count_dict[recipient] += 1
@@ -940,9 +940,10 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
 Analyze the provided response  and determine if it needs the additional phrase: "I can raise a request for support for an issue your facing if needed."
 If the response already covers support or additional help, return the same text with no changes.
 If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
-** in the conversation the ai model should provide troubleshooting steps for users issue  reported atleast for 5 times if it didnt provide trouble shootings for more than 5 times you should act as ai model  and provide trouble shooting steps accordingly by analysing the conversation act according you should act as the ai in the conversation only  dont act like a model analysed and responding you should act similar to the model in the convrsation**
+
+** in the conversation the ai model should provide troubleshooting steps for users issue  reported atleast for 5 times if it didnt provide trouble shootings for more than 5 times you should act as ai model  and provide trouble shooting steps accordingly by analysing the conversation act according you should act as the ai in the conversation only  dont act like a model analysed and responding you should act similar to the model in the convrsation and in the entire conversation provided if you analyse that the user is asking to raise a support request or ticket to them team then also you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps this is one of the most important objective**
 **If the ai model had not provided troubleshooting steps to troubleshoot the issue in the conversation for  5 times and user is reporting that issue is not fixed  act as a ai model and return the trouble shooting steps**,
- ** in the entire conversation provided if the model had provided troubleshooting steps for more 5 times and user reported that issue is not resloved then only you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps**
+** in the entire conversation provided if the model had provided troubleshooting steps for more 5 times and user reported that issue is not resloved and then only you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps**
 **If the  user asks provides about the issue he is facing try to analyse it and respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps**
 ***
 
@@ -951,7 +952,7 @@ User Asking for Support Multiple Times:
 **this the interaction between the user and the AI. The user's query is labeled as 'user query', and the AI's response is labeled as 'ai model response'. Ignore case sensitivity in the comparison.** If no AI model response is provided, assume the user has just initiated a conversation, and you act as a ai model and respond accordingly**. Carefully evaluate both strings and get an insightful analysis of the conversation and respond as as ai model to the user for further communication follow the objectives. The full conversation is as follows: "**
 ''' +  full_input )
 
-    if(response.text =="I've raised a request, and our support team will reach out to you soon."):
+    if((response.text =="I've raised a request, and our support team will reach out to you soon.") or  ("support team" in  response.text.lower())):
         full_input = " ".join(message_dict[recipient])
 
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
