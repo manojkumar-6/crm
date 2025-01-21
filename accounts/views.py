@@ -677,11 +677,11 @@ def email(ticket,email_,path):
 
     # Hostinger's SMTP settings
     #
-    smtp_server = "smtp.hostinger.com"
+    smtp_server = "smtp.office365.com"
     smtp_port = 587  # Use 465 if you want SSL
     sender_email = "notifications@fixm8.com"  # Your email address
     receiver_email = email_  # Recipient's email
-    password = "Vlookup@2024"  # Your email account password
+    password = "V!629645585772om"  # Your email account password
 
     # Create the email message
     message = MIMEMultipart()
@@ -958,13 +958,13 @@ User Asking for Support Multiple Times:
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         message_dict[recipient]=[]
 
-        # thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
-        # thread.start()
+        thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
+        thread.start()
         media_dict[recipient]='no path'
         print("triggered a email")
         user_data_dict[recipient]=[summary.text,media_dict[recipient]]
-        reslove_dict[recipient]="feedback"
-        return  send_message_interaction(recipient)
+        reslove_dict[recipient]="issue"
+        return  #send_message_interaction(recipient)
     response=model.generate_content('''make the response to a short 100 words if response length exceeds by 120 words with same meaning and add the phrase i can raise a support request on your behalf to the response if you think it is needed to response and  the response is: '''+response.text)
     message_dict[recipient].append("AI model Response:  "+response.text+"\n")
     user=UserModels.objects.filter(phone=recipient).first()
@@ -983,6 +983,8 @@ def create_ticket_from_summary(summary,phonenumber,path):
     print("triggering a email to client and tenant")
     # email(mail_body,user.email,path)
     # email(mail_body,user.tenant_to.email,path)
+    email(mail_body,"mk123456manoj1@gmail.com",path)
+    email(mail_body,"mk123456manoj1@gmail.com",path)
     userData=UserModels.objects.filter(phone=phonenumber).first()
     print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
@@ -1126,7 +1128,7 @@ def process_whatsapp_message(body):
             create_ticket_from_summary(data[0],receipient_number,data[1])
             del user_data_dict[receipient_number]
         elif selected_option_id=="Resloved_":
-            print("hereb in the loop dkjghqsdkja")
+
             del reslove_dict[receipient_number]
             data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
             send_message(data,facebookData)
