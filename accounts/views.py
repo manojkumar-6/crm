@@ -585,9 +585,9 @@ def loginUser(request):
         login_user = authenticate(request, username=username, password=password)
         print(login_user,TenantModel.objects.filter(name=login_user).first(),DashboardAccessProvidedByClientModel.objects.filter(user=login_user).first())
         if login_user is not None:
+            # user_logout_view = UserLogoutView()
+            # user_logout_view.dispatch(request)
             login(request, login_user)
-
-            print(login(request,login_user))
 
             if request.user.is_superuser:
                 return redirect("/adashboard")
@@ -677,16 +677,15 @@ def email(ticket,email_,path):
 
     # Hostinger's SMTP settings
     #
-    smtp_server = "smtp.office365.com"
-    smtp_port = 587  # Use 465 if you want SSL
-    sender_email = "notifications@fixm8.com"  # Your email address
-    receiver_email = email_  # Recipient's email
-    password = "V!629645585772om"  # Your email account password
-
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587  # Use 465 for SSL, or 587 for TLS
+    sender_email = "noreplyplease1230@gmail.com"  # Your Gmail address
+    # receiver_email = "receiver-email@example.com"  # Recipient's email address
+    password = ""  # Use your Gmail App Password (if you have 2FA enabled)
     # Create the email message
     message = MIMEMultipart()
     message["From"] = sender_email
-    message["To"] = receiver_email
+    message["To"] = email_
     message["Subject"] = "Ticket with number " + str(ticket['ticket_number'])+" was created "
 
     # Email body with an HTML table
@@ -758,7 +757,7 @@ def email(ticket,email_,path):
         server.login(sender_email, password)
         print("logined")
         # Send the email
-        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.sendmail(sender_email, email_, message.as_string())
         print("Email sent successfully!")
 
     except Exception as e:
