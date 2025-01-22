@@ -681,7 +681,7 @@ def email(ticket,email_,path):
     smtp_port = 587  # Use 465 for SSL, or 587 for TLS
     sender_email = "noreplyplease1230@gmail.com"  # Your Gmail address
     # receiver_email = "receiver-email@example.com"  # Recipient's email address
-    password = "srohllfyyugpnuai"  # Use your Gmail App Password (if you have 2FA enabled)
+    password = ""  # Use your Gmail App Password (if you have 2FA enabled)
     # Create the email message
     message = MIMEMultipart()
     message["From"] = sender_email
@@ -982,7 +982,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     print("triggering a email to client and tenant")
     email(mail_body,user.email,path)
     email(mail_body,user.tenant_to.email,path)
-    
+
     userData=UserModels.objects.filter(phone=phonenumber).first()
     print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
