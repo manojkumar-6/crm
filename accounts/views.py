@@ -497,6 +497,45 @@ def html_to_whatsapp_text(html_content):
     text_content = text_content.replace('\xa0', ' ')  # Remove non-breaking spaces
 
     return text_content
+import requests
+import json
+
+def send_whatsapp_message_using_template(access_token, to, template_name, language_code="en_US"):
+    url = "https://graph.facebook.com/v21.0/563853653467023/messages"
+
+    # Define the headers for the request
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    # Define the payload (data to be sent)
+    data = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "template",
+        "template": {
+            "name": template_name,
+            "language": {
+                "code": language_code
+            }
+        }
+    }
+
+    # Convert the data dictionary to JSON
+    json_data = json.dumps(data)
+
+    # Send the POST request to the Facebook API
+    response = requests.post(url, headers=headers, data=json_data)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        print("Message sent successfully!")
+        return response.json()  # Return the response as JSON
+    else:
+        print(f"Failed to send message. Status Code: {response.status_code}")
+        print(response.text)  # Print the error message
+        return None
 
 
 from django.views.decorators.csrf import csrf_protect
@@ -681,7 +720,7 @@ def email(ticket,email_,path):
     smtp_port = 587  # Use 465 for SSL, or 587 for TLS
     sender_email = "noreplyplease1230@gmail.com"  # Your Gmail address
     # receiver_email = "receiver-email@example.com"  # Recipient's email address
-    password = ""  # Use your Gmail App Password (if you have 2FA enabled)
+    password = "srohllfyyugpnuai"  # Use your Gmail App Password (if you have 2FA enabled)
     # Create the email message
     message = MIMEMultipart()
     message["From"] = sender_email

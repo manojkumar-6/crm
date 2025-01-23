@@ -12,91 +12,233 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
     <style>
-        .navbar-toggler {
-            border-color: rgba(255, 255, 255, 0.1);
-        }
+        /* Sidebar styling */
         
-        .offcanvas {
+        .sidebar {
             width: 300px;
-            background-color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #2c3e50;
+            /* Dark navy */
+            color: #ecf0f1;
+            /* Light gray */
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-        }
-        
-        @media (min-width: 992px) {
-            .navbar-collapse {
-                display: none !important;
-            }
-            .navbar-toggler {
-                display: block !important;
-            }
-        }
-        
-        .scrollable-chat {
-            max-height: 550px;
+            z-index: 1000;
+            padding: 15px;
             overflow-y: auto;
-            padding: 10px;
-            background-color: #f9f9f9;
+        }
+        
+        .sidebar a {
+            color: #bdc3c7;
+            /* Light gray */
+            text-decoration: none;
+            padding: 10px 15px;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            border-radius: 5px;
+            gap: 10px;
+            /* Spacing between icon and text */
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar a:hover {
+            background-color: #34495e;
+            /* Slightly lighter navy */
+            color: #1abc9c;
+            /* Green accent for hover */
+        }
+        
+        .sidebar a.active {
+            background-color: #1abc9c;
+            /* Highlight active item */
+            color: #fff;
+        }
+        
+        .sidebar .nav-icon {
+            font-size: 18px;
+            /* Icon size */
+        }
+        /* Main content */
+        
+        .main-content {
+            margin-left: 300px;
+            /* Sidebar width */
+            padding: 20px;
+            background-color: #ecf0f1;
+            /* Light gray */
+            min-height: 100vh;
+        }
+        /* Navbar styling */
+        
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 300px;
+            /* Align with content */
+            width: calc(100% - 300px);
+            z-index: 1100;
+            background-color: #34495e;
+            /* Green accent */
+            color: #fff;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .navbar .navbar-brand {
+            font-size: 20px;
+            color: #fff;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        /* Modal fixes */
+        
+        .modal {
+            z-index: 1250;
+            /* Ensure above other elements */
+        }
+        
+        .modal-backdrop {
+            z-index: 1240;
+            /* Ensure below modal but above content */
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                left: 0;
+                width: 100%;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        /* Title styling for sidebar */
+        
+        .sidebar-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #1abc9c;
+            /* Green color for title */
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
     <!-- Navbar with Always Visible Hamburger Menu -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu" aria-controls="offcanvasMenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <a class="navbar-brand" href="#">Dashboard</a>
-        </div>
-    </nav>
+    <!-- <nav class="navbar navbar-expand-lg navbar-dark" style="display: flex;
+           justify-content: center;
+           align-items: center;
+           height: 56px;
 
-    <!-- Off-canvas Sidebar Menu -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasMenuLabel">Menu</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link active" aria-current="page" href="/dashboard">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="/users_/">Tenant Management</a></li>
-                <li class="nav-item"><a class="nav-link" href="/update_facebook_credentials">Update My Facebook Data</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#updateProfileModal">Update My Profile</a></li>
-                <!-- Link to update profile modal -->
-                <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal">Bulk User Update</a></li>
-                <li class="nav-item"></li>
-                <a class="nav-link" href="{% url 'list_tickets' %}">Tickets Created For Tenant Issues</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/tickets_status/">Ticket Status For Tenant Issues</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/get-access/">Dashboard access management</a>
-                </li>
-                <li class="nav-item"></li>
-                <a class="nav-link" href="/api/chat" target="_blank">Chat</a>
-                </li>
-                <li class="nav-item">
-                    <form method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-link btn btn-link">Logout</button>
-                    </form>
-                </li>
-            </ul>
-        </div>
+           position: fixed;
+           top: 0;
+           width: 100%;
+           z-index: 1000;">
+        <a class="navbar-brand" href="#" style="font-size: 20px; color: white;">Client Dashboard Management</a>
+    </nav> -->
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-title">CRM</div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="/dashboard">
+                    <span class="nav-icon">&#128202;</span>
+                    <!-- Dashboard icon -->
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/users_/">
+                    <span class="nav-icon">&#128100;</span>
+                    <!-- User management icon -->
+                    Tenant Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/update_facebook_credentials">
+                    <span class="nav-icon">&#127759;</span>
+                    <!-- Globe icon -->
+                    Update My Facebook Data
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#updateProfileModal">
+                    <span class="nav-icon">&#128221;</span>
+                    <!-- Profile icon -->
+                    Update My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <span class="nav-icon">&#128228;</span>
+                    <!-- Bulk upload icon -->
+                    Bulk User Update
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'list_tickets' %}">
+                    <span class="nav-icon">&#128195;</span>
+                    <!-- Ticket icon -->
+                    Tickets Created For Tenant Issues
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/tickets_status/">
+                    <span class="nav-icon">&#128197;</span>
+                    <!-- Status icon -->
+                    Ticket Status For Tenant Issues
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/get-access/">
+                    <span class="nav-icon">&#128275;</span>
+                    <!-- Lock icon -->
+                    Dashboard Access Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/api/chat" target="_blank">
+                    <span class="nav-icon">&#128172;</span>
+                    <!-- Chat icon -->
+                    Chat
+                </a>
+            </li>
+            <li class="nav-item">
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link btn btn-link">
+                        <span class="nav-icon">&#128682;</span> <!-- Logout icon -->
+                        Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
     </div>
 
     <!-- Main content area -->
-    <div class="container my-4">
-        <main>
-            {% block content %}
-            <!-- The content will be injected dynamically in the modal -->
-            {% endblock %}
-        </main>
+    <div class="main-content">
+        <div class="container">
+            <main>
+                {% block content %}
+                <!-- Content dynamically injected -->
+                {% endblock %}
+            </main>
+        </div>
     </div>
+
 
     <!-- Update Profile Modal -->
     <div class="modal fade" id="updateProfileModal" tabindex="-1" aria-labelledby="updateProfileModalLabel" aria-hidden="true">

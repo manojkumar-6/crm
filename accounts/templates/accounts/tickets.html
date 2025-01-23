@@ -34,14 +34,80 @@
         }
         
         .description-column {
-            max-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
             word-wrap: break-word;
-            width: 300px;
+            width: 350px;
         }
         
         .form-control {
             border-radius: 50px;
+        }
+        
+        .table-scrollable {
+            max-height: 2150px;
+            /* Set a fixed height for the scrollable area */
+            overflow-y: auto;
+            /* Enable scrolling for the table body */
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+            margin: 0;
+        }
+        
+        tbody {
+            display: block;
+            max-height: 550px;
+            /* Adjustable height for scrolling */
+            overflow-y: auto;
+        }
+        
+        thead,
+        tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            /* Ensures alignment between header and body */
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: #e2e6ea;
+            /* Add hover effect for rows */
+            transition: background-color 0.3s ease;
+        }
+        
+        .description-column {
+            max-width: 400px;
+            overflow-wrap: break-word;
+            /* Wrap long text in the description column */
+        }
+        /* Customize the scrollbar for the table */
+        
+        .table-scrollable::-webkit-scrollbar {
+            width: 15px;
+        }
+        
+        .table-scrollable::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+        
+        .table-scrollable::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .table-scrollable::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .btn {
+            font-size: 12px;
+            margin: 2px;
         }
     </style>
 </head>
@@ -64,12 +130,12 @@
         </div>
 
         <!-- Table to list all tickets -->
-        <div class="table-responsive mt-3">
+        <div class="table-responsive table-scrollable">
             <table class="table table-hover" id="ticketsTable">
                 <thead class="table-dark">
                     <tr>
                         <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
-                        <th>ID</th>
+
                         <th>Tenant</th>
                         <th>Ticket Number</th>
                         <th>Ticket Description</th>
@@ -80,7 +146,7 @@
                     {% for ticket in tickets %}
                     <tr>
                         <td><input type="checkbox" class="ticket-checkbox" data-id="{{ ticket.id }}"></td>
-                        <td>{{ ticket.id }}</td>
+
                         <td>{{ ticket.user.name }}</td>
                         <td>{{ ticket.ticket_number }}</td>
                         <td class="description-column">{{ ticket.Description }}</td>
