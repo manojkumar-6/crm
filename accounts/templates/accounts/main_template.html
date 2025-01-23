@@ -429,18 +429,18 @@
 
 
             // Check for the 'parent_client_id' cookie
-            if (getCookie('client')) {
-                // Hide the links if the cookie exists
-                const facebookLink = document.querySelector('a[href="/update_facebook_credentials"]');
-                const profileLink = document.querySelector('a[data-bs-toggle="modal"][data-bs-target="#updateProfileModal"]');
+            //if (getCookie('client')) {
+            // Hide the links if the cookie exists
+            //const facebookLink = document.querySelector('a[href="/update_facebook_credentials"]');
+            //const profileLink = document.querySelector('a[data-bs-toggle="modal"][data-bs-target="#updateProfileModal"]');
 
-                const tenantDashboardLink = document.querySelector('a[href="/get-access/"]'); // Update as needed
+            //const tenantDashboardLink = document.querySelector('a[href="/get-access/"]'); // Update as needed
 
-                if (facebookLink) facebookLink.closest('.nav-item').style.display = 'none';
-                if (profileLink) profileLink.closest('.nav-item').style.display = 'none';
-                if (tenantDashboardLink) tenantDashboardLink.closest('.nav-item').style.display = 'none';
-                setInterval(check, 1000)
-            }
+            //if (facebookLink) facebookLink.closest('.nav-item').style.display = 'none';
+            //if (profileLink) profileLink.closest('.nav-item').style.display = 'none';
+            //if (tenantDashboardLink) tenantDashboardLink.closest('.nav-item').style.display = 'none';
+            //setInterval(check, 1000)
+            //}
 
         });
 
