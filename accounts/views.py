@@ -571,7 +571,7 @@ def send_email_view(request):
                     conv.save()
                     print("sent",message_)
                     print("sent to particular user",user.name)
-                    send_message(message_,facebookData)
+                    send_message_template_(message_,facebookData)
 
             return JsonResponse({'message': 'messages successfully!','success': True}, status=200)
 
@@ -1217,6 +1217,22 @@ def send_message(data,facebookData):
                 print("sejnfj",response,response.text)
                 return response
             return None
+def send_message_template_(data,facebookData):
+
+
+            # if user_intiated_chat[data_dict["to"]]=="received" or user_intiated_chat[data_dict["to"]]=="create":
+                print("received call for particular user")
+                url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+                headers = {
+                    "Authorization": "Bearer " + facebookData.accessToken,
+                    "Content-Type": "application/json",
+                }
+                # print(url,data)
+                # user_intiated_chat[data_dict["to"]]="sent"
+                response = requests.post(url, headers=headers, data=data)
+                print("sejnfj",response,response.text)
+                return response
+            # return None
 
 def send_message_interaction(receipient_number):
     userData=UserModels.objects.filter(phone=receipient_number).first()
