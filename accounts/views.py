@@ -718,9 +718,9 @@ def email(ticket,email_,path):
     #
     smtp_server = "smtp.gmail.com"
     smtp_port = 587  # Use 465 for SSL, or 587 for TLS
-    sender_email = "noreplyplease1230@gmail.com"  # Your Gmail address
+    sender_email = "srsurajjain@gmail.com"  # Your Gmail address
     # receiver_email = "receiver-email@example.com"  # Recipient's email address
-    password = "srohllfyyugpnuai"  # Use your Gmail App Password (if you have 2FA enabled)
+    password = "2p9m3bpw3"  # Use your Gmail App Password (if you have 2FA enabled)
     # Create the email message
     message = MIMEMultipart()
     message["From"] = sender_email
