@@ -562,7 +562,7 @@ def send_email_view(request):
                     conv.save()
 
                     print("sent",message_,user_.name)
-                    send_message(message_,facebookData)
+                    send_message_template_(message_,facebookData)
             else:
 
                 for user in UserModels.objects.filter(tenant_to=tenant, id__in=data.get('userIds')):
