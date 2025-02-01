@@ -8,91 +8,24 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         .table {
-            border-radius: 8px;
+            border-radius: 5px;
             overflow: hidden;
             /* Ensures rounded corners work */
         }
-        
-        .modal-body_ {
-            max-height: 600px;
-            /* Set your desired height */
-            overflow-y: auto;
-            /* Enable vertical scrolling */
-        }
-        
-        .table th,
-        .table td {
-            vertical-align: middle;
-            /* Center align content */
-            padding: 1rem;
-            /* Add padding for better spacing */
-        }
         /* Alternate row color for better readability */
-        
+
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: #f9f9f9;
             /* Light gray for odd rows */
         }
         /* Hover effect for rows */
-        
+
         .table-hover tbody tr:hover {
             background-color: #e2e6ea;
             /* Light hover color */
         }
         /* Responsive adjustments */
-        
-        @media (max-width: 768px) {
-            .table thead {
-                display: none;
-                /* Hide headers on small screens */
-            }
-            .table,
-            .table tbody,
-            .table tr,
-            .table td {
-                display: block;
-                /* Make each row block */
-                width: 100%;
-                /* Full width for each row */
-            }
-            .table tr {
-                margin-bottom: 1rem;
-                /* Space between rows */
-            }
-            .table td {
-                text-align: left;
-                /* Align text to the left */
-                position: relative;
-                /* Positioning for pseudo elements */
-                padding-left: 50%;
-                /* Indent content for label */
-            }
-            .table td::before {
-                content: attr(data-label);
-                /* Use data-label for responsive headers */
-                position: absolute;
-                left: 0;
-                width: 50%;
-                /* Label width */
-                padding-left: 1rem;
-                /* Space from left */
-                font-weight: bold;
-                /* Bold for emphasis */
-            }
-            body {
-                background-color: #f8f9fa;
-            }
-            .table-responsive {
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                border-radius: 8px;
-                overflow: hidden;
-            }
-            table {
-                font-size: 0.9rem;
-                /* Adjust font size for smaller screens */
-            }
-        }
-        
+
         .table-scrollable {
             max-height: 550px;
             /* Adjust this height based on your design */
@@ -101,119 +34,143 @@
             border-radius: 5px;
         }
         /* Customize the scrollbar */
-        
+
         .table-scrollable::-webkit-scrollbar {
             width: 10px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 5px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
         /* Adjust table layout for better readability */
-        
-        table {
-            margin: 0;
-        }
-        
-        .table thead th {
-            text-align: center;
-            background-color: #343a40;
-            color: white;
-        }
-        
+
         .table tbody tr:nth-child(odd) {
             background-color: #f9f9f9;
         }
-        
+
         .table tbody tr:nth-child(even) {
             background-color: #f1f1f1;
         }
-        
+
         .table tbody tr:hover {
             background-color: #e2e6ea;
             transition: background-color 0.3s;
         }
-        
+
         .btn {
             font-size: 12px;
             margin: 2px;
         }
-        
-        .comments-column {
-            max-width: 250px;
-            overflow-wrap: break-word;
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
         }
-        
-        thead th {
+
+        .table-hover tbody tr:hover {
+            background-color: #e2e6ea;
+        }
+
+        .table-scrollable {
+            max-height: 550px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .table-scrollable::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .table-scrollable::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+
+        .table-scrollable::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .btn {
+            font-size: 12px;
+            margin: 2px;
+            border-radius: 50px;
+            padding: 5px 15px;
+        }
+
+        .form-control {
+            border-radius: 50px;
+        }
+
+        .scrollable-textarea {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            border-radius: 10px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 2px solid #ddd;
+            background-color: transparent;
+            /* Removed background */
             position: sticky;
             top: 0;
-            z-index: 2;
-            background-color: #343a40;
-            /* Header background color */
-            color: white;
-            text-align: center;
+            z-index: 100;
         }
-        
-        @media (max-width: 768px) {
-            table {
-                font-size: 0.8rem;
-                /* Further reduce font size on smaller screens */
-            }
+
+        th {
+            font-weight: bold;
         }
-        
-        .comments-column {
-            max-height: 90px;
-            /* Set a max height for the comments area */
-            width: 70px;
-            /* Fixed width */
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
         }
-        
-        table thead {
-            background-color: #343a40;
-            color: white;
-        }
-        
-        table tbody tr:hover {
-            background-color: #f1f3f5;
-        }
-        
+
         .btn-primary,
         .btn-warning,
         .btn-danger,
         .btn-success,
         .btn-info {
-            border-radius: 50px;
+            border-radius: 20px;
             padding: 5px 15px;
         }
-        
+
         .form-control {
             border-radius: 50px;
         }
-        
+
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
         }
-        
+
         .modal-content {
-            border-radius: 10px;
+            border-radius: 8px;
             /* Rounded corners for modals */
         }
-        
-        @media (max-width: 576px) {
-            .btn {
-                width: 100%;
-                /* Make buttons full width on small screens */
-            }
+
+        thead {
+            background-color: #343a40;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
     </style>
 </head>
@@ -221,11 +178,11 @@
 <body>
     <div class="container my-4">
         <div class="row align-items-center mb-3">
-            <div class="col">
+            <div class="col header">
                 <h1 class="display-6 text-dark">Ticket Status Management</h1>
             </div>
             <div class="col-auto d-flex flex-column flex-sm-row gap-2">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Ticket Status</button>
+                <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Ticket Status</button> -->
                 <button class="btn btn-danger" onclick="deleteSelected()">Delete Selected Ticket(s)</button>
             </div>
         </div>
@@ -237,17 +194,19 @@
 
         <!-- Responsive Table for Ticket Status -->
         <div class="table-responsive table-scrollable">
-            <table class="table table-bordered table-hover" id="ticketsTable">
+            <table class="table table-hover" id="ticketsTable">
                 <thead class="table-dark">
                     <tr>
                         <th><input type="checkbox" onchange="selectAll(this)"></th>
 
                         <th>Tenant</th>
-                        <th>Client</th>
+
                         <th>Ticket Number</th>
 
                         <th>Status</th>
-                        <th class="comments-column">Comments</th>
+
+                        <th>Issue</th>
+
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -257,14 +216,16 @@
                         <td><input type="checkbox" data-id="{{ ticket.id }}"></td>
 
                         <td>{{ ticket.user.name }}</td>
-                        <td>{{ ticket.tenant_to.name }}</td>
+
                         <td>{{ ticket.ticket_number.ticket_number }}</td>
 
                         <td>{{ ticket.ticket_status }}</td>
-                        <td class="comments-column">{{ ticket.comments }}</td>
+
+                        <td>{{ ticket.issue }}</td>
+
                         <td>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.tenant_to.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-status="{{ ticket.ticket_status }}"
-                                data-comments="{{ ticket.comments }}">
+                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.user.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-status="{{ ticket.ticket_status }}"
+                                data-issue="{{ ticket.issue }}" data-comments="{{ ticket.comments }}">
                                 Edit
                             </button>
                             <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-description="{{ ticket.description }}" data-status="{{ ticket.ticket_status }}"
@@ -305,14 +266,14 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="tenant_to" class="form-label">Client:</label>
                             <select name="tenant_to" id="tenant_to" class="form-select" required>
                                 {% for tenant in tenants %}
                                 <option value="{{ tenant.id }}">{{ tenant.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
+                        </div> -->
 
                         <div class="mb-3">
                             <label for="ticket_number" class="form-label">Ticket Number:</label>
@@ -333,6 +294,10 @@
                         <!-- </div> -->
 
                         <div class="mb-3">
+                            <label for="issue" class="form-label">Issue</label>
+                            <textarea name="issue" id="issue" class="form-control" required></textarea>
+                        </div>
+                        <div class="mb-3">
                             <label for="ticket_status" class="form-label">Ticket Status:</label>
                             <select name="ticket_status" id="ticket_status" class="form-select" required>
                                 <option value="PENDING">Pending</option>
@@ -341,10 +306,7 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="comments" class="form-label">Comments:</label>
-                            <textarea name="comments" id="comments" class="form-control" required></textarea>
-                        </div>
+
 
                         <button type="submit" class="btn btn-primary">Create Ticket</button>
                     </form>
@@ -381,7 +343,7 @@
                     <h5 class="modal-title" id="showDescriptionModalLabel">Ticket Status History</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body_">
+                <div class="modal-body">
                     <p><span id="modalHistory"></span>
                     </p>
                 </div>
@@ -410,14 +372,14 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label for="editTenantSelect" class="form-label">Client</label>
                             <select class="form-select" id="editTenantSelect" name="tenant_to" required>
                                 {% for tenant in tenants %}
                                 <option value="{{ tenant.id }}">{{ tenant.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
+                        </div> -->
 
                         <div class="mb-3">
                             <label for="editTicketNumberSelect" class="form-label">Ticket Number</label>
@@ -447,8 +409,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="editComments" class="form-label">Comments</label>
-                            <textarea class="form-control" id="editComments" name="comments" required></textarea>
+                            <label for="editIssue" class="form-label">Issue</label>
+                            <textarea class="form-control" id="editIssue" name="issue" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editComment" class="form-label">Comment:</label>
+                            <textarea class="form-control" id="editComment" name="comments" required></textarea>
                         </div>
 
                         <button type="submit" class="btn btn-primary">Save Changes</button>
@@ -473,7 +439,7 @@
         const description = button.getAttribute('data-description');
         const ticketStatus = button.getAttribute('data-status');
         const dateReported = button.getAttribute('data-date-reported');
-
+        const issue = button.getAttribute("data-issue")
         const modalTicketNumber = showDescriptionModal.querySelector('#modalTicketNumber');
         const modalDescription = showDescriptionModal.querySelector('#modalDescription');
         const modalTicketStatus = showDescriptionModal.querySelector('#modalTicketStatus');
@@ -503,21 +469,21 @@
         const user = button.getAttribute('data-user');
         const tenant = button.getAttribute('data-tenant');
         const ticketNumber = button.getAttribute('data-ticket-number');
-        // const issue = button.getAttribute('data-issue');
+        const issue = button.getAttribute('data-comments');
         const status = button.getAttribute('data-status');
-        const comments = button.getAttribute('data-comments');
-        console.log(id, user, tenant, ticketNumber, status)
+        const comments = button.getAttribute('data-issue');
+        console.log("iisue", issue)
         const modal = editModal.querySelector('.modal-body');
         modal.querySelector('#editTicketId').value = id;
         modal.querySelector('#editUserSelect').value = user;
-        modal.querySelector('#editTenantSelect').value = tenant;
+        //modal.querySelector('#editTenantSelect').value = user;
         modal.querySelector('#editTicketNumberSelect').value = ticketNumber;
-        // modal.querySelector('#editIssueSelect').value = issue;
+        //modal.querySelector('#editIssueSelect').value = issue;
         modal.querySelector('#editTicketStatusSelect').value = status;
-        modal.querySelector('#editComments').value = comments;
+        modal.querySelector('#editIssue').value = comments;
+        modal.querySelector('#editComment').value = issue;
     });
 
-    // Save Changes AJAX Submission
     function saveChanges() {
         const form = document.getElementById('editTicketStatusForm');
         const formData = new FormData(form);

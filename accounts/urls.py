@@ -81,6 +81,13 @@ urlpatterns = [
     path('getContacts', views.getContacts,name='user_'),
     path('getChat/<str:number>', views.getChat,name='user_data'),
     path('upload-media/', views.upload_media, name='upload_media'),
+    path("show_template/",views.showTemplate,name="showtemplate"),
+    path("archive_user/",views.archive_user,name="archive_user"),
+    path('manage-chat-options/', views.manage_chat_options, name='manage_chat_options'),
+    path('create-chat-option/', views.create_chat_option, name='create_chatoption'),
+    path('update-chat-option/', views.update_chat_option, name='update_chatoption'),
+    path('delete-chat-option/', views.delete_chat_option, name='delete_chatoption'),
+    path('delete-selected-chat-options/', views.delete_selected_chat_options, name='delete_selected_chatoptions'),
     path('send_message_from_socket/', views.send_message_from_socket,name='user_data'),
     path('mark-messages-as-seen/<str:phone>/', views.mark_messages_as_seen, name='mark_messages_as_seen'),
 ]

@@ -7,89 +7,181 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <style>
+    /* General Styles */
+
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    .dashboard {
+        padding: 10px;
+    }
+    /* Accordion Styles */
+
     .accordion-item {
         border: 1px solid #007bff;
-        border-radius: 0.25rem;
+        border-radius: 0.5rem;
         margin-bottom: 1rem;
-        background-color: #f7f7f7;
-        /* Light grey background for accordion items */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
     }
-    
+
     .accordion-button {
         background-color: #ffffff;
-        /* Light button background */
         color: #007bff;
-        border: 1px solid #007bff;
-        /* Optional: keep border consistent */
+        font-weight: 500;
+        padding: 1rem;
+        transition: all 0.3s ease-in-out;
     }
-    
-    .accordion-button:not(.collapsed) {
-        background-color: #e1ecf4;
-        /* Lighter active button background */
+
+    .accordion-button:hover {
+        background-color: #f0f8ff;
         color: #0056b3;
     }
-    
+
+    .accordion-button:not(.collapsed) {
+        background-color: #e1ecf4;
+        color: #0056b3;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
     .accordion-body {
         background-color: #ffffff;
-        /* Light background for body */
         color: #333;
-        /* Slightly darker text for readability */
+        padding: 1.5rem;
+        line-height: 1.5;
+        border-top: 1px solid #007bff;
     }
-    
-    .user-tag {
-        background-color: #e0e0e0;
-        padding: 5px;
-        margin: 5px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 5px;
+    /* Button Styles */
+
+    .btn {
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        font-size: 14px;
+        transition: all 0.3s ease-in-out;
     }
-    
-    .remove-user {
-        cursor: pointer;
-        color: red;
-        font-weight: bold;
-        font-size: 1.2em;
-        /* Increased size for better visibility */
-        margin-left: 10px;
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        color: #ffffff;
     }
-    
-    #userSelectList {
-        max-height: 300px;
-        /* Height for scrolling */
-        overflow-y: auto;
+
+    .btn-primary:hover {
+        background-color: #0056b3;
     }
-    
+
+    .btn-danger {
+        background-color: #dc3545;
+        border: none;
+        color: #ffffff;
+    }
+
+    .btn-danger:hover {
+        background-color: #b52a37;
+    }
+    /* Table Styles */
+
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table thead th {
+        background-color: black;
+        color: #ffffff;
+        text-align: left;
+        position: sticky;
+        top: 0;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .table td {
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+    }
+    /* Modal Styles */
+
+    .modal-header {
+        background-color: #007bff;
+        color: #ffffff;
+        border-bottom: none;
+        padding: 1rem;
+    }
+
+    .modal-title {
+        font-size: 1.2rem;
+    }
+
     .modal-body {
-        max-height: 400px;
-        /* Height for modal body scrolling */
+        padding: 1.5rem;
+        line-height: 1.5;
+    }
+
+    .modal-footer {
+        border-top: none;
+        padding: 1rem;
+    }
+
+    .form-control {
+        border-radius: 0.5rem;
+    }
+    /* Scrollable Section */
+
+    .scrollable {
+        max-height: 300px;
         overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 0.5rem;
+        background-color: #f8f9fa;
+    }
+    /* Hover Effects */
+
+    .hover-highlight:hover {
+        background-color: #e6f7ff;
+        color: #007bff;
+    }
+    /* Selected User List */
+
+    .selected-users {
+        background-color: #f0f8ff;
+        padding: 10px;
+        border-radius: 0.5rem;
+        border: 1px solid #007bff;
     }
 </style>
-
 <br>
 <div class="dashboard">
     <!-- Button to Add Template -->
-    <div class="mb-3">
+    <!-- <div class="mb-3">
         <button id="addTemplateBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
         Add Template
     </button>
-    </div>
+    </div> -->
     <!-- Send Message Modal -->
-    <div id="sendMessageModal" class="modal">
+    <!-- <div id="sendMessageModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
             <h2>Select Users to Send Template</h2>
-            <div id="userList">
-                <!-- Dynamically populate users here -->
-            </div>
+            <div id="userList"> -->
+    <!-- Dynamically populate users here -->
+    <!-- </div>
             <button id="sendTemplateButton">Send</button>
         </div>
-    </div>
+    </div> -->
 
     <!-- Modal for Adding a New Template -->
-    <div class="modal fade" id="addTemplateModal" tabindex="-1" aria-labelledby="addTemplateModalLabel" aria-hidden="true">
+    <!-- <div class="modal fade" id="addTemplateModal" tabindex="-1" aria-labelledby="addTemplateModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -112,10 +204,10 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <!-- Main Content (Issues Accordion) -->
-        <div class="col-md-12">
+    </div> -->
+    <!-- <div class="row"> -->
+    <!-- Main Content (Issues Accordion) -->
+    <!-- <div class="col-md-12">
             <div class="accordion" id="issuesAccordion">
 
 
@@ -124,8 +216,8 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingTemplate{{ template.templateName }}">
                             <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTemplate{{ template.templateName }}" aria-expanded="false" aria-controls="collapseTemplate{{ template.templateName }}">
-                {{ template.templateName }}
-            </button>
+                            {{ template.templateName }}
+                            </button>
                         </h2>
                         <div id="collapseTemplate{{ template.templateName }}" class="accordion-collapse collapse" aria-labelledby="headingTemplate{{ template.templateName }}" data-bs-parent="#templateList">
                             <div class="accordion-body">
@@ -163,10 +255,10 @@
                         </div>
                     </div>
                     {% endfor %}
-                </div>
+                </div> -->
 
-                <!-- User Selection Modal -->
-                <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+    <!-- User Selection Modal -->
+    <!-- <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -190,10 +282,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
-                <!-- </div User Selection Modal -->
-                <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+    <!-- </div User Selection Modal -->
+    <!-- <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -209,9 +301,9 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
-
+    <!--
 
                 <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-lg">
@@ -237,142 +329,180 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
 
-
-
-
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingOne">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
                             Issues Reported By Your Users
                         </button>
-                    </h2>
-                    <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#issuesAccordion">
-                        <div class="accordion-body">
-                            <div class="row">
-                                <!-- Data Table (75%) -->
-                                <div class="col-md-12 mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm">Export as CSV</a>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="toggleFilterButton">Show Filter</button>
-                                    </div>
-                                    <form id="filterForm" method="GET" class="form-inline mb-3" style="display: none;">
-                                        <div class="form-row align-items-center">
-                                            <div class="form-group mb-2">
-                                                <label for="status" class="mr-2">Filter by Status:</label>
-                                                <select name="status" id="status" class="form-control mr-2">
-                                                    <option value="">All</option>
-                                                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
-                                                    <option value="INPROGRESS" {% if status_filter == 'INPROGRESS' %}selected{% endif %}>In Progress</option>
-                                                    <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group mb-2">
-                                                <label for="start_date" class="mr-2">From:</label>
-                                                <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control mr-2">
-                                            </div>
-                                            <div class="form-group mb-2">
-                                                <label for="end_date" class="mr-2">To:</label>
-                                                <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control mr-2">
-                                            </div>
-                                            <div class="form-group mb-2">
-                                                <button type="submit" class="btn btn-primary mr-2">Filter</button>
-                                                <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset Filter</button>
-                                            </div>
-                                        </div>
-                                    </form>
-
-
-
-
-                                    <div class="table-responsive mt-3" style="border: 1px solid #ddd; border-radius: 4px; padding: 1px; max-height: 400px; overflow-y: auto;">
-                                        <div style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
-                                            <table class="table">
-                                                <thead>
-                                                    <tr>
-                                                        <th> Tenant
-                                                            <a href="?sort_by=user">↑</a>
-                                                            <a href="?sort_by=-user">↓</a>
-                                                        </th>
-                                                        <th>Ticket
-                                                            <a href="?sort_by=ticket_number">↑</a>
-                                                            <a href="?sort_by=-ticket_number">↓</a>
-                                                        </th>
-                                                        <th>Status
-                                                            <a href="?sort_by=ticket_status">↑</a>
-                                                            <a href="?sort_by=-ticket_status">↓</a>
-                                                        </th>
-                                                        <th>Reported Date
-                                                            <a href="?sort_by=date_reported">↑</a>
-                                                            <a href="?sort_by=-date_reported">↓</a>
-                                                        </th>
-                                                        <th>Comment</th>
-                                                        <th>Days Reported</th>
-                                                        <th>Ticket Info</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {% for item in ticket_list %}
-                                                    <tr style="background-color: #ffffff; border-bottom: 1px solid #ddd;">
-                                                        <td>{{ item.ticket.user }}</td>
-                                                        <td>{{ item.ticket.ticket_number }}</td>
-                                                        <td>{{ item.ticket.ticket_status }}</td>
-                                                        <td>{{ item.ticket.date_reported }}</td>
-                                                        <td>{{ item.ticket.comments }}</td>
-                                                        <td>{{ item.days_reported }}</td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-info btn-sm"><a href="/tickets_status/">Manage</a></button>
-                                                        </td>
-                                                    </tr>
-
-                                                    <!-- Ticket Info Modal -->
-                                                    <div class="modal fade" id="ticketInfoModal{{ item.ticket.id }}" tabindex="-1" aria-labelledby="ticketInfoModalLabel{{ item.ticket.id }}" aria-hidden="true">
-                                                        <div class="modal-dialog modal-lg">
-                                                            <div class="modal-content">
-                                                                <div class="modal-header">
-                                                                    <h5 class="modal-title" id="ticketInfoModalLabel{{ item.ticket.id }}">Ticket Info - {{ item.ticket.ticket_number }}</h5>
-                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                </div>
-                                                                <div class="modal-body">
-                                                                    <p><strong>Ticket Number:</strong> {{ item.ticket.ticket_number }}</p>
-                                                                    <p><strong>Days Reported:</strong> {{ item.days_reported }}</p>
-                                                                    <p><strong>Description:</strong><br> {{ item.ticket.description }}<br></p>
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {% empty %}
-                                                    <tr>
-                                                        <td colspan="7" class="text-center">No tickets found for this issue.</td>
-                                                    </tr>
-                                                    {% endfor %}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Ticket Status Summary (25%) -->
-
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#issuesAccordion">
+            <div class="accordion-body">
+                <div class="row">
+                    <!-- Data Table (75%) -->
+                    <div class="col-md-12 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <!-- Inline Search Bar -->
+                            <div class="input-group" style="max-width: 900px;">
+                                <input type="text" class="form-control form-control-sm" id="searchBar" placeholder="Search tickets..." aria-label="Search tickets" onkeyup="searchTickets()">
                             </div>
+                            <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm">Export as CSV</a>
+
+                        </div>
+
+                        <!-- Ticket Table with Scrollable Area -->
+                        <div class="table-responsive" style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); max-height: 300px; overflow-y: auto;">
+                            <table class="table table-striped table-hover" id="ticketTable">
+                                <thead>
+                                    <tr>
+                                        <th>Tenant
+                                            <a href="?sort_by=user" class="text-decoration-none text-muted">↑</a>
+                                            <a href="?sort_by=-user" class="text-decoration-none text-muted">↓</a>
+                                        </th>
+                                        <th>Ticket
+                                            <a href="?sort_by=ticket_number" class="text-decoration-none text-muted">↑</a>
+                                            <a href="?sort_by=-ticket_number" class="text-decoration-none text-muted">↓</a>
+                                        </th>
+                                        <th>Status
+                                            <a href="?sort_by=ticket_status" class="text-decoration-none text-muted">↑</a>
+                                            <a href="?sort_by=-ticket_status" class="text-decoration-none text-muted">↓</a>
+                                        </th>
+                                        <th>Days Reported</th>
+                                        <th>Ticket Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in ticket_list %}
+                                    <tr style="background-color: #fff; border-bottom: 1px solid #ddd;">
+                                        <td>{{ item.ticket.user }}</td>
+                                        <td>{{ item.ticket.ticket_number }}</td>
+                                        <td>{{ item.ticket.ticket_status }}</td>
+                                        <td>{{ item.days_reported }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#ticketInfoModal{{ item.ticket.id }}">Manage</button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Ticket Info Modal -->
+                                    <div class="modal fade" id="ticketInfoModal{{ item.ticket.id }}" tabindex="-1" aria-labelledby="ticketInfoModalLabel{{ item.ticket.id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="ticketInfoModalLabel{{ item.ticket.id }}">Ticket Info - {{ item.ticket.ticket_number }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p><strong>Ticket Number:</strong> {{ item.ticket.ticket_number }}</p>
+                                                    <p><strong>Days Reported:</strong> {{ item.days_reported }}</p>
+                                                    <p><strong>Description:</strong><br> {{ item.ticket.description }}<br></p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">No tickets found for this issue.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+
+                    <!-- Ticket Status Summary (25%) -->
                 </div>
             </div>
         </div>
-
-        <!-- Email Template Section -->
     </div>
+
+    <!-- Additional Styling -->
+    <style>
+        .accordion-button {
+            background-color: #f7f7f7;
+            color: #333;
+            border-radius: 0.5rem;
+        }
+
+        .accordion-button:hover,
+        .accordion-button:focus {
+            background-color: #e2e6ea;
+            color: #333;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .modal-content {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .btn-info,
+        .btn-info:hover {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        /* Add scrollbar if rows exceed 7 */
+
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
+
+</div>
+
+
+<!-- Email Template Section -->
+
 </div>
 <script>
     const selectedUsersMap = new Map();
     const checkmap_ = new Map()
+
+    function searchTickets() {
+        var input = document.getElementById("searchBar").value.toLowerCase();
+        var rows = document.getElementById("ticketTable").getElementsByTagName("tr");
+
+        // Loop through all table rows and hide those who don't match the search query
+        for (var i = 1; i < rows.length; i++) {
+            var cells = rows[i].getElementsByTagName("td");
+            var found = false;
+
+            // Check if any cell in the row matches the search input
+            for (var j = 0; j < cells.length; j++) {
+                if (cells[j].innerHTML.toLowerCase().indexOf(input) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    }
 
     function add(templateName) {
         console.log("clicked")

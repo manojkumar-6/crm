@@ -15,5 +15,6 @@ admin.site.register(TicketsStatusModel)
 admin.site.register(FacebookCredentials)
 admin.site.register(DashboardAccessProvidedByClientModel)
 admin.site.register(TemplateModel)
+admin.site.register(ChatOptionsToTenant)
 
 

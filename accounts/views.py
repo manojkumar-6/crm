@@ -45,6 +45,8 @@ user_data_dict=dict()
 
 user_intiated_chat=dict()
 
+user_issue_dict=dict()
+
 def superuser_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -366,26 +368,8 @@ def dashBoard(request):
     # Count ticket statuses for the pie chart
     pending_count = t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.PENDING).count()
     in_progress_count = t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS).count()
-    print(in_progress_count,t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS))
     completed_count = t_tickets_.filter(ticket_status=TicketsStatusModel.TicketStatusChoices.COMPLETED).count()
-    print(pending_count)
-    # issues_count = TicketsStatusModel.objects.values('issue').annotate(
-    #     total=Count('id'),  # Total number of tickets for each issue
-    #     pending_count=Count(Case(  # Count only pending tickets
-    #         When(ticket_status=TicketsStatusModel.TicketStatusChoices.PENDING, then=1),
-    #         output_field=IntegerField()
-    #     )),
-    #     inprogress_count=Count(Case(  # Count only pending tickets
-    #         When(ticket_status=TicketsStatusModel.TicketStatusChoices.INPROGRESS, then=1),
-    #         output_field=IntegerField()
-    #     )),
-    #     completed_count=Count(Case(  # Count only pending tickets
-    #         When(ticket_status=TicketsStatusModel.TicketStatusChoices.COMPLETED, then=1),
-    #         output_field=IntegerField()
-    #     )),
-    #     users_count=Count('user', distinct=True)  # Count distinct users who reported the issue
-    # )
-    # print(issues_count)
+
     user_conversated = ConversationModel.objects.all()
     print("user",request.user.username)
     username=User.objects.filter(username=request.user.username).first()
@@ -664,9 +648,11 @@ def update_customer(request, customer_id):
         name = request.POST.get('name')
         email = request.POST.get('email')
         phone = request.POST.get('phone')
+        address=request.POST.get("address")
         customer.name = name
         customer.email = email
         customer.phone = phone
+        customer.address=address
         customer.save()
         for ticket in currentTickets:
             ticket.user=customer
@@ -835,13 +821,19 @@ genai.configure(api_key="AIzaSyDy3FHTLDFr_gUM74_RuVHoOSnF5BEC-No")
 
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
+import google.generativeai as genai_
+
+genai_.configure(api_key="AIzaSyA2gOgFJ5KU-XyzsMHhc71H3pEvalbeRzs")
+
+model_ = genai_.GenerativeModel('gemini-1.5-flash-latest')
+
 message_dict = {}
 
 
 
 # Download necessary datasets for nltk
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+# nltk.download('wordnet')
+# nltk.download('omw-1.4')
 
 # Initialize sentiment-analysis pipeline
 model_name = "distilbert-base-uncased-finetuned-sst-2-english"
@@ -963,37 +955,28 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
     if media:
         image = Image.open(media['file_path'])
         media_dict[recipient]=media['file_path']
-        # media_response = process_media_with_model(media['file_path'])
         response = model.generate_content([full_input , image])
-
-#     else:
-#         response = model.generate_content(
-
-# )
-
-    # print(response,"response","fjnjk")
-    response=model.generate_content('''Analyzing Support Need :
+    response=model_.generate_content('''Analyzing Support Need :
 
 ***Objectives:
 Analyze the provided response  and determine if it needs the additional phrase: "I can raise a request for support for an issue your facing if needed."
 If the response already covers support or additional help, return the same text with no changes.
 If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
 
-** in the conversation the ai model should provide troubleshooting steps for users issue  reported atleast for 5 times if it didnt provide trouble shootings for more than 5 times you should act as ai model  and provide trouble shooting steps accordingly by analysing the conversation act according you should act as the ai in the conversation only  dont act like a model analysed and responding you should act similar to the model in the convrsation and in the entire conversation provided if you analyse that the user is asking to raise a support request or ticket to them team then also you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps this is one of the most important objective**
 **If the ai model had not provided troubleshooting steps to troubleshoot the issue in the conversation for  5 times and user is reporting that issue is not fixed  act as a ai model and return the trouble shooting steps**,
 ** in the entire conversation provided if the model had provided troubleshooting steps for more 5 times and user reported that issue is not resloved and then only you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps**
 **If the  user asks provides about the issue he is facing try to analyse it and respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps**
+**If the  user respomds specifying issue is resloved then return "resloved"**
 ***
 
 User Asking for Support Multiple Times:
-**Return the final text , ensuring no other changes are made to the original response unless the phrase or support escalation is added.**
 **this the interaction between the user and the AI. The user's query is labeled as 'user query', and the AI's response is labeled as 'ai model response'. Ignore case sensitivity in the comparison.** If no AI model response is provided, assume the user has just initiated a conversation, and you act as a ai model and respond accordingly**. Carefully evaluate both strings and get an insightful analysis of the conversation and respond as as ai model to the user for further communication follow the objectives. The full conversation is as follows: "**
 ''' +  full_input )
 
     if((response.text =="I've raised a request, and our support team will reach out to you soon.") or  ("support team" in  response.text.lower())):
         full_input = " ".join(message_dict[recipient])
 
-        summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
+        summary=model_.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         message_dict[recipient]=[]
 
         thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
@@ -1001,26 +984,36 @@ User Asking for Support Multiple Times:
         media_dict[recipient]='no path'
         print("triggered a email")
         user_data_dict[recipient]=[summary.text,media_dict[recipient]]
-        reslove_dict[recipient]="issue"
-        return  #send_message_interaction(recipient)
+        # reslove_dict[recipient]="issue"
+        if recipient in message_dict:
+            del message_dict[recipient]
+        del support_count_dict[recipient]
+        return
+    # print("reslone",response.text,response.text=="resloved")
+    if (response.text.strip() == "resolved"):
+        print("here")
+        del message_dict[recipient]
+        del support_count_dict[recipient]
+        print("deleted")
+        return "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue"
     response=model.generate_content('''make the response to a short 100 words if response length exceeds by 120 words with same meaning and add the phrase i can raise a support request on your behalf to the response if you think it is needed to response and  the response is: '''+response.text)
     message_dict[recipient].append("AI model Response:  "+response.text+"\n")
     user=UserModels.objects.filter(phone=recipient).first()
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
     return response.text
-
+global_ticket_number=1000785
 def create_ticket_from_summary(summary,phonenumber,path):
     user=UserModels.objects.filter(phone=phonenumber).first()
-    ticket_created=TicketsModel(user=user,ticket_number=timezone.now().timestamp(),Description=summary)
+    ticket_created=TicketsModel(user=user,ticket_number=str(datetime.now().timestamp()),Description=summary)
     ticket_created.save()
-    ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary)
+    ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
     ticket_status.save()
     mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
                'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
     print("triggering a email to client and tenant")
-    email(mail_body,user.email,path)
-    email(mail_body,user.tenant_to.email,path)
+    # email(mail_body,user.email,path)
+    # email(mail_body,user.tenant_to.email,path)
     # email(mail_body,"mk123456manoj1@gmail.com",path)
     # email(mail_body,"mk123456manoj1@gmail.com",path)
     userData=UserModels.objects.filter(phone=phonenumber).first()
@@ -1032,6 +1025,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     text="A support ticket had been created for the issue you had raised this is the ticket id "+str(ticket_created.ticket_number)+" further info will be shared to your email"
     data = get_text_message_input(phonenumber, text)
     user_intiated_chat[phonenumber]="create"
+    del message_dict[phonenumber]
     send_message(data,facebookData)
 
 def process_media_with_model(file_path):
@@ -1141,66 +1135,102 @@ def process_whatsapp_message(body):
     name=User.objects.filter(username=userData.tenant_to).first()
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
-    if message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="Resloved_team" or message_data.get('interactive').get('button_reply').get('id')=="No_team"):
-        selected_option_id = message_data['interactive']['button_reply']['id']
-        selected_option_title = message_data['interactive']['button_reply']['title']
-        if selected_option_id=="No_team":
-            print("triggering a mail to team")
-            data = get_text_message_input(receipient_number, "A mail is sent to the team reagrding the issue they will reach out to you Thanks")
-            s=ConversationModel(user=userData,ai_model_reply="A mail is sent to the team reagrding the issue they will reach out to you Thanks",user_query="issue_persist")
-            s.save()
-            send_message(data,facebookData)
-        elif selected_option_id=="Resloved_team":
-            if receipient_number in reslove_dict:
-                del reslove_dict[receipient_number]
-            data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
-            s=ConversationModel(user=userData,ai_model_reply="I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue",user_query="resloved")
-            s.save()
-            send_message(data,facebookData)
-    elif message_data.get('interactive') and reslove_dict.get(receipient_number)=='feedback':
-        selected_option_id = message_data['interactive']['button_reply']['id']
-        selected_option_title = message_data['interactive']['button_reply']['title']
-        if selected_option_id=="No_":
-            reslove_dict[receipient_number]="issue"
-            data=user_data_dict[receipient_number]
-            create_ticket_from_summary(data[0],receipient_number,data[1])
-            del user_data_dict[receipient_number]
-        elif selected_option_id=="Resloved_":
+    # data_acknowledge=get_acknowledgment_keywords(["thanks"])
+    wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+    if receipient_number not in message_dict:
+        if message_data.get('interactive')and (message_data.get('interactive').get('list_reply')!=None):
+            selected_option_id = message_data['interactive']['list_reply']['title']
+            print("sele",selected_option_id)
+            get_ticket=TicketsModel.objects.filter(ticket_number=selected_option_id)
+            print("here",get_ticket)
+            if get_ticket:
+                status=send_ticket_status(get_ticket[0])
+                data = get_text_message_input(wa_id, status)
+                send_message(data,facebookData)
+                send_message_interaction_check_user_request(receipient_number)
+            else:
 
-            del reslove_dict[receipient_number]
-            data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+                issue_text="The user is facing " +selected_option_id
+                user_issue_dict[receipient_number]=selected_option_id
+                response = get_gemini_response(issue_text+"  "+"if needed ask him more info about the issue and provide trouble shooting steps" , wa_id,"",None)
+                data = get_text_message_input(wa_id, response)
+                send_message(data,facebookData)
+        elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="m_issue"):
+            start_sending_maintainence_issue_interaction(receipient_number)
+        elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="not_required"):
+            data = get_text_message_input(wa_id, "Feel free to reach out tome if you are facing any issue havea good day")
             send_message(data,facebookData)
-    elif receipient_number not in reslove_dict or reslove_dict.get('receipient_number')=='feedback':
-            wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
-            if message_id in processed_messages:
-                print(f"Message {message_id} already processed.")
-                return
-            processed_messages.add(message_id)
-            media = None
-            caption=""
-            if "image" in message_data:
-                media_id = message_data["image"]["id"]
-                if message_data["image"].get("caption"):
-                    caption = message_data["image"]["caption"]
-                media = process_media(media_id,caption,facebookData)
-            elif "document" in message_data:
-                media_id = message_data["document"]["id"]
-                media = process_media(media_id,caption,facebookData)
-            elif "video" in message_data:
-                media_id = message_data["video"]["id"]
-                media = process_media(media_id,caption,facebookData)
+        elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="request_current_stat"):
+            data = get_text_message_input(wa_id, "I Had Notfied the team by sending a email they will get in touch with you soon feel free to reach out regarding any other issue you are facing")
+            print("triggering email")
+            send_message(data,facebookData)
+        elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="e_status"):
+             get_data_about_exiting_tickets(receipient_number)
+        else:
             message_body = message_data.get("text", {}).get("body", "")
-            response = get_gemini_response(message_body, wa_id,caption, media)
-            data = get_text_message_input(wa_id, response)
-            send_message(data,facebookData)
-            # send_message_interaction(receipient_number)
+            if message_body in ACKNOWLEDGMENT_KEYWORDS:
+                return ACKNOWLEDGMENT_RESPONSE
+            else:
+                start_sending_message_interaction(receipient_number)
     else:
-        message_body = message_data.get("text", {}).get("body", "")
-        data = get_text_message_input(receipient_number, "A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well")
-        s=ConversationModel(user=userData,ai_model_reply="A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well",user_query=message_body)
-        s.save()
-        send_message(data,facebookData)
-        # Function to send messages via WhatsApp
+        if message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="Resloved_team" or message_data.get('interactive').get('button_reply').get('id')=="No_team"):
+            selected_option_id = message_data['interactive']['button_reply']['id']
+            if selected_option_id=="No_team":
+                print("triggering a mail to team")
+                data = get_text_message_input(receipient_number, "A mail is sent to the team reagrding the issue they will reach out to you Thanks")
+                s=ConversationModel(user=userData,ai_model_reply="A mail is sent to the team reagrding the issue they will reach out to you Thanks",user_query="issue_persist")
+                s.save()
+                send_message(data,facebookData)
+            elif selected_option_id=="Resloved_team":
+                if receipient_number in reslove_dict:
+                    del reslove_dict[receipient_number]
+                data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+                s=ConversationModel(user=userData,ai_model_reply="I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue",user_query="resloved")
+                s.save()
+                send_message(data,facebookData)
+        elif message_data.get('interactive') and reslove_dict.get(receipient_number)=='feedback':
+            selected_option_id = message_data['interactive']['button_reply']['id']
+            if selected_option_id=="No_":
+                # reslove_dict[receipient_number]="issue"
+                data=user_data_dict[receipient_number]
+                create_ticket_from_summary(data[0],receipient_number,data[1])
+                del user_data_dict[receipient_number]
+            elif selected_option_id=="Resloved_":
+
+                del reslove_dict[receipient_number]
+                data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+                send_message(data,facebookData)
+        elif receipient_number not in reslove_dict:
+                wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+                if message_id in processed_messages:
+                    print(f"Message {message_id} already processed.")
+                    return
+                processed_messages.add(message_id)
+                media = None
+                caption=""
+                if "image" in message_data:
+                    media_id = message_data["image"]["id"]
+                    if message_data["image"].get("caption"):
+                        caption = message_data["image"]["caption"]
+                    media = process_media(media_id,caption,facebookData)
+                elif "document" in message_data:
+                    media_id = message_data["document"]["id"]
+                    media = process_media(media_id,caption,facebookData)
+                elif "video" in message_data:
+                    media_id = message_data["video"]["id"]
+                    media = process_media(media_id,caption,facebookData)
+                message_body = message_data.get("text", {}).get("body", "")
+                response = get_gemini_response(message_body, wa_id,caption, media)
+                data = get_text_message_input(wa_id, response)
+                send_message(data,facebookData)
+            # send_message_interaction(receipient_number)
+    # else:
+    #     message_body = message_data.get("text", {}).get("body", "")
+    #     data = get_text_message_input(receipient_number, "A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well")
+    #     s=ConversationModel(user=userData,ai_model_reply="A ticket is created on your behalf for the issue you had reported previously our team will reach out to you please let them know if your facing any other issues as well",user_query=message_body)
+    #     s.save()
+    #     send_message(data,facebookData)
+    #     # Function to send messages via WhatsApp
 def send_message(data,facebookData):
             data_dict = json.loads(data)
             print(user_intiated_chat,data_dict["to"])
@@ -1293,15 +1323,287 @@ def send_message_interaction(receipient_number):
 
     # response.raise_for_status()  # Raises an HTTPError for bad responses
     # return response.text # Return the JSON response if successful
-
-def send_message_interaction_by_team(receipient_number):
-    print("here i n interatcion by team",receipient_number)
+def send_message_interaction_check_user_request(receipient_number):
     userData=UserModels.objects.filter(phone=receipient_number).first()
     print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
+    options = {
+    'header': '',
+    'button': 'Options',
+    'section_title': 'Menu',
+    'rows': [
+        {'id': 'request_current_stat', 'title': 'Request Current Stat'},
+        {'id': 'not_required', 'title': 'Not Required'},
+    ]
+}
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    data = {
+    "messaging_product": "whatsapp",
+    "to": receipient_number,
+    "type": "interactive",
+    "interactive": {
+        "type": "button",
+        "header": {
+            "type": "text",
+            "text": options['header']
+        },
+         "body": {  # Adding the body
+            "text": 'Do you Want To Raise a Request For The Current Status Of Ticket'  # Ensure 'body' is a key in options
+        },
+        "action": {
+            "buttons": [
+                {
+                    "type": "reply",
+                    "reply": {
+                        "id": opt['id'],
+                        "title": opt['title']
+                    }
+                } for opt in options['rows']  # Adjust the rows to fit button format
+            ]
+        }
+    }
+}
+
+
+    # Send the request
+    con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    con.save()
+    response = requests.post(url, headers=headers, json=data)
+
+    # Handle response
+
+    # response.raise_for_status()  # Raises an HTTPError for bad responses
+    return response.text # Return the JSON response if successful
+import requests
+def start_sending_message_interaction(receipient_number):
+    print("sending interaction", receipient_number)
+    userData = UserModels.objects.filter(phone=receipient_number).first()
+
+    name = User.objects.filter(username=userData.tenant_to).first()
+    tenant = TenantModel.objects.filter(name=name).first()
+    facebookData = FacebookCredentials.objects.filter(user=tenant).first()
+
+    # Welcome message content
+    welcome_text = "Hi there! 👋 Welcome to 'CLIENT', your property maintenance assistant. I'm here to help you with any issues in your property. To get started, please choose a main category from the menu below:"
+
+    options = {
+        'header': " ",
+        'section_title': "Choose a Category",
+        'rows': [
+            {'id': 'm_issue', 'title': '⬅️ Report An Issue'},  # Added back arrow
+            {'id': 'e_status', 'title': '✅ Check Existing Ticket'},  # Added checkmark emoji
+        ]
+    }
+
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": receipient_number,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "header": {
+                "type": "text",
+                "text": options['header']
+            },
+            "body": {
+                "text": welcome_text
+            },
+            "footer": {
+                "text": "Main Menu"
+            },
+            "action": {
+                "buttons": [
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": "m_issue",
+                            "title": "⬅️ Report An Issue"  # Back arrow here
+                        }
+                    },
+                    {
+                        "type": "reply",
+                        "reply": {
+                            "id": "e_status",
+                            "title": "✅ Check Existing"  # Checkmark emoji
+                        }
+                    }
+                ]
+            }
+        }
+    }
+
+    # Save the conversation model
+    con = ConversationModel(user=userData, ai_model_reply="template", user_query="card")
+    con.save()
+
+    # Send the request
+    response = requests.post(url, headers=headers, json=data)
+    print(response, response.text)
+    return response.json()
+
+
+import requests
+
+def start_sending_maintainence_issue_interaction(receipient_number):
+    print("sending interaction menu ", receipient_number)
+    userData = UserModels.objects.filter(phone=receipient_number).first()
+
+    name = User.objects.filter(username=userData.tenant_to).first()
+    tenant = TenantModel.objects.filter(name=name).first()
+    facebookData = FacebookCredentials.objects.filter(user=tenant).first()
+    row=[]
+    chatOption=ChatOptionsToTenant.objects.filter(user=name)
+    # Prepare the options for the list
+    for chat in chatOption:
+        temp={}
+        temp['id']=chat.options
+        temp['title']=chat.options
+        row.append(temp)
+    options = {
+        'header': " ",
+        'section_title': 'Menu',
+        'rows': row
+    }
+
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    # Construct the data for the list message
+    data = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": receipient_number,
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "header": {
+                "type": "text",
+                "text": options['header']
+            },
+            "body": {
+                "text": "Thanks! Please select the type of issue you’re facing from the list below:"
+            },
+            "footer": {
+                "text": "Sub-Menu for Maintenance Issues:"  # Footer text
+            },
+            "action": {
+                "button": "Select The Issue",  # **THIS IS THE REQUIRED BUTTON LABEL**
+                "sections": [
+                    {
+                        "title": options['section_title'],
+                        "rows": [
+                            {"id": opt['id'], "title": opt['title'], "description": " "} for opt in options['rows']
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+
+    # Save the conversation model
+    con = ConversationModel(user=userData, ai_model_reply="template", user_query="list")
+    con.save()
+
+    # Send the request
+    response = requests.post(url, headers=headers, json=data)
+    print(response, response.text)
+    return response.json()
+
+def get_data_about_exiting_tickets(receipient_number):
+    print('in getiing data')
+    userData = UserModels.objects.filter(phone=receipient_number).first()
+    name = User.objects.filter(username=userData.tenant_to).first()
+    tenant = TenantModel.objects.filter(name=name).first()
+    facebookData = FacebookCredentials.objects.filter(user=tenant).first()
+    user_instance = UserModels.objects.get(id=userData.id)
+    tickets = TicketsStatusModel.objects.filter(user=user_instance).order_by('-date_reported')[:10]
+
+    row=[]
+    for ticket in tickets:
+        temp={}
+        temp["id"]=str(ticket.ticket_number)
+        temp["title"]=str(ticket.ticket_number)
+        row.append(temp)
+    if len(row)>0:
+        options = {
+            'header': " ",
+            'section_title': 'Menu',
+            'rows': row
+        }
+
+        url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+        headers = {
+            "Authorization": "Bearer " + facebookData.accessToken,
+            "Content-Type": "application/json",
+        }
+
+        # Construct the data for the list message
+        data = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": receipient_number,
+            "type": "interactive",
+            "interactive": {
+                "type": "list",
+                "header": {
+                    "type": "text",
+                    "text": options['header']
+                },
+                "body": {
+                    "text": " List Of Tickets Raised By"+" "+userData.name
+                },
+                "footer": {
+                    "text": "Tap below to choose an ticket to get info about"  # Footer text
+                },
+                "action": {
+                    "button": "Select Ticket",  # **THIS IS THE REQUIRED BUTTON LABEL**
+                    "sections": [
+                        {
+                            "title": options['section_title'],
+                            "rows": [
+                                {"id": opt['id'], "title": opt['title'], "description": " "} for opt in options['rows']
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+        response = requests.post(url, headers=headers, json=data)
+        print(response,response.text,response.json())
+        return response.json()
+    else:
+        data=get_text_message_input(receipient_number,"No tickets were raised on your behalf if ypur facing any issue you can raise a support ticket")
+        send_whatsapp_message(data,facebookData)
+def send_ticket_status(ticketNumber):
+    ticket=TicketsStatusModel.objects.get(ticket_number=ticketNumber)
+    temp="Hi User"+"\n"+"The Ticket Number you choosed is "+ " "+str(ticket.ticket_number)+"\n"+"The status of the ticket is "+" "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
+    return temp
+
+def send_message_interaction_by_team(receipient_number):
+    print("here i n interatcion by team",receipient_number)
+    userData=UserModels.objects.filter(phone=receipient_number).first()
+    name=User.objects.filter(username=userData.tenant_to).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+
     options = {
     'header': 'Our team has closed your ticket. Please confirm if resolved',
     'button': 'Options',
@@ -1455,14 +1757,6 @@ def update_tenant(request):
         tenant.name=user
         tenant.email=email
         tenant.save()
-
-        # tenant = get_object_or_404(TenantModel, id=tenant_id)
-
-        # # Update tenant details
-        # tenant.name = name
-        # tenant.email = email
-        # tenant.save()
-
         return JsonResponse({'success': True, 'message': 'Tenant updated successfully!'})
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
@@ -1506,12 +1800,13 @@ def create_user_tenant_(request):
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         email = request.POST.get('email')
-        print(name,email,phone)
+        address=request.POST.get("address")
+        print(name,email,phone,address)
         user=User.objects.filter(username=request.user.username,email=request.user.email).first()
         print(user)
         tenant =TenantModel.objects.filter(name=user).first()
         print(tenant)
-        user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant)
+        user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
         user.save()
         return JsonResponse({'success': True, 'user_id': user.id})
 
@@ -1688,28 +1983,29 @@ def update_ticket_status(request):
     if request.method == 'POST':
         print("in post")
         ticket_id = request.POST.get('id')
+
         print(ticket_id)
         ticket = get_object_or_404(TicketsStatusModel, id=ticket_id)
-
-        history=ticket.commentHistory+"\n"+"Ticket status is: "+request.POST.get('ticket_status')+"\n"+"comments :"+request.POST.get('comments')+"\n"+"updated at: "+str(datetime.now())+"\n"+"========================"+"\n"
-        print(history)
+        userData=UserModels.objects.filter(phone=ticket.user.phone).first()
+        print(userData)
+        name=User.objects.filter(username=userData.tenant_to).first()
+        tenant=TenantModel.objects.filter(name=name).first()
+        history=ticket.commentHistory+"\n"+"Ticket status is: "+request.POST.get('ticket_status')+"\n"+"comments :"+request.POST.get('comments')+"\n"+"updated at: "+str(datetime.now())+"\n"+"   "+"\n"
+        ticket.issue=request.POST.get('issue')
         ticket.commentHistory=history
-        form = TicketsStatusForm(request.POST, instance=ticket)
-        if form.is_valid():
-            form.save()
-
-            userData=UserModels.objects.filter(phone=ticket.user.phone).first()
-            print(userData)
-            name=User.objects.filter(username=userData.tenant_to).first()
-            tenant=TenantModel.objects.filter(name=name).first()
-            facebookData=FacebookCredentials.objects.filter(user=tenant).first()
-            print(facebookData)
-            data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory+"     Please dont not reply to this message" )
-            user_intiated_chat[ticket.user.phone]="create"
-            send_message(data,facebookData)
-            if request.POST.get('ticket_status')=="COMPLETED":
-                send_message_interaction_by_team(ticket.user.phone)
-            return JsonResponse({'success': True})
+        ticket.user=userData
+        ticket.tenant_to=tenant
+        ticket.comments=request.POST.get('comments')
+        ticket.status=request.POST.get('ticket_status')
+        ticket.save()
+        facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+        print(facebookData)
+        data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory+"     Please dont not reply to this message" )
+        user_intiated_chat[ticket.user.phone]="create"
+        send_message(data,facebookData)
+        if request.POST.get('ticket_status')=="COMPLETED":
+            send_message_interaction_by_team(ticket.user.phone)
+        return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid data'})
 @login_required
 @csrf_exempt
@@ -2020,7 +2316,9 @@ def user_list(request):
     tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()  # Get the tenant object
     tenant_=TenantModel.objects.filter(name=tenant).first()
     users = UserModels.objects.filter(tenant_to=tenant_)
-    return render(request, 'accounts/utenant.html', {'users': users})
+    active_users = UserModels.objects.filter(archived=False).all()
+    archived_users = UserModels.objects.filter(archived=True).all()
+    return render(request, 'accounts/utenant.html', {'users': users,'active_users':active_users, 'archived_users':archived_users})
 
 @csrf_exempt
 def create_user_tenant(request):
@@ -2324,6 +2622,18 @@ class DashboardAccessView( View):
         User.objects.filter(id__in=ids).delete()
         return JsonResponse({'success': True})
 
+@csrf_exempt
+def archive_user(request):
+
+    data = json.loads(request.body)
+    user_id=data.get('userId')
+    archived=data.get('archived')
+    user=UserModels.objects.filter(id=user_id).first()
+    if user:
+        user.archived=archived
+        user.save()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
 class DashboardAccessUpdateView(View):
     @csrf_exempt
@@ -2363,6 +2673,96 @@ class UserLogoutView(LogoutView):
 def chat(request):
     return render(request,"accounts/whatsapp.html")
 
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from .models import  ChatOptionsToTenant as ChatOption
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+# View for managing chat options
+def manage_chat_options(request):
+    chat_options = ChatOption.objects.all()
+    users = User.objects.all()  # Assuming you have a User model or tenant model
+    username=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    templates = TemplateModel.objects.filter(name=username)
+    print(templates)
+    return render(request, 'accounts/template.html', {
+        'chat_options': chat_options,
+        'users': users,
+        'templates': templates,
+    })
+
+# View for creating a new chat option
+@csrf_exempt
+@require_POST
+def create_chat_option(request):
+    data = json.loads(request.body.decode('utf-8'))
+    chat_option = data.get('key')
+    name=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    print("data",data,name,tenant)
+    try:
+        option=ChatOptionsToTenant(user=name,options=chat_option)
+        option.save()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# View for updating an existing chat option
+@csrf_exempt
+@require_POST
+def update_chat_option(request):
+    data = json.loads(request.body.decode('utf-8'))
+    chat_option = data.get('options')
+    prev=data.get('id')
+    print(data,chat_option,prev)
+    try:
+        name=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        chat_option_ = ChatOption.objects.filter(user=name,options=prev).first()
+        chat_option_.options = chat_option
+        chat_option_.save()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# View for deleting a single chat option
+@csrf_exempt
+def delete_chat_option(request):
+    data = json.loads(request.body.decode('utf-8'))
+    chat_option = data.get('options')
+    try:
+        name=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        chat_option = ChatOption.objects.get(user=name,options=chat_option)
+        chat_option.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# View for deleting selected chat options
+@csrf_exempt
+def delete_selected_chat_options(request):
+    try:
+        name=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        data = json.loads(request.body)
+        ids = data.get('ids', [])
+        ChatOption.objects.filter(user=name,options__in=ids).delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+def showTemplate(request):
+    chat_options = ChatOption.objects.all()
+      # Assuming you have a User model or tenant model
+    username=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    tenant=TenantModel.objects.filter(name=username).first()
+    users=UserModels.objects.filter(tenant_to=tenant)
+    templates = TemplateModel.objects.filter(name=username)
+    print(templates)
+    return render(request, 'accounts/template.html', {
+        'chat_options': chat_options,
+        'users':users,
+        'templates': templates
+    })
 from django.http import JsonResponse
 
 def getContacts(request):
@@ -2503,7 +2903,7 @@ def send_message_from_socket(request):
             tenant=TenantModel.objects.filter(name=name).first()
             facebookData=FacebookCredentials.objects.filter(user=tenant).first()
             print("sending message from template")
-            send_message(data_,facebookData)
+            send_message_template_(data_,facebookData)
             s=ConversationModel(user=userData,ai_model_reply=message_content)
             s.save()
             # Respond back with a success message

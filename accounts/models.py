@@ -1,12 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-
-
 class TenantModel(models.Model):
     id = models.AutoField(primary_key=True)  # Optional: Explicitly set id as primary key
     name = models.ForeignKey(User, on_delete=models.CASCADE)
     email = models.EmailField()
     email_template= models.CharField(max_length=5000)
+
     def __str__(self):
         return self.name.username
 class TemplateModel(models.Model):
@@ -23,6 +22,8 @@ class UserModels(models.Model):
     email = models.CharField(max_length=200, null=True)
     tenant_to=models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    address=models.CharField(max_length=2000)
+    archived = models.BooleanField(default=False)
     def __str__(self):
 	    return self.name
 class DashboardAccessProvidedByClientModel(models.Model):
@@ -52,6 +53,7 @@ class TicketsStatusModel(models.Model):
     user = models.ForeignKey(UserModels, on_delete=models.CASCADE)
     tenant_to = models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     ticket_number = models.ForeignKey(TicketsModel, on_delete=models.CASCADE)
+    issue=models.CharField(max_length=24)
     ticket_status = models.CharField(
         max_length=20,
         choices=TicketStatusChoices.choices,
@@ -73,6 +75,11 @@ class FacebookCredentials(models.Model):
 	accessToken=models.CharField(max_length=243)
 	def __str__(self):
             return self.phoneNumberId
+class ChatOptionsToTenant(models.Model):
+    user=models.ForeignKey(User, on_delete=models.CASCADE)
+    options=models.CharField(max_length=24)
+    def __str__(self):
+         return self.options
 class MessageModel(models.Model):
 	customer = models.ForeignKey(UserModels, on_delete= models.SET_NULL, null=True)
 	ai_model_hit=models.IntegerField(default=0)

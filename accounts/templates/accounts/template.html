@@ -1,0 +1,1238 @@
+{% extends 'accounts/main_template.html' %} {% load static %} {% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Options & Templates Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+</head>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .container {
+        max-width: 90%;
+        margin: auto;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 3px solid #ddd;
+        background-color: transparent;
+    }
+
+    .header h1 {
+        color: #343a40;
+    }
+
+    .header .btn {
+        margin-left: 10px;
+    }
+
+    .search-bar input {
+        border-radius: 25px;
+        padding: 15px 30px;
+        width: 400px;
+        margin: 20px 0;
+        font-size: 16px;
+    }
+
+    .table-responsive {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: white;
+    }
+
+    .table-responsive thead {
+        background-color: #343a40;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    table tbody tr:hover {
+        background-color: #f1f3f5;
+        transition: background-color 0.3s ease;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+    }
+
+    th,
+    td {
+        padding: 15px;
+        text-align: left;
+    }
+
+    th {
+        font-weight: bold;
+    }
+
+    .btn-primary,
+    .btn-warning,
+    .btn-danger {
+        border-radius: 25px;
+        padding: 5px 15px;
+        font-size: 14px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover,
+    .btn-warning:hover,
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .description-column {
+        max-width: 350px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        overflow-y: auto;
+        height: 100px;
+    }
+
+    .form-control {
+        border-radius: 50px;
+    }
+
+    .table-scrollable {
+        max-height: 350px;
+        overflow-y: auto;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .table-scrollable::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .table-scrollable::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 5px;
+    }
+
+    .table-scrollable::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .table-scrollable::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .btn {
+        font-size: 12px;
+        margin: 2px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #e2e6ea;
+        transition: background-color 0.3s ease;
+    }
+
+    .accordion-item {
+        border: 1px solid #007bff;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .accordion-button {
+        background-color: #ffffff;
+        color: #007bff;
+        font-weight: 500;
+        padding: 1rem;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .accordion-button:hover {
+        background-color: #f0f8ff;
+        color: #0056b3;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background-color: #e1ecf4;
+        color: #0056b3;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .accordion-body {
+        background-color: #ffffff;
+        color: #333;
+        padding: 1.5rem;
+        line-height: 1.5;
+        border-top: 1px solid #007bff;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    #add-chat-option-button,
+    .btn-danger {
+        width: auto;
+        padding: 6px 12px;
+        font-size: 12px;
+        min-width: 120px;
+    }
+
+    #search-filter {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+
+    .search-bar .btn {
+        padding: 4px 10px;
+        /* Much smaller padding */
+        font-size: 12px;
+        /* Reduce font size further */
+        border-radius: 20px;
+        /* Slightly smaller rounded corners */
+        height: auto;
+        /* Allow height to adjust dynamically */
+        min-width: 100px;
+        /* Set a smaller minimum width */
+    }
+
+    #add-chat-option-button,
+    .btn-danger {
+        width: auto;
+        /* Allow the button to shrink based on content */
+        padding: 4px 10px;
+        /* Smaller padding */
+        font-size: 12px;
+        /* Smaller font size */
+    }
+
+    .add-button-hidden {
+        display: none;
+    }
+</style>
+
+<body>
+    <div class="container my-4">
+        <div class="header">
+            <div>
+                <h1 class="display-6 text-dark">Chat Options & Broadcast Management</h1>
+            </div>
+            <div class="mb-2">
+                <button id="addTemplateBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
+                Add Template
+            </button>
+            </div>
+        </div>
+
+        <!-- Accordion Start -->
+        <div class="accordion" id="chatOptionsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Manage Chat Options
+                    </button>
+                </h2>
+
+                <div id="collapseOne" class="accordion-collapse collapse hide" aria-labelledby="headingOne" data-bs-parent="#chatOptionsAccordion">
+                    <div class="accordion-body">
+                        <div class="search-bar d-flex align-items-center">
+                            <input type="text" id="search-filter" class="form-control" placeholder="Search chat options" onkeyup="filterTable()">
+                            <button class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#createChatOptionModal" id="add-chat-option-button">Add New Chat Option</button>
+                            <button class="btn btn-danger ms-2" onclick="deleteSelectedChatOptions()">Delete Selected</button>
+                        </div>
+                        <div class="table-responsive table-scrollable mt-3">
+                            <table class="table table-hover" id="chatOptionsTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Select</th>
+
+                                        <th>Option</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for chat_option in chat_options %}
+                                    <tr>
+                                        <td><input type="checkbox" class="chat-option-checkbox" data-id="{{ chat_option.options }}" onclick='selectArray("{{ chat_option.options }}")'></td>
+
+                                        <td>{{ chat_option.options }}</td>
+                                        <td>
+                                            <button class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#editChatOptionModal" id="add-chat-option-button" data-options="{{ chat_option.options }}">Edit</button>
+                                            <button class="btn btn-danger ms-2" onclick="deleteChatOption('{{ chat_option.options }}')">Delete</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="accordion" id="issuesAccordion">
+
+
+            <div id="templateList">
+                {% for template in templates %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTemplate{{ template.templateName }}">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTemplate{{ template.templateName }}" aria-expanded="false" aria-controls="collapseTemplate{{ template.templateName }}">
+                        {{ template.templateName }}
+                        </button>
+                    </h2>
+                    <div id="collapseTemplate{{ template.templateName }}" class="accordion-collapse collapse" aria-labelledby="headingTemplate{{ template.templateName }}" data-bs-parent="#templateList">
+                        <div class="accordion-body">
+                            <form id="emailTemplateForm{{ template.templateName }}" method="POST">
+                                {% csrf_token %}
+                                <div class="mb-3 d-flex justify-content-between align-items-start">
+                                    <label for="emailDescription{{ template.templateName }}" class="form-label me-2">template message</label>
+
+                                    <div>
+                                        <input type="checkbox" onchange="added('{{ template.templateName }}')" id="sendMessageToAll{{ template.templateName }}" name="sendMessageToAll">
+                                        <label for="sendMessageToAll{{ template.templateName }}" class="form-check-label me-2">Send message to everyone</label>
+
+                                        <input type="checkbox" id="selectUsers{{ template.templateName }}" name="selectUsers" onchange="toggleButtonVisibility('{{ template.templateName }}')">
+                                        <label for="selectUsers{{ template.templateName }}" class="form-check-label me-2">Select Specific users</label>
+
+                                        <button id="userSelectButton{{ template.templateName }}" class="btn btn-primary" type="button" style="font-size: 0.8em; display: none;" data-template-name="{{ template.templateName }}" onclick="add('{{ template.templateName }}')">Add users to send template message</button></div>
+                                </div>
+
+                                <div id="emailDescription{{ template.templateName }}" style="height: 200px; border: 1px solid #ccc; padding: 10px; overflow-y: auto;">
+                                    {{ template.templateDescription|safe }}
+                                </div>
+
+                                <input type="hidden" name="emailDescription" id="emailDescriptionInput{{ template.templateName }}">
+
+                                <div class="mb-3">
+                                    <div id="selectedUsersContainer{{ template.templateName }}" class="mt-2" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f9f9f9; max-height: 100px; overflow-y: auto;">
+                                        <h6>Selected Users:</h6>
+                                        <div id="selectedUsers{{ template.templateName }}"></div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-danger" id="deleteTemplateButton{{ template.templateName }}" onclick="deleteTemplate('{{ template.templateName }}')">Delete Template</button>
+                                <button type="button" class="btn btn-primary" id="sendEmailButton{{ template.templateName }}" onclick="sendMessageTemplate('{{ template.templateName }}', '{{ template.templateDescription }}')">Send WhatsApp Message</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- User Selection Modal -->
+            <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="userSelectModalLabel">Select Users to send the template message</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" id="userFilter" placeholder="Filter users..." class="form-control mb-2" style="width: 100%;">
+                            <div id="userSelectList" style="max-height: 300px; overflow-y: auto;">
+                                {% for user in users %}
+                                <div class="form-check user-check">
+                                    <input class="form-check-input" type="checkbox" value="{{ user.id }}" id="userCheckbox{{ user.id }}">
+                                    <label class="form-check-label" for="userCheckbox{{ user.id }}">{{ user.name }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="confirmSelection">Confirm Selection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- </div User Selection Modal -->
+            <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="userSelectModalLabel">Select Users</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="userSelectList"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="confirmSelection">Confirm Selection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="modal fade" id="userSelectModal" tabindex="-1" aria-labelledby="userSelectModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="userSelectModalLabel">Select Users</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                            <input type="text" id="userFilter" placeholder="Filter users..." class="form-control mb-2" style="width: 100%;">
+                            <div id="userSelectList" style="max-height: 300px; overflow-y: auto;">
+                                {% for user in users %}
+                                <div class="form-check user-check">
+                                    <input class="form-check-input" type="checkbox" value="{{ user.id }}" id="userCheckbox{{ user.id }}">
+                                    <label class="form-check-label" for="userCheckbox{{ user.id }}">{{ user.name }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="confirmSelection">Confirm Selection</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Create ChatOption Modal -->
+            <div class="modal fade" id="createChatOptionModal" tabindex="-1" aria-labelledby="createChatOptionModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="createChatOptionModalLabel">Add New Chat Option</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="createChatOptionForm">
+
+                                <div class="mb-3">
+                                    <label for="create-options" class="form-label">Options</label>
+                                    <input type="text" class="form-control" id="create-options" name="create-options">
+                                </div>
+                                <button type="button" id="update-button" class="btn btn-primary" onclick='createChatOption()'>Create</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="addTemplateModal" tabindex="-1" aria-labelledby="addTemplateModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addTemplateModalLabel">Create New Template</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addTemplateForm">
+                                <div class="mb-3">
+                                    <label for="templateName" class="form-label">Template Name</label>
+                                    <input type="text" class="form-control" id="templateName" name="templateName" required>
+                                    <small id="templateNameError" class="form-text text-danger" style="display: none;">Template name already exists!</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="templateContent" class="form-label">Template Content</label>
+                                    <textarea class="form-control" id="templateContent" rows="5" required></textarea>
+                                </div>
+                                <button id="saveTemplate" type="submit" class="btn btn-primary" disabled>Save Template</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Create ChatOption Modal -->
+            <div class="modal fade" id="editChatOptionModal" tabindex="-1" aria-labelledby="editChatOptionModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editChatOptionModalLabel">Edit Chat Option</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editChatOptionForm">
+                                <!-- Hidden Input for Chat Option ID -->
+                                <input type="hidden" id="edit-chatoption-id">
+
+                                <!-- Options Field -->
+                                <div class="mb-3">
+                                    <label for="edit-options" class="form-label">Options</label>
+                                    <input type="text" class="form-control" id="edit-options" name="options">
+                                </div>
+
+                                <!-- Save Button -->
+                                <button type="button" class="btn btn-primary" onclick="updateChatOption()">Update</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="deleteChatOptionModal" tabindex="-1" aria-labelledby="deleteChatOptionModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteChatOptionModalLabel">Delete Chat Option</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Are you sure you want to delete this chat option? This action cannot be undone.</p>
+                            <!-- Hidden Input to Store the ID of the Chat Option to be Deleted -->
+                            <input type="hidden" id="delete-chatoption-id">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-secondary" onclick="deleteChatOption()">Delete</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <script>
+                var previousValue = ""
+                var checkboxes = []
+                var selectAllCheckbox = []
+                document.addEventListener("DOMContentLoaded", function() {
+                    const chatOptions = document.querySelectorAll('#chatOptionsTable tbody tr');
+                    if (chatOptions.length >= 10) {
+                        document.getElementById('add-chat-option-button').classList.add('add-button-hidden');
+                    }
+                });
+
+                // Hide the add button if the rows exceed 10
+                function checkRowLimit() {
+                    const rows = document.querySelectorAll('#chatOptionsTable tbody tr').length;
+                    if (rows >= 10) {
+                        document.getElementById('add-chat-option-button').classList.add('add-button-hidden');
+                    }
+                }
+                $('#create-options').on('input', function() {
+                    const inputVal = $(this).val();
+
+                    // Check if the input length exceeds 24 characters
+                    if (inputVal.length > 24) {
+                        // Limit the input to 24 characters
+                        $(this).val(inputVal.slice(0, 24));
+                    }
+
+                    // Enable/disable the update button based on input length
+                    if (inputVal.length <= 24 && inputVal.length > 0) {
+                        $('#update-button').prop('disabled', false);
+                    } else {
+                        $('#update-button').prop('disabled', true);
+                    }
+                });
+                $('#edit-options').on('input', function() {
+                    const inputVal = $(this).val();
+
+                    // Check if the input length exceeds 24 characters
+                    if (inputVal.length > 24) {
+                        // Limit the input to 24 characters
+                        $(this).val(inputVal.slice(0, 24));
+                    }
+
+                    // Enable/disable the update button based on input length
+                    if (inputVal.length <= 24 && inputVal.length > 0) {
+                        $('#update-button-edit').prop('disabled', false);
+                    } else {
+                        $('#update-button-edit').prop('disabled', true);
+                    }
+                });
+
+                function createChatOption() {
+                    var form = document.getElementById('createChatOptionForm');
+                    console.log("form", form)
+                    var optionToBeAdded = ""
+                    var formData = new FormData(form);
+                    formData.forEach((value, key) => {
+                        // Log each key-value pair in the FormData
+                        optionToBeAdded = {
+                            "key": value
+                        }
+                    });
+                    console.log(optionToBeAdded)
+
+                    fetch("{% url 'create_chatoption' %}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                            },
+                            body: JSON.stringify(optionToBeAdded)
+
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        });
+                }
+
+                // Set the chat option data when the Edit button is clicked
+                document.getElementById('editChatOptionModal').addEventListener('show.bs.modal', function(event) {
+                    var button = event.relatedTarget; // The button that triggered the modal
+                    var id = button.getAttribute('data-id'); // Get the ID from the button's data-id attribute
+                    var user = button.getAttribute('data-user'); // Get the user ID from the button's data-user attribute
+                    var options = button.getAttribute('data-options'); // Get the options value from the button's data-options attribute
+                    console.log("body", options)
+                        // Set the values in the modal
+                    document.getElementById('edit-chatoption-id').value = options;
+                    document.getElementById('edit-options').value = options; // Set the options
+                    previousValue = options
+                });
+
+                // Function to handle updating the chat option
+                function updateChatOption() {
+                    var form = document.getElementById('editChatOptionForm');
+                    var optionToBeAdded = ""
+                    var formData = new FormData(form);
+                    formData.forEach((value, key) => {
+                        // Log each key-value pair in the FormData
+                        console.log(value, key, previousValue)
+                        optionToBeAdded = value
+                    });
+                    console.log(optionToBeAdded)
+                    fetch("{% url 'update_chatoption' %}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                id: previousValue,
+
+                                options: optionToBeAdded
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Close the modal after successful update
+                                var modal = bootstrap.Modal.getInstance(document.getElementById('editChatOptionModal'));
+                                modal.hide();
+
+                                // Optionally reload the page to reflect the changes
+                                window.location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        });
+                }
+
+                function selectArray(option) {
+                    // If the option is already in the array, remove it, otherwise add it
+                    const index = checkboxes.indexOf(option);
+
+                    if (index === -1) {
+                        checkboxes.push(option); // Add the option if not found
+                    } else {
+                        checkboxes.splice(index, 1); // Remove the option if found
+                    }
+                }
+
+
+                function deleteChatOption(option) {
+                    if (confirm('Are you sure you want to delete these chat options?')) {
+                        //var options = button.getAttribute('data-options-delete'); // Get the options value from the button's data-options attribute
+                        console.log(option)
+                        fetch("{% url 'delete_chatoption' %}", {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}',
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    options: option
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    window.location.reload();
+                                } else {
+                                    alert('Error: ' + data.error);
+                                }
+                            });
+                    }
+
+                }
+
+                function deleteSelectedChatOptions() {
+                    const selectedCheckboxes = document.querySelectorAll('.chat-option-checkbox:checked');
+                    const ids = Array.from(selectedCheckboxes).map(cb => cb.getAttribute('data-id'));
+                    console.log(ids)
+                    if (ids.length === 0) {
+                        alert('No chat options selected for deletion.');
+                        return;
+                    }
+
+                    if (confirm('Are you sure you want to delete these chat options?')) {
+                        fetch("{% url 'delete_selected_chatoptions' %}", {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}',
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    ids: checkboxes
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    window.location.reload();
+                                } else {
+                                    alert('Error: ' + data.error);
+                                }
+                            });
+                    }
+                }
+
+                function toggleSelectAll(selectAllCheckbox) {
+                    console.log("Selected:", selectAllCheckbox.checked);
+
+                    // Get all checkboxes with the class "checkbox", excluding the "select all" checkbox
+                    const checkboxes = document.querySelectorAll('chat-option-checkbox');
+                    console.log(checkboxes)
+                        // Loop through each checkbox and set the checked property to match the selectAllCheckbox
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    });
+
+                    console.log(checkboxes);
+                }
+
+                function filterTable() {
+                    const filterValue = document.getElementById("search-filter").value.toLowerCase();
+                    const table = document.getElementById("chatOptionsTable");
+                    const tr = table.getElementsByTagName("tr");
+
+                    for (let i = 1; i < tr.length; i++) {
+                        const tds = tr[i].getElementsByTagName("td");
+                        let rowContainsFilterValue = false;
+
+                        for (let j = 0; j < tds.length; j++) {
+                            if (tds[j].textContent.toLowerCase().includes(filterValue)) {
+                                rowContainsFilterValue = true;
+                                break;
+                            }
+                        }
+
+                        tr[i].style.display = rowContainsFilterValue ? '' : 'none';
+                    }
+                }
+                const selectedUsersMap = new Map();
+                const checkmap_ = new Map()
+
+                function add(templateName) {
+                    console.log("clicked")
+                    const userSelectModal = new bootstrap.Modal(document.getElementById('userSelectModal'));
+                    userSelectModal.show();
+
+                    // Clear previous selections
+                    const selectedUsersContainer = document.getElementById(`selectedUsers${templateName}`);
+                    selectedUsersContainer.innerHTML = '';
+
+                    // Populate selected users if any
+                    if (selectedUsersMap.has(templateName)) {
+                        const selectedUsers = selectedUsersMap.get(templateName);
+                        selectedUsers.forEach(userId => {
+                            const userTag = document.createElement('div');
+                            userTag.className = 'user-tag d-flex justify-content-between align-items-center';
+                            userTag.innerText = document.querySelector(`label[for="userCheckbox${userId}"]`).innerText;
+
+                            const crossMark = document.createElement('span');
+                            crossMark.innerHTML = '&times;'; // Cross mark
+                            crossMark.className = 'remove-user';
+                            crossMark.onclick = () => {
+                                selectedUsersContainer.removeChild(userTag);
+                                const checkbox = document.getElementById(`userCheckbox${userId}`);
+                                if (checkbox) {
+                                    checkbox.checked = false;
+                                }
+                                selectedUsersMap.set(templateName, selectedUsers.filter(id => id !== userId));
+                            };
+
+                            userTag.appendChild(crossMark);
+                            selectedUsersContainer.appendChild(userTag);
+
+                            const checkbox = document.getElementById(`userCheckbox${userId}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+
+
+
+
+                    // Filter logic
+                    const userFilter = document.getElementById('userFilter');
+                    userFilter.addEventListener('input', function() {
+                        const filterValue = userFilter.value.toLowerCase();
+                        const userChecks = document.querySelectorAll('#userSelectList .form-check');
+                        userChecks.forEach(userCheck => {
+                            const label = userCheck.querySelector('.form-check-label').innerText.toLowerCase();
+                            userCheck.style.display = label.includes(filterValue) ? '' : 'none';
+                        });
+                    });
+
+                    // Confirm selection logic
+                    document.getElementById('confirmSelection').onclick = () => {
+                        selectedUsersContainer.innerHTML = ''; // Clear previous selection
+                        const checkboxes = document.querySelectorAll('#userSelectList input[type="checkbox"]:checked');
+                        const selectedIds = [];
+
+                        checkboxes.forEach(cb => {
+                            const userId = cb.value;
+                            selectedIds.push(userId);
+
+                            const userTag = document.createElement('div');
+                            userTag.className = 'user-tag d-flex justify-content-between align-items-center';
+                            userTag.innerText = cb.nextElementSibling.innerText;
+
+                            const crossMark = document.createElement('span');
+                            crossMark.innerHTML = '&times;'; // Cross mark
+                            crossMark.className = 'remove-user';
+                            crossMark.onclick = () => {
+                                selectedUsersContainer.removeChild(userTag);
+                                cb.checked = false;
+                                selectedUsersMap.set(templateName, selectedIds.filter(id => id !== userId));
+                            };
+
+                            userTag.appendChild(crossMark);
+                            selectedUsersContainer.appendChild(userTag);
+                        });
+
+                        selectedUsersMap.set(templateName, selectedIds);
+                        userSelectModal.hide();
+                    };
+                }
+
+                // Filter logic
+                const userFilter = document.getElementById('userFilter');
+                userFilter.addEventListener('input', function() {
+                    const filterValue = userFilter.value.toLowerCase();
+                    const userChecks = document.querySelectorAll('#userSelectList .form-check');
+                    userChecks.forEach(userCheck => {
+                        const label = userCheck.querySelector('.form-check-label').innerText.toLowerCase();
+                        userCheck.style.display = label.includes(filterValue) ? '' : 'none';
+                    });
+                });
+
+                // Confirm selection logic
+                document.getElementById('confirmSelection').onclick = () => {
+                    selectedUsersContainer.innerHTML = ''; // Clear previous selection
+                    const checkboxes = document.querySelectorAll('#userSelectList input[type="checkbox"]:checked');
+                    const selectedIds = []; // Array to hold selected IDs
+
+                    checkboxes.forEach(cb => {
+                        const userId = cb.value;
+                        selectedIds.push(userId);
+
+                        const userTag = document.createElement('div');
+                        userTag.className = 'user-tag d-flex justify-content-between align-items-center';
+                        userTag.innerText = cb.nextElementSibling.innerText;
+
+                        const crossMark = document.createElement('span');
+                        crossMark.innerHTML = '&times;'; // Cross mark
+                        crossMark.className = 'remove-user';
+                        crossMark.onclick = () => {
+                            selectedUsersContainer.removeChild(userTag);
+                            cb.checked = false; // Uncheck the checkbox
+                            // Remove from selected users map
+                            selectedUsersMap.set(templateName, selectedIds.filter(id => id !== userId));
+                        };
+
+                        userTag.appendChild(crossMark);
+                        selectedUsersContainer.appendChild(userTag);
+                    });
+
+                    // Update the map with selected user IDs
+                    selectedUsersMap.set(templateName, selectedIds);
+                    userSelectModal.hide();
+                };
+
+
+                function resetFilters() {
+                    document.getElementById('status').value = '';
+                    document.getElementById('start_date').value = '';
+                    document.getElementById('end_date').value = '';
+                    document.getElementById('filterForm').submit(); // Optionally submit to apply reset
+                }
+
+                document.getElementById('saveTemplate').addEventListener('click', function(event) {
+                    event.preventDefault(); // Prevent form submission
+
+                    // Get form data
+                    const templateName = document.getElementById('templateName').value;
+                    const templateContent = document.getElementById('templateContent').value;
+
+                    // Prepare the data to send in the request
+                    const data = {
+                        templateName: templateName,
+                        templateContent: templateContent
+                    };
+
+                    // Send the data to the server using the fetch API
+                    fetch('/save-template/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json', // Send data as JSON
+                            },
+                            body: JSON.stringify(data), // Convert the data object to a JSON string
+                        })
+                        .then(response => response.json()) // Parse JSON response
+                        .then(data => {
+                            console.log('Success:', data); // Handle success response
+                            location.reload();
+                            // You can do something like closing the modal or showing a success message here
+                        })
+                        .catch((error) => {
+                            console.error('Error:', error); // Handle error
+                            // You can show an error message to the user here
+                        });
+                });
+
+                document.addEventListener("DOMContentLoaded", function() {
+
+                    let isQuillReady = false; // Flag to check if Quill is ready
+                    let isContentLoaded = false; // Flag to check if content is loaded into Quill
+                    const form = document.getElementById('addTemplateForm');
+                    const templateNameInput = document.getElementById('templateName');
+                    const templateNameError = document.getElementById('templateNameError');
+                    const saveButton = document.getElementById('saveTemplate');
+
+                    // Initially disable the save button
+                    saveButton.disabled = true;
+
+                    // Handle template name input change
+                    templateNameInput.addEventListener('input', function() {
+                            const templateName = templateNameInput.value.trim();
+
+                            if (templateName) {
+                                // Make an AJAX request to check if the template name exists
+                                fetch(`/check-template-name/?templateName=${templateName}`)
+                                    .then(response => {
+                                        if (response.ok) {
+                                            // Template name is available
+                                            templateNameError.style.display = 'none';
+                                            saveButton.disabled = false; // Enable the save button
+                                        } else {
+                                            // Template name already exists
+                                            templateNameError.style.display = 'block';
+                                            saveButton.disabled = true; // Disable the save button
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error checking template name:', error);
+                                        alert('Something went wrong!');
+                                    });
+                            } else {
+                                // If template name is empty, disable the save button
+
+                                templateNameError.style.display = 'none';
+                                saveButton.disabled = true;
+                            }
+                        })
+                        // Ensure that Quill is initialized for each dynamically rendered template
+                    const templates = document.querySelectorAll('.accordion-item'); // All templates (accordion items)
+                    console.log(templates);
+
+                    templates.forEach((templateElement) => {
+                        const templateName = templateElement.querySelector('.accordion-header').textContent.trim();
+                        console.log("trmosakjjas", templateName)
+                        const quillId = `emailDescription${templateName}`; // Ensure the ID is consistent
+                        const descriptionElement = templateElement.querySelector(`#${quillId}`);
+                        console.log("id", quillId, descriptionElement);
+
+                        if (descriptionElement) {
+                            // Initialize Quill editor
+                            const quill = new Quill(`#${quillId}`, {
+                                theme: 'snow',
+                                modules: {
+                                    toolbar: [
+                                        ['bold', 'italic', 'underline'],
+                                        ['link'],
+                                        [{
+                                            'list': 'ordered'
+                                        }, {
+                                            'list': 'bullet'
+                                        }]
+                                    ]
+                                }
+                            });
+
+                            // Mark as content loading has started
+                            isQuillReady = true;
+
+                            // Use Quill's clipboard API to set the content (avoids triggering `text-change` event)
+                            const templateDescription = descriptionElement.innerHTML.trim();
+                            quill.clipboard.dangerouslyPasteHTML(templateDescription); // Avoid triggering event
+
+                            // Mark as content loaded
+                            isContentLoaded = true;
+
+                            let typingTimer;
+                            const doneTypingInterval = 2 // 200ms delay after typing stops before auto-save triggers
+
+                            // Function to auto-save the content for the specific template
+                            function autoSave(text, id) {
+                                fetch('/auto-save-url/', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': '{{ csrf_token }}' // Send the CSRF token in the header
+                                        },
+                                        body: JSON.stringify({
+                                            emailDescription: text,
+                                            templateName: id, // Send the unique templateName to target this specific template
+                                        }),
+                                    })
+                                    .then(response => {
+                                        if (response.ok) {
+                                            console.log(`Auto-saved content for template: ${id}`);
+                                        } else {
+                                            console.error(`Error in auto-saving template ${id}:`, response.statusText);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Error during auto-save:', error);
+                                    });
+                            }
+
+                            // Handle text changes in Quill editor
+                            quill.on('text-change', (delta, oldDelta, source) => {
+                                // Skip text-change event during initialization or loading content
+                                if (!isQuillReady || !isContentLoaded) {
+                                    console.log("Quill is initializing or content is being loaded, skipping auto-save.");
+                                    return; // Skip the auto-save during initialization
+                                }
+
+                                // Prevent accidental triggering of auto-save for programmatic changes
+                                if (source === 'api') {
+                                    console.log("Skipping auto-save as change was triggered by API.");
+                                    return; // Skip if the change was made programmatically
+                                }
+
+                                // Clear the previous timer and trigger auto-save if the content has changed
+                                clearTimeout(typingTimer);
+                                const updatedText = quill.root.innerHTML
+                                const emailFormatSelect = templateElement.querySelector(`#emailFormat${templateName}`);
+                                const editorId = quill.container.id;
+                                if (emailFormatSelect == "plain") {
+                                    // Get the plain text content (without formatting)
+
+                                    const updatedText = quill.getText();
+                                }
+                                // Get the Quill container's ID
+                                console.log(`Changes occurred in editor with ID: ${editorId}`);
+                                const emailDescription = quill.root.innerHTML; // Get the HTML content from the editor
+                                document.getElementById(`emailDescriptionInput${templateName}`).value = emailDescription; // Update the hidden input
+                                // Set a new timer for auto-save (debounced)
+                                typingTimer = setTimeout(() => autoSave(updatedText, editorId), doneTypingInterval); // Delay auto-save
+                            });
+
+                            // Handle the Save Template button functionality (if needed)
+                            // You can use this function inside the loop if there's any "Save" button inside each template
+                        }
+                    });
+
+                    // Handle delete template
+                    const deleteButtons = document.querySelectorAll('.delete-template-button');
+                    deleteButtons.forEach(deleteButton => {
+                        deleteButton.addEventListener('click', function() {
+                            const templateName = this.closest('.accordion-item').querySelector('.template-name').innerText; // Capture template name
+                            deleteTemplate(templateName); // Ensure the deleteTemplate function is implemented
+                        });
+                    });
+
+                    // Send email button functionality (can be adjusted as needed)
+                    const sendButtons = document.querySelectorAll('.send-email-button');
+                    sendButtons.forEach(sendButton => {
+                        sendButton.addEventListener('click', function() {
+                            const emailDescription = quill.root.innerHTML; // Capture Quill editor content
+                            const templateName = this.closest('.accordion-item').querySelector('.template-name').innerText; // Get template name
+
+                            if (confirm("Are you sure you want to send this email?")) {
+                                fetch('/send-email/', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRFToken': '{{ csrf_token }}' // CSRF token for Django
+                                        },
+                                        body: JSON.stringify({
+                                            emailDescription: emailDescription,
+                                            templateName: templateName
+                                        })
+                                    })
+                                    .then(response => {
+                                        if (response.ok) {
+                                            alert("Email sent successfully!");
+                                        } else {
+                                            console.error('Error in sending email:', response.statusText);
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Fetch error:', error);
+                                    });
+                            }
+                        });
+                    });
+
+                    // Optional: Toggle filter section visibility
+
+
+                });
+
+                // Delete template function (Ensure it works on dynamically rendered delete buttons)
+                function deleteTemplate(templateName) {
+                    if (confirm(`Are you sure you want to delete the template: ${templateName}?`)) {
+                        fetch(`/delete-template/${templateName}/`, { // Adjust the URL to use template name
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': '{{ csrf_token }}'
+                                },
+                            })
+                            .then(response => {
+                                if (response.ok) {
+                                    alert('Template deleted successfully!');
+                                    location.reload(); // Reload the page to update the template list
+                                } else {
+                                    console.error('Error deleting template:', response.statusText);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Fetch error:', error);
+                            });
+                    }
+                }
+
+                // Open the modal when the send button is clicked
+                const sendButtons = document.querySelectorAll('.send-email-button');
+                sendButtons.forEach(sendButton => {
+                    sendButton.addEventListener('click', function() {
+                        const templateName = this.closest('.accordion-item').querySelector('.template-name').innerText;
+                        openUserSelectionModal(templateName);
+                    });
+                });
+
+                // Function to open the modal and populate user list
+                function openUserSelectionModal(templateName) {
+                    const modal = document.getElementById('sendMessageModal');
+                    const userList = document.getElementById('userList');
+
+                    // Fetch users from the server (assuming you have an endpoint for this)
+                    fetch('/get-users/')
+                        .then(response => response.json())
+                        .then(users => {
+                            userList.innerHTML = ''; // Clear previous users
+                            users.forEach(user => {
+                                const userItem = document.createElement('div');
+                                userItem.innerHTML = `
+                        <input type="checkbox" value="${user.id}" /> ${user.name}
+                    `;
+                                userList.appendChild(userItem);
+                            });
+                        });
+
+                    modal.style.display = 'block'; // Show the modal
+
+                    // Handle sending the template
+                    document.getElementById('sendTemplateButton').onclick = function() {
+                        const selectedUsers = Array.from(userList.querySelectorAll('input:checked')).map(input => input.value);
+                        console.log()
+                        sendMessageTemplate(templateName, selectedUsers);
+                        modal.style.display = 'none'; // Close the modal after sending
+                    };
+
+                    // Close modal on clicking the close button
+                    modal.querySelector('.close-button').onclick = function() {
+                        modal.style.display = 'none';
+                    };
+                }
+
+                function toggleButtonVisibility(templateName) {
+                    const checkbox = document.getElementById(`selectUsers${templateName}`);
+                    const button = document.getElementById(`userSelectButton${templateName}`);
+                    button.style.display = checkbox.checked ? 'inline-block' : 'none';
+                }
+
+                function added(templateName) {
+
+                    if (checkmap_.get(templateName) === undefined) {
+                        checkmap_.set(templateName, 'true');
+                    } else {
+                        // Toggle between 'true' and 'false'
+                        const currentValue = checkmap_.get(templateName);
+                        checkmap_.set(templateName, currentValue === 'true' ? 'false' : 'true');
+                    }
+
+
+
+                }
+                // Function to send the message to selected users
+                function sendMessageTemplate(templateName, selectedUsers) {
+                    const selectedUsers_ = selectedUsersMap.get(templateName);
+
+                    // Check if there are selected users
+
+                    if (!selectedUsers_ || selectedUsers_.length === 0) {
+                        if (checkmap_.get(templateName) == 'false' || checkmap_.get(templateName) == undefined) {
+                            alert('Please select user(s) to send the message.');
+                            return;
+                        }
+
+                    }
+
+                    // Log the selected users
+                    console.log(selectedUsers_); // Log the selected users for debugging
+
+
+                    fetch('/send-template-message', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}' // CSRF token for security
+                            },
+                            body: JSON.stringify({
+                                templateName: templateName,
+                                userIds: selectedUsers_, // Send the selected user IDs
+                                check: checkmap_.get(templateName)
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Template message sent successfully!');
+                                selectedUsersMap.set(templateName, []);
+                                checkmap_.set(templateName, undefined)
+                                location.reload(); // Reload the page to reflect changes
+                            } else {
+                                console.error('Error sending message:', data.message || 'Unknown error');
+                                alert('Failed to send template message');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Fetch error:', error);
+                            alert('An error occurred while sending the template message');
+                        });
+                }
+            </script>
+
+</body>
+{% endblock %}

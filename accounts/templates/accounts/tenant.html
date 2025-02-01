@@ -65,6 +65,7 @@
                         <th>ID</th>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Address</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -74,6 +75,7 @@
                         <td>{{ tenant.id }}</td>
                         <td>{{ tenant.name }}</td>
                         <td>{{ tenant.email }}</td>
+                        <td>{{tenant.address}}</td>
                         <td>
 
                             <button class="btn btn-danger btn-sm" onclick="deleteTenant({{ tenant.id }})">Delete</button>
@@ -106,6 +108,10 @@
                             <div class="mb-3">
                                 <label for="new-tenant-email" class="form-label">Email</label>
                                 <input type="email" class="form-control" id="new-tenant-email" name="email" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-tenant-email" class="form-label">Address</label>
+                                <input type="address" class="form-control" id="new-tenant-address" name="address">
                             </div>
                             <button type="button" class="btn btn-primary" onclick="createTenant()">Create</button>
                         </form>
