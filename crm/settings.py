@@ -140,7 +140,15 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-MEDIA_URL = '/images/'
+
+
+import os
+
+# Where your media files are stored
+MEDIA_ROOT = os.path.join(BASE_DIR, '')  # This is where files are stored on your server
+
+# URL to access the media files
+MEDIA_URL = '/images/'  # The URL prefix used to serve media files
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')

@@ -228,8 +228,8 @@
                                 data-issue="{{ ticket.issue }}" data-comments="{{ ticket.comments }}">
                                 Edit
                             </button>
-                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-description="{{ ticket.description }}" data-status="{{ ticket.ticket_status }}"
-                                data-date-reported="{{ ticket.date_reported }}">
+                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-ticket-image="{{ticket.image_path}}" data-description="{{ ticket.description }}"
+                                data-status="{{ ticket.ticket_status }}" data-date-reported="{{ ticket.date_reported }}">
                                 Show Description
                             </button>
                             <button class="btn btn-info btn-sm bi bi-clock-history" data-bs-toggle="modal" data-bs-target="#showModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-comment-history="{{ ticket.commentHistory }}">
@@ -328,9 +328,18 @@
                     <p><strong>Status:</strong> <span id="modalTicketStatus"></span></p>
                     <p><strong>Date Reported:</strong> <span id="modalDateReported"></span> (<span id="modalDaysSinceReported"></span> days ago)</p>
                     <div class="mb-3">
-                        <label for="modalDescription" class="form-label">Description:</label>
+                        <label for="modalDescription" class="form-label"><strong>Description:</strong></label>
                         <textarea id="modalDescription" class="form-control scrollable-textarea" readonly></textarea>
                     </div>
+
+                    <div>
+                        <p><strong>Image</strong></p>
+                        <img id="modalImageReported" src="" alt="Ticket Image" class="img-fluid" style="display: none;">
+                        <!-- Initially hidden -->
+                        <p id="noImageMessage" style="display: none;">No image provided by tenant.</p>
+                        <!-- Initially hidden -->
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -437,6 +446,7 @@
         const button = event.relatedTarget;
         const ticketNumber = button.getAttribute('data-ticket-number');
         const description = button.getAttribute('data-description');
+        console.log(button.getAttribute('data-ticket-image'));
         const ticketStatus = button.getAttribute('data-status');
         const dateReported = button.getAttribute('data-date-reported');
         const issue = button.getAttribute("data-issue")
@@ -444,11 +454,25 @@
         const modalDescription = showDescriptionModal.querySelector('#modalDescription');
         const modalTicketStatus = showDescriptionModal.querySelector('#modalTicketStatus');
         const modalDateReported = showDescriptionModal.querySelector('#modalDateReported');
+        const modalImageReported = showDescriptionModal.querySelector('#modalImageReported');
         modalTicketNumber.textContent = ticketNumber;
         modalDescription.value = description;
         modalTicketStatus.textContent = ticketStatus;
         modalDateReported.textContent = dateReported;
 
+        if (button.getAttribute('data-ticket-image')) {
+            // If an image path is provided, show the image
+            modalImageReported.src = "/images/" +
+                button.getAttribute('data-ticket-image');
+            console.log(modalImageReported) // Assuming ticketImagePath is the relative path
+            modalImageReported.style.display = 'block'; // Show the image element
+            noImageMessage.style.display = 'none'; // Hide the "No image provided" message
+        } else {
+            // If no image path is provided, show the "No image" message
+            modalImageReported.style.display = 'none'; // Hide the image element
+            noImageMessage.style.display = 'block';
+
+        };
     });
     const showModal = document.getElementById('showModal');
     showModal.addEventListener('show.bs.modal', function(event) {

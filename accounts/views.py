@@ -47,6 +47,8 @@ user_intiated_chat=dict()
 
 user_issue_dict=dict()
 
+image_media_dict=dict()
+
 def superuser_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -912,6 +914,55 @@ base_support_keywords = [  "raise", "raise a support request", "support", "assis
 SUPPORT_REQUEST_KEYWORDS = get_support_keywords(base_support_keywords)
 media_dict=dict()
 # Updated get_gemini_response function
+import os
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from email.mime.image import MIMEImage
+
+import os
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
+from email.mime.image import MIMEImage
+
+def save_image_to_ticket(path, ticket, image_format='PNG'):
+    # Open the image in binary mode
+    with open(path, 'rb') as img_file:
+        img_data = img_file.read()
+
+        # Use PIL to open the image and convert it to the desired format (PNG or JPEG)
+        image = Image.open(BytesIO(img_data))
+
+        # Ensure the image is in the desired format (e.g., PNG or JPEG)
+        if image_format == 'PNG':
+            output_image = BytesIO()
+            image.save(output_image, format='PNG')
+            output_image.seek(0)  # Reset pointer to the beginning of the file-like object
+        elif image_format == 'JPEG':
+            output_image = BytesIO()
+            image.save(output_image, format='JPEG')
+            output_image.seek(0)
+        else:
+            raise ValueError("Unsupported image format")
+
+        # Prepare the file name and path
+        image_name = f"{ticket.ticket_number}.{image_format.lower()}"  # Example: 'ticket123.png'
+        image_path = os.path.join('uploads', image_name)  # Relative path to save the image
+
+        # Save the image data to the Ticket model's image field (or path)
+        ticket.image_path.save(image_name, ContentFile(output_image.read()), save=True)
+
+        # Optional: If you are also attaching this image to an email
+        img = MIMEImage(output_image.getvalue())
+        img.add_header('Content-ID', f'<image{ticket.ticket_number}>')  # Matches 'cid:image1' in HTML body
+        img.add_header('Content-Disposition', 'inline', filename=image_name)
+
+        # Optional: Attach the image to your email message
+        # message.attach(img)
+
+    return ticket
+
+
 def  get_gemini_response(input_message, recipient,caption, media=None):
 
     if is_acknowledgment(input_message):
@@ -945,7 +996,7 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
         summary=model.generate_content('''proivde me a brief summary regarding the converstion what issue does the user is facing '''+full_input)
         # thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
         # thread.start()
-        media_dict[recipient]='no path'
+        # media_dict[recipient]='no path'
         reslove_dict[recipient]="feedback"
         user_data_dict[recipient]=[summary.text,media_dict[recipient]]
         return send_message_interaction(recipient)
@@ -954,6 +1005,7 @@ def  get_gemini_response(input_message, recipient,caption, media=None):
 
     if media:
         image = Image.open(media['file_path'])
+        # image_media_dict[recipient]=media["media_file_path"]
         media_dict[recipient]=media['file_path']
         response = model.generate_content([full_input , image])
     response=model_.generate_content('''Analyzing Support Need :
@@ -981,7 +1033,7 @@ User Asking for Support Multiple Times:
 
         thread = threading.Thread(target=create_ticket_from_summary(summary.text,recipient,media_dict[recipient]))
         thread.start()
-        media_dict[recipient]='no path'
+        # media_dict[recipient]='no path'
         print("triggered a email")
         user_data_dict[recipient]=[summary.text,media_dict[recipient]]
         # reslove_dict[recipient]="issue"
@@ -1004,10 +1056,13 @@ User Asking for Support Multiple Times:
     return response.text
 global_ticket_number=1000785
 def create_ticket_from_summary(summary,phonenumber,path):
+    print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
     ticket_created=TicketsModel(user=user,ticket_number=str(datetime.now().timestamp()),Description=summary)
     ticket_created.save()
+
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
+    ticket_status=save_image_to_ticket(path,ticket_status)
     ticket_status.save()
     mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
                'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
@@ -1061,7 +1116,7 @@ def process_media(media_id,caption,facebookData):
 
         # Save media content to a file and return the file path
         if media_content:
-            file_path = save_media_file(media_content, media_type)
+            file_path  = save_media_file(media_content, media_type)
             return {"url": media_url, "type": media_type, "file_path": file_path,"captions":caption}
         else:
             print("Failed to download media content.")
@@ -1213,6 +1268,7 @@ def process_whatsapp_message(body):
                     if message_data["image"].get("caption"):
                         caption = message_data["image"]["caption"]
                     media = process_media(media_id,caption,facebookData)
+
                 elif "document" in message_data:
                     media_id = message_data["document"]["id"]
                     media = process_media(media_id,caption,facebookData)
@@ -3020,6 +3076,8 @@ def upload_media(request):
 
         # Get file type
         file_type, _ = mimetypes.guess_type(file.name)
+
+
         print(file_type)
         # Check if file is image, video, or audio
         if file_type :
@@ -3118,6 +3176,8 @@ def send_media_to_user(phone_number, media_id, facebookData, file_type):
         }
     elif file_type.startswith('text') or file_type == 'application/pdf' or file_type == 'text/plain':
             print("here in message")
+
+
             message_data["type"] = "DOCUMENT"
             message_data["document"] = {
                 "id": media_id,

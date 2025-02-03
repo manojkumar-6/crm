@@ -54,6 +54,8 @@ class TicketsStatusModel(models.Model):
     tenant_to = models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     ticket_number = models.ForeignKey(TicketsModel, on_delete=models.CASCADE)
     issue=models.CharField(max_length=24)
+    image_path=models.ImageField(upload_to='uploads', blank=True, null=True)
+
     ticket_status = models.CharField(
         max_length=20,
         choices=TicketStatusChoices.choices,
