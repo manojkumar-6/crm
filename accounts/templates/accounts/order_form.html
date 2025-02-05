@@ -4,8 +4,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
 
 <style>
-    /* Center the form vertically and horizontally */
-
     .centered-form {
         display: flex;
         justify-content: center;
@@ -22,17 +20,13 @@
         font-weight: bold;
         margin-bottom: 20px;
         text-align: center;
-        color: #0d6efd;
-        /* Bootstrap primary color */
+        color: #1abc9c;
     }
-    /* Add card shadow and rounded corners */
 
     .card {
         border-radius: 15px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        /* Subtle shadow */
         transition: transform 0.3s ease-in-out;
-        /* Smooth transition on hover */
     }
 
     .card:hover {
@@ -53,17 +47,17 @@
     }
 
     .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 5px rgba(13, 110, 253, 0.5);
+        border-color: #1abc9c;
+        box-shadow: 0 0 5px #1abc9c(13, 110, 253, 0.5);
         /* Blue shadow on focus */
     }
     /* Submit button styling */
 
     .btn-info {
-        background-color: #0d6efd;
+        background-color: white;
         /* Bootstrap primary */
-        border-color: #0d6efd;
-        color: white;
+        border-color: #1abc9c;
+        color: #1abc9c;
         font-size: 1.2rem;
         border-radius: 10px;
         transition: background-color 0.3s ease, transform 0.3s ease;
@@ -71,23 +65,18 @@
 
     .btn-info:hover {
         background-color: #0b5ed7;
-        /* Slightly darker blue on hover */
         transform: scale(1.05);
-        /* Slightly enlarge on hover */
     }
     /* Animation on submit */
 
     .btn-info:active {
         transform: scale(0.98);
-        /* Shrink button slightly on click */
     }
-    /* Add fade-in effect for the form */
 
     .card {
         opacity: 0;
         animation: fadeIn 0.6s forwards;
     }
-    /* Fade-in keyframe */
 
     @keyframes fadeIn {
         0% {

@@ -11,6 +11,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
@@ -23,14 +24,15 @@
             position: fixed;
             top: 0;
             left: 0;
-            background-color: #2c3e50;
+            background-color: white;
             /* Dark navy */
             color: #ecf0f1;
             /* Light gray */
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 100;
             padding: 15px;
             overflow-y: auto;
+            font-size: 14px;
         }
 
         .sidebar a {
@@ -45,13 +47,6 @@
             /* Spacing between icon and text */
             font-size: 14px;
             transition: all 0.3s ease;
-        }
-
-        .sidebar a:hover {
-            background-color: #34495e;
-            /* Slightly lighter navy */
-            color: #1abc9c;
-            /* Green accent for hover */
         }
 
         .sidebar a.active {
@@ -81,9 +76,9 @@
             top: 0;
             left: 300px;
             /* Align with content */
-            width: calc(100% - 300px);
+            width: calc(100% - 500px);
             z-index: 1100;
-            background-color: #34495e;
+            background-color: white;
             /* Green accent */
             color: #fff;
             height: 56px;
@@ -92,6 +87,16 @@
             padding: 0 15px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             text-align: center;
+        }
+
+        .modal-header {
+            background-color: #1abc9c;
+            color: white
+        }
+
+        .req {
+            background-color: #1abc9c;
+            color: white
         }
 
         .navbar .navbar-brand {
@@ -103,28 +108,13 @@
         /* Modal fixes */
 
         .modal {
-            z-index: 1250;
+            z-index: 1750;
             /* Ensure above other elements */
         }
 
         .modal-backdrop {
-            z-index: 1240;
+            z-index: 1540;
             /* Ensure below modal but above content */
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                left: 0;
-                width: 100%;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-            }
-            .main-content {
-                margin-left: 0;
-            }
         }
         /* Title styling for sidebar */
 
@@ -146,83 +136,60 @@
         <div class="sidebar-title">CRM</div>
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link" href="/dashboard">
-                    <span class="nav-icon">&#128202;</span>
-                    <!-- Dashboard icon -->
-                    Dashboard
+                <a class="nav-link" href="/dashboard" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-house-user"></i></span> Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/users_/">
-                    <span class="nav-icon">&#128100;</span>
-                    <!-- User management icon -->
-                    Tenant Management
+                <a class="nav-link" href="/users_/" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-users-cog"></i></span> Tenant Management
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/update_facebook_credentials">
-                    <span class="nav-icon">&#127759;</span>
-                    <!-- Globe icon -->
-                    Update My Facebook Data
+                <a class="nav-link" href="/update_facebook_credentials" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-network-wired"></i></span> Update My Facebook Data
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#updateProfileModal">
-                    <span class="nav-icon">&#128221;</span>
-                    <!-- Profile icon -->
-                    Update My Profile
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#updateProfileModal" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-user-edit"></i></span> Update My Profile
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                    <span class="nav-icon">&#128228;</span>
-                    <!-- Bulk upload icon -->
-                    Bulk User Update
-                </a>
-            </li>
-            <!-- <li class="nav-item">
-                <a class="nav-link" href="{% url 'list_tickets' %}">
-                    <span class="nav-icon">&#128195;</span>
-
-                    Tickets Created For Tenant Issues
-                </a>
-            </li> -->
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'showtemplate' %}">
-                    <span class="nav-icon">&#128195;</span> Templates
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#uploadModal" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span> Bulk User Update
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/tickets_status/">
-                    <span class="nav-icon">&#128197;</span>
-                    <!-- Status icon -->
-                    Ticket Status For Tenant Issues
+                <a class="nav-link" href="{% url 'showtemplate' %}" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-scroll"></i></span> Templates
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/get-access/">
-                    <span class="nav-icon">&#128275;</span>
-                    <!-- Lock icon -->
-                    Dashboard Access Management
+                <a class="nav-link" href="/tickets_status/" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-calendar-check"></i></span> Ticket Status For Tenant Issues
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/api/chat" target="_blank">
-                    <span class="nav-icon">&#128172;</span>
-                    <!-- Chat icon -->
-                    Chat
+                <a class="nav-link" href="/get-access/" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-user-shield"></i></span> Dashboard Access Management
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/api/chat" target="_blank" style="color: #333;">
+                    <span class="nav-icon"><i class="fas fa-comments"></i></span> Chat
                 </a>
             </li>
             <li class="nav-item">
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button type="submit" class="nav-link btn btn-link">
-                        <span class="nav-icon">&#128682;</span> <!-- Logout icon -->
-                        Logout
+                    <button type="submit" class="nav-link btn btn-link" style="color: #333333;">
+                        <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
                 </form>
             </li>
         </ul>
+
     </div>
 
     <!-- Main content area -->
@@ -288,7 +255,7 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #1abc9c;">Update</button>
                         <div id="form-result" class="mt-2"></div>
                         <!-- For showing result messages -->
                     </form>
@@ -315,7 +282,9 @@
                             <input type="file" class="form-control" id="customFile" name="file" accept=".csv" required>
                             <div class="form-text">Please upload a valid CSV file. Max size: 5MB.</div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #1abc9c;">
+                            Upload
+                        </button>
                     </form>
                     <div id="upload-result" class="mt-3"></div>
                 </div>

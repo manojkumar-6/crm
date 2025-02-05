@@ -82,12 +82,13 @@
         font-weight: bold;
     }
 
-    .btn-primary,
+    .bthn-secondary,
     .btn-warning,
     .btn-danger {
         border-radius: 25px;
         padding: 5px 15px;
         font-size: 14px;
+        width: 70px;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
         transition: all 0.3s ease;
     }
@@ -146,7 +147,7 @@
     }
 
     .accordion-item {
-        border: 1px solid #007bff;
+        border: 1px solid #1abc9c;
         border-radius: 0.5rem;
         margin-bottom: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -155,7 +156,7 @@
 
     .accordion-button {
         background-color: #ffffff;
-        color: #007bff;
+        color: #1abc9c;
         font-weight: 500;
         padding: 1rem;
         transition: all 0.3s ease-in-out;
@@ -163,31 +164,30 @@
 
     .accordion-button:hover {
         background-color: #f0f8ff;
-        color: #0056b3;
+        color: #1abc9c;
     }
 
     .accordion-button:not(.collapsed) {
         background-color: #e1ecf4;
-        color: #0056b3;
+        color: #1abc9c;
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .accordion-body {
         background-color: #ffffff;
-        color: #333;
+        color: #1abc9c;
         padding: 1.5rem;
         line-height: 1.5;
-        border-top: 1px solid #007bff;
+        border-top: 1px solid #1abc9c;
         max-height: 500px;
         overflow-y: auto;
     }
 
     #add-chat-option-button,
-    .btn-danger {
-        width: auto;
+    .btn-danger .btn-secondary {
+        width: 70px;
         padding: 6px 12px;
         font-size: 12px;
-        min-width: 120px;
     }
 
     #search-filter {
@@ -208,16 +208,6 @@
         /* Set a smaller minimum width */
     }
 
-    #add-chat-option-button,
-    .btn-danger {
-        width: auto;
-        /* Allow the button to shrink based on content */
-        padding: 4px 10px;
-        /* Smaller padding */
-        font-size: 12px;
-        /* Smaller font size */
-    }
-
     .add-button-hidden {
         display: none;
     }
@@ -227,7 +217,7 @@
     <div class="container my-4">
         <div class="header">
             <div>
-                <h1 class="display-6 text-dark">Chat Options & Broadcast Management</h1>
+                <h1 class="display-6 text" style="color:#1abc9c">Chat Options & Broadcast Management</h1>
             </div>
             <div class="mb-2">
                 <button id="addTemplateBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTemplateModal">
@@ -249,12 +239,13 @@
                     <div class="accordion-body">
                         <div class="search-bar d-flex align-items-center">
                             <input type="text" id="search-filter" class="form-control" placeholder="Search chat options" onkeyup="filterTable()">
-                            <button class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#createChatOptionModal" id="add-chat-option-button">Add New Chat Option</button>
-                            <button class="btn btn-danger ms-2" onclick="deleteSelectedChatOptions()">Delete Selected</button>
+                            <button class="btn btn-primary ms-1" data-bs-toggle="modal" data-bs-target="#createChatOptionModal" id="add-chat-option-button"><i class="fas fa-plus-circle"></i></button>
+                            <button class="btn btn-warning ms-1" onclick="deleteSelectedChatOptions()"> <i class="fas fa-trash-alt"></i></button>
                         </div>
                         <div class="table-responsive table-scrollable mt-3">
                             <table class="table table-hover" id="chatOptionsTable">
-                                <thead class="table-dark">
+                                <thead class="table" style="
+                                background-color:whitesmoke;color:#1abc9c">
                                     <tr>
                                         <th>Select</th>
 
@@ -269,8 +260,8 @@
 
                                         <td>{{ chat_option.options }}</td>
                                         <td>
-                                            <button class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#editChatOptionModal" id="add-chat-option-button" data-options="{{ chat_option.options }}">Edit</button>
-                                            <button class="btn btn-danger ms-2" onclick="deleteChatOption('{{ chat_option.options }}')">Delete</button>
+                                            <button class="btn btn-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editChatOptionModal" id="add-chat-option-button" data-options="{{ chat_option.options }}"><i class="fas fa-edit"></i></button>
+                                            <button class="btn btn-warning ms-1" onclick="deleteChatOption('{{ chat_option.options }}')"> <i class="fas fa-trash-alt"></i></button>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -323,7 +314,7 @@
                                         <div id="selectedUsers{{ template.templateName }}"></div>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-danger" id="deleteTemplateButton{{ template.templateName }}" onclick="deleteTemplate('{{ template.templateName }}')">Delete Template</button>
+                                <button type="button" class="btn btn-secondary" id="deleteTemplateButton{{ template.templateName }}" onclick="deleteTemplate('{{ template.templateName }}')">Delete Template</button>
                                 <button type="button" class="btn btn-primary" id="sendEmailButton{{ template.templateName }}" onclick="sendMessageTemplate('{{ template.templateName }}', '{{ template.templateDescription }}')">Send WhatsApp Message</button>
                             </form>
                         </div>
@@ -423,7 +414,7 @@
                                     <label for="create-options" class="form-label">Options</label>
                                     <input type="text" class="form-control" id="create-options" name="create-options">
                                 </div>
-                                <button type="button" id="update-button" class="btn btn-primary" onclick='createChatOption()'>Create</button>
+                                <button type="button" id="update-button" class="btn btn-primary" style="background-color:#1abc9c;color:white" onclick='createChatOption()'>Create</button>
                             </form>
                         </div>
                     </div>
@@ -447,7 +438,7 @@
                                     <label for="templateContent" class="form-label">Template Content</label>
                                     <textarea class="form-control" id="templateContent" rows="5" required></textarea>
                                 </div>
-                                <button id="saveTemplate" type="submit" class="btn btn-primary" disabled>Save Template</button>
+                                <button id="saveTemplate" type="submit" class="btn btn-primary" style="background-color:#1abc9c;color:white" disabled>Save Template</button>
                             </form>
                         </div>
                     </div>
@@ -473,7 +464,7 @@
                                 </div>
 
                                 <!-- Save Button -->
-                                <button type="button" class="btn btn-primary" onclick="updateChatOption()">Update</button>
+                                <button type="button" class="btn btn-primary" onclick="updateChatOption()" style="background-color:#1abc9c;color:white">Update</button>
                             </form>
                         </div>
                     </div>

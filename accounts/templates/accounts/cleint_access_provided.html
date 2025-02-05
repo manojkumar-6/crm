@@ -48,7 +48,7 @@
             width: 400px;
             /* Increased width */
             margin: 20px 0;
-            font-size: 16px;
+            font-size: 13px;
             /* Increased font size */
         }
 
@@ -61,8 +61,8 @@
         /* Sticky Header Style */
 
         .table-responsive thead {
-            background-color: #343a40;
-            color: white;
+            background-color: white;
+            color: #1abc9c;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -165,8 +165,8 @@
                 <h1 class="display-6 text-dark mb-0">Access Management</h1>
             </div>
             <div class="col-auto">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Create New Access</button>
-                <button class="btn btn-danger" onclick="deleteSelectedEntries()">Delete Selected Access(es)</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal"><i class="fas fa-plus-circle"></i></button>
+                <button class="btn btn-danger" onclick="deleteSelectedEntries()"> <i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
 
@@ -176,7 +176,7 @@
 
         <div class="table-responsive table-scrollable mt-3">
             <table class="table table-hover" id="accessTable">
-                <thead class="table-dark">
+                <thead class="table">
                     <tr>
                         <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
 
@@ -218,7 +218,7 @@
                                 <label for="confirm-password" class="form-label">Confirm Password</label>
                                 <input type="password" class="form-control" id="confirm-password" name="confirm_password" required>
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="createAccess()">Create</button>
+                            <button type="button" class="btn btn-primary" onclick="createAccess()">create</i></button>
                         </form>
                     </div>
 
@@ -253,7 +253,7 @@
                                 <label for="edit-confirm-password" class="form-label">Confirm Password</label>
                                 <input type="password" class="form-control" id="edit-confirm-password" name="confirm_password">
                             </div>
-                            <button type="button" class="btn btn-primary" onclick="saveAccessChanges()">Update</button>
+                            <button type="button" class="btn btn-secondary" style="background-color:#1abc9c color:black" onclick="saveAccessChanges()">update</i></button>
                         </form>
                     </div>
                 </div>
@@ -315,9 +315,9 @@
                         <td>${entry.user.username}</td>
                         <td>${entry.user.email}</td>
                         <td>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal"
+                            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editModal"
                                 data-id="${entry.user.id}" data-user="${entry.user.username}" data-email="${entry.user.email}"
-                                onclick="populateEditModal(this)">Edit</button>
+                                onclick="populateEditModal(this)"><i class="fas fa-edit"></i></button>
                         </td>
                     </tr>
                 `).join('');

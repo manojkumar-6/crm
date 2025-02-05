@@ -134,6 +134,7 @@
 
         th {
             font-weight: bold;
+            color: #1abc9c
         }
 
         th,
@@ -166,8 +167,8 @@
         }
 
         thead {
-            background-color: #343a40;
-            color: white;
+            background-color: white;
+            color: #1abc9c;
             position: sticky;
             top: 0;
             z-index: 10;
@@ -179,11 +180,11 @@
     <div class="container my-4">
         <div class="row align-items-center mb-3">
             <div class="col header">
-                <h1 class="display-6 text-dark">Ticket Status Management</h1>
+                <h1 class="display-6 text" style="color:#1abc9c">Ticket Status Management</h1>
             </div>
             <div class="col-auto d-flex flex-column flex-sm-row gap-2">
                 <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">Add New Ticket Status</button> -->
-                <button class="btn btn-danger" onclick="deleteSelected()">Delete Selected Ticket(s)</button>
+                <button class="btn btn-danger" onclick="deleteSelected()"> <i class="fas fa-trash-alt"></i></button>
             </div>
         </div>
 
@@ -195,7 +196,7 @@
         <!-- Responsive Table for Ticket Status -->
         <div class="table-responsive table-scrollable">
             <table class="table table-hover" id="ticketsTable">
-                <thead class="table-dark">
+                <thead class="table">
                     <tr>
                         <th><input type="checkbox" onchange="selectAll(this)"></th>
 
@@ -226,14 +227,16 @@
                         <td>
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.user.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-status="{{ ticket.ticket_status }}"
                                 data-issue="{{ ticket.issue }}" data-comments="{{ ticket.comments }}">
-                                Edit
+                                <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-ticket-image="{{ticket.image_path}}" data-description="{{ ticket.description }}"
                                 data-status="{{ ticket.ticket_status }}" data-date-reported="{{ ticket.date_reported }}">
-                                Show Description
+                                <i class="fa fa-book"></i>
+
                             </button>
                             <button class="btn btn-info btn-sm bi bi-clock-history" data-bs-toggle="modal" data-bs-target="#showModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-comment-history="{{ ticket.commentHistory }}">
-                                History
+                                <i class="fa fa-history"></i>
+
                             </button>
                         </td>
                     </tr>

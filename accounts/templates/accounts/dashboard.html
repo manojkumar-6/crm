@@ -20,7 +20,7 @@
     /* Accordion Styles */
 
     .accordion-item {
-        border: 1px solid #007bff;
+        border: 1px solid #1abc9c;
         border-radius: 0.5rem;
         margin-bottom: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -29,7 +29,7 @@
 
     .accordion-button {
         background-color: #ffffff;
-        color: #007bff;
+        color: #1abc9c;
         font-weight: 500;
         padding: 1rem;
         transition: all 0.3s ease-in-out;
@@ -37,12 +37,12 @@
 
     .accordion-button:hover {
         background-color: #f0f8ff;
-        color: #0056b3;
+        color: white;
     }
 
     .accordion-button:not(.collapsed) {
-        background-color: #e1ecf4;
-        color: #0056b3;
+        background-color: white;
+        color: #1abc9c;
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
@@ -51,7 +51,7 @@
         color: #333;
         padding: 1.5rem;
         line-height: 1.5;
-        border-top: 1px solid #007bff;
+        border-top: 1px solid #1abc9c;
     }
     /* Button Styles */
 
@@ -90,8 +90,8 @@
     }
 
     .table thead th {
-        background-color: black;
-        color: #ffffff;
+        background-color: white;
+        color: #1abc9c;
         text-align: left;
         position: sticky;
         top: 0;
@@ -348,7 +348,9 @@
                             <div class="input-group" style="max-width: 900px;">
                                 <input type="text" class="form-control form-control-sm" id="searchBar" placeholder="Search tickets..." aria-label="Search tickets" onkeyup="searchTickets()">
                             </div>
-                            <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm">Export as CSV</a>
+                            <a href="{% url 'get_detailed_export_issue_csv' %}" class="btn btn-success btn-sm" style="background-color: #1abc9c;">
+                                Export as CSV
+                            </a>
 
                         </div>
 
@@ -358,16 +360,16 @@
                                 <thead>
                                     <tr>
                                         <th>Tenant
-                                            <a href="?sort_by=user" class="text-decoration-none text-muted">↑</a>
-                                            <a href="?sort_by=-user" class="text-decoration-none text-muted">↓</a>
+                                            <!-- <a href="?sort_by=user" class="text-decoration-none text-muted">↑</a>
+                                            <a href="?sort_by=-user" class="text-decoration-none text-muted">↓</a> -->
                                         </th>
                                         <th>Ticket
-                                            <a href="?sort_by=ticket_number" class="text-decoration-none text-muted">↑</a>
-                                            <a href="?sort_by=-ticket_number" class="text-decoration-none text-muted">↓</a>
+                                            <!-- <a href="?sort_by=ticket_number" class="text-decoration-none text-muted">↑</a>
+                                            <a href="?sort_by=-ticket_number" class="text-decoration-none text-muted">↓</a> -->
                                         </th>
                                         <th>Status
-                                            <a href="?sort_by=ticket_status" class="text-decoration-none text-muted">↑</a>
-                                            <a href="?sort_by=-ticket_status" class="text-decoration-none text-muted">↓</a>
+                                            <!-- <a href="?sort_by=ticket_status" class="text-decoration-none text-muted">↑</a>
+                                            <a href="?sort_by=-ticket_status" class="text-decoration-none text-muted">↓</a> -->
                                         </th>
                                         <th>Days Reported</th>
                                         <th>Ticket Info</th>
@@ -381,7 +383,7 @@
                                         <td>{{ item.ticket.ticket_status }}</td>
                                         <td>{{ item.days_reported }}</td>
                                         <td>
-                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#ticketInfoModal{{ item.ticket.id }}">Manage</button>
+                                            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#ticketInfoModal{{ item.ticket.id }}" style="color:white">Manage</button>
                                         </td>
                                     </tr>
 

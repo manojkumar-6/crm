@@ -1054,7 +1054,7 @@ User Asking for Support Multiple Times:
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
     return response.text
-global_ticket_number=1000785
+global_ticket_number=1000
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
@@ -1192,6 +1192,11 @@ def process_whatsapp_message(body):
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     # data_acknowledge=get_acknowledgment_keywords(["thanks"])
     wa_id = body["entry"][0]["changes"][0]["value"]["contacts"][0]["wa_id"]
+    user=UserModels.objects.filter(phone=receipient_number).first()
+    if user.archived:
+        data = get_text_message_input(wa_id, "You dont have requried permission to access the model kindly check with your client")
+        send_message(data,facebookData)
+        return "No access granted"
     if receipient_number not in message_dict:
         if message_data.get('interactive')and (message_data.get('interactive').get('list_reply')!=None):
             selected_option_id = message_data['interactive']['list_reply']['title']
