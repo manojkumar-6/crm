@@ -1062,7 +1062,8 @@ def create_ticket_from_summary(summary,phonenumber,path):
     ticket_created.save()
 
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
-    ticket_status=save_image_to_ticket(path,ticket_status)
+    if path.lower()!="no path":
+        ticket_status=save_image_to_ticket(path,ticket_status)
     ticket_status.save()
     mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
                'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
@@ -1318,8 +1319,7 @@ def send_message_template_(data,facebookData):
                     "Authorization": "Bearer " + facebookData.accessToken,
                     "Content-Type": "application/json",
                 }
-                # print(url,data)
-                # user_intiated_chat[data_dict["to"]]="sent"
+
                 response = requests.post(url, headers=headers, data=data)
                 print("sejnfj",response,response.text)
                 return response
