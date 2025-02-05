@@ -1058,7 +1058,7 @@ global_ticket_number=1000
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
-    ticket_created=TicketsModel(user=user,ticket_number=str(datetime.now().timestamp()),Description=summary)
+    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number),Description=summary)
     ticket_created.save()
 
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
