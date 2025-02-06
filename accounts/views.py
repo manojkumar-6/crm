@@ -2057,7 +2057,7 @@ def update_ticket_status(request):
         ticket.user=userData
         ticket.tenant_to=tenant
         ticket.comments=request.POST.get('comments')
-        ticket.status=request.POST.get('ticket_status')
+        ticket.ticket_status=request.POST.get('ticket_status')
         ticket.save()
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
         print(facebookData)
