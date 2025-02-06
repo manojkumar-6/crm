@@ -1058,7 +1058,7 @@ global_ticket_number=1000
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
-    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number),Description=summary)
+    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number+1),Description=summary)
     ticket_created.save()
 
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
@@ -1376,8 +1376,8 @@ def send_message_interaction(receipient_number):
 
 
     # Send the request
-    con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
-    con.save()
+    # con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    # con.save()
     response = requests.post(url, headers=headers, json=data)
 
     # Handle response
@@ -1435,8 +1435,8 @@ def send_message_interaction_check_user_request(receipient_number):
 
 
     # Send the request
-    con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
-    con.save()
+    # con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    # con.save()
     response = requests.post(url, headers=headers, json=data)
 
     # Handle response
@@ -1509,8 +1509,8 @@ def start_sending_message_interaction(receipient_number):
     }
 
     # Save the conversation model
-    con = ConversationModel(user=userData, ai_model_reply="template", user_query="card")
-    con.save()
+    # con = ConversationModel(user=userData, ai_model_reply="template", user_query="card")
+    # con.save()
 
     # Send the request
     response = requests.post(url, headers=headers, json=data)
@@ -1580,8 +1580,8 @@ def start_sending_maintainence_issue_interaction(receipient_number):
     }
 
     # Save the conversation model
-    con = ConversationModel(user=userData, ai_model_reply="template", user_query="list")
-    con.save()
+    # con = ConversationModel(user=userData, ai_model_reply="template", user_query="list")
+    # con.save()
 
     # Send the request
     response = requests.post(url, headers=headers, json=data)
@@ -1707,8 +1707,8 @@ def send_message_interaction_by_team(receipient_number):
     }
 }
 
-    con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
-    con.save()
+    # con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    # con.save()
     # Send the request
     response = requests.post(url, headers=headers, json=data)
     print(response,response.text,response.json())
