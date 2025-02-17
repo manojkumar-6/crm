@@ -73,6 +73,10 @@
         }
         /* Add transition for smooth hover effect on rows */
 
+        #tenant {
+            text-align: center;
+        }
+
         table tbody tr:hover {
             background-color: #f1f3f5;
             transition: background-color 0.3s ease;
@@ -209,10 +213,15 @@
                         </td>
 
                     </tr>
-                    {% endfor %}
+                    <!-- <p>Archived Users Length: {{ a_user_length }}</p> -->
+
+                    {% endfor %} {% if a_user_length != 0 %}
+
                     <tr>
-                        <td colspan="7"><strong>Archived Users</strong></td>
+                        <td colspan="7"><strong>Archived Users</strong>
+                        </td>
                     </tr>
+
                     {% for user in archived_users %}
                     <tr class="table-secondary">
                         <td><input type="checkbox" class="user-checkbox" data-id="{{ user.id }}"></td>
@@ -222,6 +231,7 @@
                         <td>{{ user.email }}</td>
                         <td>{{ user.address }}</td>
                         <td>
+
                             <a href="/customer/{{ user.id }}/">
                                 <button class="btn btn-secondary" data-id="{{ user.id }}" data-name="{{ user.name }}" data-phone="{{ user.phone }}" data-email="{{ user.email }}"><i class="fas fa-edit"></i></button>
                             </a>
@@ -229,8 +239,9 @@
                             <button class="btn btn-success" onclick="archiveUser({{ user.id }}, false)"><i class="fas fa-undo"></i></button> {% else %}
                             <button class="btn btn-warning" onclick="archiveUser({{ user.id }}, true)"><i class="fas fa-archive"></i></button> {% endif %}
                         </td>
+
                     </tr>
-                    {% endfor %}
+                    {% endfor %}{% endif %}
                 </tbody>
             </table>
         </div>

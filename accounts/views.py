@@ -2058,7 +2058,7 @@ def update_ticket_status(request):
         ticket.tenant_to=tenant
         ticket.comments=request.POST.get('comments')
         ticket.ticket_status=request.POST.get('ticket_status') #updated
-        
+
         ticket.save()
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
         print(facebookData)
@@ -2296,6 +2296,7 @@ def create_user(request):
         is_tenant=request.POST.get('is_tenant') =='true'
         user = User.objects.create(username=username, email=email, is_superuser=is_superuser)
         user.set_password(password)
+        print(user,password)
         user.save()
         if(is_tenant):
             make_tenant=TenantModel(name=user,email=email,email_template='hello')
@@ -2326,10 +2327,13 @@ def update_user_(request):
         username = request.POST.get('username')
         email = request.POST.get('email')
         is_superuser = request.POST.get('is_superuser') == 'true'
-
         user = User.objects.get(id=user_id)
+        password=request.POST.get('password')
+        user.set_password(password)
+        user.save()
         tenant_update=TenantModel.objects.filter(name=user).first()
         print(tenant_update)
+        print(user,password)
         user.username = username
         user.email = email
         user.is_superuser = is_superuser
@@ -2378,9 +2382,9 @@ def user_list(request):
     tenant =User.objects.filter(username=request.user.username,email=request.user.email).first()  # Get the tenant object
     tenant_=TenantModel.objects.filter(name=tenant).first()
     users = UserModels.objects.filter(tenant_to=tenant_)
-    active_users = UserModels.objects.filter(archived=False).all()
-    archived_users = UserModels.objects.filter(archived=True).all()
-    return render(request, 'accounts/utenant.html', {'users': users,'active_users':active_users, 'archived_users':archived_users})
+    active_users = users.filter(id__in=users.values('id'), archived=False)
+    archived_users = users.filter(id__in=users.values('id'), archived=True)
+    return render(request, 'accounts/utenant.html', {'users': users,'active_users':active_users, 'archived_users':archived_users,"a_user_length":len(archived_users)})
 
 @csrf_exempt
 def create_user_tenant(request):

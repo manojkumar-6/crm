@@ -1,4 +1,14 @@
 {% extends 'accounts/base.html' %} {% block title %}User Management{% endblock %} {% block content %}
+<style>
+    /* Style the required asterisk */
+
+    .required {
+        color: red;
+        /* Make the asterisk red */
+        font-weight: bold;
+        /* Optional: Make the asterisk bold */
+    }
+</style>
 <div class="container my-4">
     <div class="row align-items-center">
         <div class="col">
@@ -68,15 +78,14 @@
                 <form id="createUserForm">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="create-username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="create-username" name="username" required>
-                    </div>
+                        <label for="create-username" class="form-label">Username<span class="required">*</span></label>
+                        <input type="text" class="form-control" id="create-username" name="username" required></div>
                     <div class="mb-3">
-                        <label for="create-password" class="form-label">Password</label>
+                        <label for="create-password" class="form-label">Password<span class="required">*</span></label>
                         <input type="text" class="form-control" id="create-password" name="password" required>
                     </div>
                     <div class="mb-3">
-                        <label for="create-email" class="form-label">Email</label>
+                        <label for="create-email" class="form-label">Email<span class="required">*</span></label>
                         <input type="email" class="form-control" id="create-email" name="email" required>
                     </div>
                     <div class="mb-3">
@@ -87,18 +96,20 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="create-is_tenant" class="form-label">Mark As tenant</label>
+                        <label for="create-is_tenant" class="form-label">Mark As Tenant</label>
                         <select class="form-select" id="create-is_tenant" name="is_tenant">
                             <option value="false">No</option>
                             <option value="true">Yes</option>
                         </select>
                     </div>
-                    <button type="button" class="btn btn-primary rounded-pill" onclick="createUser()">Create</button>
+                    <button type="button" id="createUserButton" class="btn btn-primary rounded-pill" onclick="createUser()" disabled>Create</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
@@ -272,6 +283,24 @@
                 }
             });
     }
+
+    function validateEmail() {
+        console.log("in validation")
+        const emailField = document.getElementById('create-email');
+        const createButton = document.getElementById('createUserButton');
+        const email = emailField.value.trim();
+
+        // Basic check: email must contain '@'
+        const isValidEmail = email.includes('@');
+
+        // Enable the button if email is valid, otherwise disable it
+        createButton.disabled = !isValidEmail;
+    }
+
+    // Event listener to trigger validation whenever the email field changes
+    document.getElementById('create-email').addEventListener('input', validateEmail);
+
+    // Function to handle form submission
 
     // Populate the edit modal with user data
     function editUser(id) {
