@@ -1309,21 +1309,80 @@ def send_message(data,facebookData):
                 print("sejnfj",response,response.text)
                 return response
             return None
-def send_message_template_(data,facebookData):
+import requests
+import json
 
+def send_message_template_(data, facebookData):
+    print("Received call for particular user",data)
 
-            # if user_intiated_chat[data_dict["to"]]=="received" or user_intiated_chat[data_dict["to"]]=="create":
-                print("received call for particular user")
-                url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
-                headers = {
-                    "Authorization": "Bearer " + facebookData.accessToken,
-                    "Content-Type": "application/json",
-                }
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
 
-                response = requests.post(url, headers=headers, data=data)
-                print("sejnfj",response,response.text)
-                return response
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    # Check the 'data' format to ensure it matches the expected API format
+    try:
+        # Log the outgoing data
+        print("Sending data:", json.dumps(data, indent=4))
+
+        # Sending the request
+        if isinstance(data, str):
+    # If it's a string, parse it into a dictionary
+            data = json.loads(data)
+
+        # Now that 'data' is a dictionary, you can safely modify the 'to' field
+        data["to"] = "+" + str(data["to"])
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
+        # Check for the actual response from Facebook API
+        if response.status_code == 200:
+            print("Response OK:", response.json())
+        else:
+            print("Response Error:", response.status_code, response.text)
+
+        return response
+    except Exception as e:
+        print("Error sending message:", e)
+        return None
+
             # return None
+def create_template(number,name):
+
+    data = {
+        "messaging_product": "whatsapp",
+        "to": number,
+        "type": "template",
+        "template": {
+            "name": name,
+            "language": {
+                "code": "en_US"  # The language code of your template (e.g., en_US, es_ES)
+            },
+            # Optionally, you can add "components" if your template uses dynamic content (e.g., parameters)
+            # Example for adding dynamic parameters (custom variables)
+
+        }
+    }
+    return data
+def send_welcome_temlate(data,facebookData):
+
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+    # Send POST request to the WhatsApp API
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    # Check the response status
+    if response.status_code == 200:
+        print("Template sent successfully!")
+        print(response.json())  # Print the response from the API
+    else:
+        print(f"Error: {response.status_code}")
+        print(response.json())  # Print the error message
 
 def send_message_interaction(receipient_number):
     userData=UserModels.objects.filter(phone=receipient_number).first()
@@ -1867,8 +1926,11 @@ def create_user_tenant_(request):
         print(user)
         tenant =TenantModel.objects.filter(name=user).first()
         print(tenant)
+        facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+        data=create_template(phone,"fixm8")
         user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
         user.save()
+        send_welcome_temlate(data,facebookData)
         return JsonResponse({'success': True, 'user_id': user.id})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
