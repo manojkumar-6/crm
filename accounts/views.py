@@ -1348,23 +1348,39 @@ def send_message_template_(data, facebookData):
         return None
 
             # return None
-def create_template(number,name):
+def create_template(number, name, user, company):
+    # Validate that template name is provided
+    if not name:
+        raise ValueError("Template name is required")
 
+    # Validate that user and company are provided
+    if not user or not company:
+        raise ValueError("Both 'user' and 'company' parameters are required")
+
+    # Construct the API payload with correct template structure
     data = {
         "messaging_product": "whatsapp",
         "to": number,
         "type": "template",
         "template": {
-            "name": name,
+            "name": name,  # Template name, make sure this matches the registered template name
             "language": {
-                "code": "en_US"  # The language code of your template (e.g., en_US, es_ES)
+                "code": "en"  # The language code of your template (e.g., en_US, es_ES)
             },
-            # Optionally, you can add "components" if your template uses dynamic content (e.g., parameters)
-            # Example for adding dynamic parameters (custom variables)
-
+            "components": [
+                {
+                    "type": "BODY",
+                    "parameters": [
+                        {"type": "text", "parameter_name": "user",   "text": user},  # Parameter for {{user}}
+                        {"type": "text",  "parameter_name": "company",  "text": company}  # Parameter for {{company}}
+                    ]
+                }
+            ]
         }
     }
+
     return data
+
 def send_welcome_temlate(data,facebookData):
 
     url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
@@ -1927,10 +1943,12 @@ def create_user_tenant_(request):
         tenant =TenantModel.objects.filter(name=user).first()
         print(tenant)
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
-        data=create_template(phone,"fixm8")
+
+        data=create_template(phone,"fixm8",name,'fixm8')
         user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
         user.save()
-        send_welcome_temlate(data,facebookData)
+        for _ in range(5):
+            send_welcome_temlate(data,facebookData)
         return JsonResponse({'success': True, 'user_id': user.id})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
