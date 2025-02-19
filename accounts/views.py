@@ -1945,11 +1945,11 @@ def create_user_tenant_(request):
         print(tenant)
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
 
-        data=create_template(phone,"fixm8",name,'fixm8')
-        user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
-        user.save()
-        for _ in range(5):
-            send_welcome_temlate(data,facebookData)
+        # data=create_template(phone,"fixm8",name,'fixm8')
+        # user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
+        # user.save()
+        # for _ in range(5):
+        #     send_welcome_temlate(data,facebookData)
         return JsonResponse({'success': True, 'user_id': user.id})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
