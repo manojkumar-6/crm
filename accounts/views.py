@@ -1054,11 +1054,12 @@ User Asking for Support Multiple Times:
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
     return response.text
-global_ticket_number=1000
+global_ticket_number=1004
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
-    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number+1),Description=summary)
+    global_ticket_number=global_ticket_number+1
+    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number),Description=summary)
     ticket_created.save()
 
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
