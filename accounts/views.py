@@ -1058,10 +1058,10 @@ global_ticket_number=1004
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
+    global global_ticket_number
     global_ticket_number=global_ticket_number+1
     ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number),Description=summary)
     ticket_created.save()
-
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
     if path.lower()!="no path":
         ticket_status=save_image_to_ticket(path,ticket_status)
@@ -1945,11 +1945,10 @@ def create_user_tenant_(request):
         print(tenant)
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
 
-        # data=create_template(phone,"fixm8",name,'fixm8')
-        # user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
-        # user.save()
-        # for _ in range(5):
-        #     send_welcome_temlate(data,facebookData)
+        data=create_template(phone,"fixm8",name,'fixm8')
+        user = UserModels.objects.create(name=name, phone=phone, email=email, tenant_to=tenant,address=address)
+        user.save()
+        send_welcome_temlate(data,facebookData)
         return JsonResponse({'success': True, 'user_id': user.id})
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
