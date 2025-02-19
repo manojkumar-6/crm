@@ -49,6 +49,8 @@ user_issue_dict=dict()
 
 image_media_dict=dict()
 
+global_ticket_number=1005
+
 def superuser_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
@@ -1015,8 +1017,8 @@ Analyze the provided response  and determine if it needs the additional phrase: 
 If the response already covers support or additional help, return the same text with no changes.
 If the response lacks support information, add the phrase to the end of the response text if it is not a grreting or acknowledge message.
 
-**If the ai model had not provided troubleshooting steps to troubleshoot the issue in the conversation for  5 times and user is reporting that issue is not fixed  act as a ai model and return the trouble shooting steps**,
-** in the entire conversation provided if the model had provided troubleshooting steps for more 5 times and user reported that issue is not resloved and then only you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps**
+**If the ai model had not provided troubleshooting steps to troubleshoot the issue in the conversation for  3 times and user is reporting that issue is not fixed  act as a ai model and return the trouble shooting steps**,
+** in the entire conversation provided if the model had provided troubleshooting steps for more 3 times and user reported that issue is not resloved and then only you should return "I've raised a request, and our support team will reach out to you soon." until and unless you analyse that the troubleshooting steps in the convefrsation provided is not more than 3 times provide the trouble shooting steps**
 **If the  user asks provides about the issue he is facing try to analyse it and respond with troubleshooting steps and mention in the respone that i can provide some trouble shooting steps**
 **If the  user respomds specifying issue is resloved then return "resloved"**
 ***
@@ -1042,7 +1044,7 @@ User Asking for Support Multiple Times:
         del support_count_dict[recipient]
         return
     # print("reslone",response.text,response.text=="resloved")
-    if (response.text.strip() == "resolved"):
+    if (response.text.strip().lower() == "resolved"):
         print("here")
         del message_dict[recipient]
         del support_count_dict[recipient]
@@ -1054,12 +1056,11 @@ User Asking for Support Multiple Times:
     con=ConversationModel(user=user,ai_model_reply=response.text,user_query=input_message)
     con.save()
     return response.text
-global_ticket_number=1004
+
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
-    global global_ticket_number
-    global_ticket_number=global_ticket_number+1
+    global_ticket_number+=1
     ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number),Description=summary)
     ticket_created.save()
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
