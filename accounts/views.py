@@ -49,7 +49,7 @@ user_issue_dict=dict()
 
 image_media_dict=dict()
 
-global_ticket_number=1005
+global_ticket_number=[1006]
 
 def superuser_required(view_func):
     @wraps(view_func)
@@ -1060,8 +1060,8 @@ User Asking for Support Multiple Times:
 def create_ticket_from_summary(summary,phonenumber,path):
     print("path",path)
     user=UserModels.objects.filter(phone=phonenumber).first()
-    global_ticket_number+=1
-    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number),Description=summary)
+    global_ticket_number[0]=global_ticket_number[0]+1
+    ticket_created=TicketsModel(user=user,ticket_number=str(global_ticket_number[0]),Description=summary)
     ticket_created.save()
     ticket_status=TicketsStatusModel(user=user,tenant_to=user.tenant_to,ticket_number=ticket_created,comments="Ticket created need to be assigned",description=summary,issue=user_issue_dict.get(phonenumber, "Not specified in chat") )
     if path.lower()!="no path":
