@@ -19,7 +19,7 @@ class UserModels(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=200, null=True)
     phone = models.CharField(max_length=200, null=True)
-    email = models.CharField(max_length=200, null=True)
+    email = models.EmailField(null=True)
     tenant_to=models.ForeignKey(TenantModel, on_delete=models.CASCADE)
     date_created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     address=models.CharField(max_length=2000)
@@ -31,6 +31,12 @@ class DashboardAccessProvidedByClientModel(models.Model):
      access_provided_by=models.ForeignKey(TenantModel,on_delete=models.CASCADE)
      def __str__(self):
           return self.access_provided_by.name.username
+class AssigneModel(models.Model):
+     name=models.CharField(max_length=100)
+     email=models.CharField(max_length=10)
+     client=models.ForeignKey(TenantModel,on_delete=models.CASCADE)
+     def __str__(self):
+          return self.name
 class TicketsModel(models.Model):
     user = models.ForeignKey(UserModels, on_delete=models.CASCADE)  # Use Django's User model or your custom User model
     ticket_number = models.CharField(max_length=45, unique=True)  # Optional: Ensure ticket numbers are unique
@@ -52,6 +58,7 @@ class TicketsStatusModel(models.Model):
 
     user = models.ForeignKey(UserModels, on_delete=models.CASCADE)
     tenant_to = models.ForeignKey(TenantModel, on_delete=models.CASCADE)
+    assigne=models.ForeignKey(AssigneModel,on_delete=models.CASCADE, null=True, blank=True)
     ticket_number = models.ForeignKey(TicketsModel, on_delete=models.CASCADE)
     issue=models.CharField(max_length=24)
     image_path=models.ImageField(upload_to='uploads', blank=True, null=True)
@@ -97,7 +104,6 @@ class ConversationModel(models.Model):
 
     def __str__(self):
         return self.user.name
-
 class IssueReported(models.Model):
     class IssueChoices(models.TextChoices):
         WATERISSUE = "water", "Water"
@@ -107,6 +113,7 @@ class IssueReported(models.Model):
     escalated_count = models.IntegerField(default=0)
     def __str__(self):
         return self.user.name
+
 
 
 

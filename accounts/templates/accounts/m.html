@@ -13,19 +13,19 @@
             /* Ensures rounded corners work */
         }
         /* Alternate row color for better readability */
-
+        
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: #f9f9f9;
             /* Light gray for odd rows */
         }
         /* Hover effect for rows */
-
+        
         .table-hover tbody tr:hover {
             background-color: #e2e6ea;
             /* Light hover color */
         }
         /* Responsive adjustments */
-
+        
         .table-scrollable {
             max-height: 550px;
             /* Adjust this height based on your design */
@@ -34,91 +34,91 @@
             border-radius: 5px;
         }
         /* Customize the scrollbar */
-
+        
         .table-scrollable::-webkit-scrollbar {
             width: 10px;
         }
-
+        
         .table-scrollable::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 5px;
         }
-
+        
         .table-scrollable::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-
+        
         .table-scrollable::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
         /* Adjust table layout for better readability */
-
+        
         .table tbody tr:nth-child(odd) {
             background-color: #f9f9f9;
         }
-
+        
         .table tbody tr:nth-child(even) {
             background-color: #f1f1f1;
         }
-
+        
         .table tbody tr:hover {
             background-color: #e2e6ea;
             transition: background-color 0.3s;
         }
-
+        
         .btn {
             font-size: 12px;
             margin: 2px;
         }
-
+        
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: #f9f9f9;
         }
-
+        
         .table-hover tbody tr:hover {
             background-color: #e2e6ea;
         }
-
+        
         .table-scrollable {
             max-height: 550px;
             overflow-y: auto;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-
+        
         .table-scrollable::-webkit-scrollbar {
             width: 10px;
         }
-
+        
         .table-scrollable::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 5px;
         }
-
+        
         .table-scrollable::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-
+        
         .btn {
             font-size: 12px;
             margin: 2px;
             border-radius: 50px;
             padding: 5px 15px;
         }
-
+        
         .form-control {
             border-radius: 50px;
         }
-
+        
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
         }
-
+        
         .modal-content {
             border-radius: 10px;
         }
-
+        
         .header {
             display: flex;
             justify-content: space-between;
@@ -131,18 +131,112 @@
             top: 0;
             z-index: 100;
         }
-
+        
         th {
             font-weight: bold;
             color: #1abc9c
         }
-
+        
         th,
         td {
             padding: 15px;
             text-align: left;
         }
-
+        /* General Form Styling */
+        
+        .filter-form {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            /* Prevents any overflow in narrow screens */
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            /* Allows wrapping when the screen is narrow */
+            gap: 20px;
+            /* Spacing between the fields */
+            justify-content: flex-start;
+            /* Aligns elements from the start */
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            flex: 1 1 180px;
+            /* Allow elements to grow, shrink, and maintain a minimum width */
+            min-width: 180px;
+            /* Prevents fields from getting too small */
+        }
+        
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: inline-block;
+            color: #333;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-select:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        /* Button Group Styling */
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-secondary {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e53935;
+        }
+        /* Responsive Design */
+        
         .btn-primary,
         .btn-warning,
         .btn-danger,
@@ -151,21 +245,21 @@
             border-radius: 20px;
             padding: 5px 15px;
         }
-
+        
         .form-control {
             border-radius: 50px;
         }
-
+        
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
         }
-
+        
         .modal-content {
             border-radius: 8px;
             /* Rounded corners for modals */
         }
-
+        
         thead {
             background-color: white;
             color: #1abc9c;
@@ -192,6 +286,65 @@
         <div class="mb-3">
             <input type="text" id="search-filter" class="form-control" placeholder="Search in all fields" onkeyup="filterTable()">
         </div>
+        <div class="filters">
+            <form id="filterForm" class="filter-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="statusFilter" class="form-label">Select Status</label>
+                        <select id="statusFilter" name="status" class="form-select">
+                            <option value="">Select Status</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="INPROGRESS">In Progress</option>
+                            <option value="COMPLETED">Completed</option>
+                            <!-- Add other status options -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ticketNumberFilter" class="form-label">Select Ticket</label>
+                        <select id="ticketNumberFilter" name="ticket_number" class="form-select">
+                            <option value="">Select Ticket</option>
+                            {% for ticket in tickets %}
+                                <option value="{{ ticket.ticket_number.ticket_number }}">{{ ticket.ticket_number.ticket_number }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assigneeFilter" class="form-label">Select Assignee</label>
+                        <select id="assigneeFilter" name="assignee" class="form-select">
+                            <option value="">Select Assignee</option>
+                            {% for ticket in tickets %}
+                                <option value="{{ ticket.assigne.name }}">{{ ticket.assigne.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issueFilter" class="form-label">Select Issue</label>
+                        <select id="issueFilter" name="issue" class="form-select">
+                            <option value="">Select Issue</option>
+                            {% for ticket in tickets %}
+                                <option value="{{ ticket.issue }}">{{ ticket.issue }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="button" id="#filterButton" class="btn btn-primary" onclick="updateTheData()">Filter</button>
+                        <button type="button" id="resetButton" class="btn btn-primary">Reset</button>
+
+                        <select id="tenantFilter" name="tenant" class="form-select">
+                            <option value="">Select Tenant</option>
+                            {% for ticket in tickets %}
+                                <option value="{{ ticket.user.name }}">{{ ticket.user.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <br>
 
         <!-- Responsive Table for Ticket Status -->
         <div class="table-responsive table-scrollable">
@@ -205,6 +358,8 @@
                         <th>Ticket Number</th>
 
                         <th>Status</th>
+
+                        <th>Assigne</th>
 
                         <th>Issue</th>
 
@@ -222,15 +377,17 @@
 
                         <td>{{ ticket.ticket_status }}</td>
 
+                        <td>{{ ticket.assigne.name }}</td>
+
                         <td>{{ ticket.issue }}</td>
 
                         <td>
                             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ ticket.id }}" data-user="{{ ticket.user.id }}" data-tenant="{{ ticket.user.id }}" data-ticket-number="{{ ticket.ticket_number.id }}" data-status="{{ ticket.ticket_status }}"
-                                data-issue="{{ ticket.issue }}" data-comments="{{ ticket.comments }}">
+                                data-issue="{{ ticket.issue }}" data-comments="{{ ticket.comments }}" data-assigne="{{ ticket.assigne }}">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-ticket-image="{{ticket.image_path}}" data-description="{{ ticket.description }}"
-                                data-status="{{ ticket.ticket_status }}" data-date-reported="{{ ticket.date_reported }}">
+                                data-status="{{ ticket.ticket_status }}" data-date-reported="{{ ticket.date_reported }}" data-assigne="{{ ticket.assigne }}">
                                 <i class="fa fa-book"></i>
 
                             </button>
@@ -269,14 +426,14 @@
                             </select>
                         </div>
 
-                        <!-- <div class="mb-3">
+                        <div class="mb-3">
                             <label for="tenant_to" class="form-label">Client:</label>
-                            <select name="tenant_to" id="tenant_to" class="form-select" required>
-                                {% for tenant in tenants %}
-                                <option value="{{ tenant.id }}">{{ tenant.name }}</option>
+                            <select name="assigne" id="assigne" class="form-select" required>
+                                {% for assigne in assignes %}
+                                <option value="{{ assigne.name }}">{{ assigne.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div> -->
+                        </div>
 
                         <div class="mb-3">
                             <label for="ticket_number" class="form-label">Ticket Number:</label>
@@ -286,15 +443,6 @@
                                 {% endfor %}
                             </select>
                         </div>
-
-                        <!-- <div class="mb-3">
-                            <label for="issue" class="form-label">Issue:</label>
-                            <select name="issue" id="issue" class="form-select" required>
-                                {% for issue in issues %}
-                                <option value="{{ issue.id }}">{{ issue.issue_name }}</option>
-                                {% endfor %}
-                            </select> -->
-                        <!-- </div> -->
 
                         <div class="mb-3">
                             <label for="issue" class="form-label">Issue</label>
@@ -309,8 +457,6 @@
                             </select>
                         </div>
 
-
-
                         <button type="submit" class="btn btn-primary">Create Ticket</button>
                     </form>
                 </div>
@@ -318,7 +464,6 @@
         </div>
     </div>
 
-    <!-- Show Description Modal -->
     <div class="modal fade" id="showDescriptionModal" tabindex="-1" aria-labelledby="showDescriptionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -402,14 +547,14 @@
                             </select>
                         </div>
 
-                        <!-- <div class="mb-3">
-                            <label for="editIssueSelect" class="form-label">Issue</label>
-                            <select class="form-select" id="editIssueSelect" name="issue" required>
-                                {% for issue in issues %}
-                                <option value="{{ issue.id }}">{{ issue.issue_name }}</option>
+                        <div class="mb-3">
+                            <label for="editIssueSelect" class="form-label">Assigne</label>
+                            <select class="form-select" id="editAssigne" name="assigne" required>
+                                {% for assigne in assignes %}
+                                <option value="{{ assigne.name }}">{{ assigne.name }}</option>
                                 {% endfor %}
                             </select>
-                        </div> -->
+                        </div>
 
                         <div class="mb-3">
                             <label for="editTicketStatusSelect" class="form-label">Ticket Status</label>
@@ -488,6 +633,99 @@
         modalHistory.innerHTML = formattedHistory; // Use innerHTML to insert HTML
     });
 
+    function updateTheData() {
+        // Collect filter values
+        console.log("clicked")
+        var status = $('#statusFilter').val();
+        var ticketNumber = $('#ticketNumberFilter').val();
+        var assignee = $('#assigneFilter').val();
+        var issue = $('#issueFilter').val();
+        var tenant = $('#tenantFilter').val();
+
+        // Send an AJAX request with the filter parameters
+        $.ajax({
+            url: "{% url 'filter_tickets' %}", // URL to your Django view
+            method: "GET",
+            data: {
+                status: status,
+                ticket_number: ticketNumber,
+                assignee: assignee,
+                issue: issue,
+                tenant: tenant
+            },
+            success: function(response) {
+                // Clear existing table rows
+                $('#ticketsTable tbody').empty();
+                console.log(response.tickets)
+                    // Append filtered tickets to the table
+                response.tickets.forEach(function(ticket) {
+                    var row = `
+                        <tr>
+                            <td><input type="checkbox" data-id="${ticket.id}"></td>
+                            <td>${ticket.username}</td>
+                            <td>${ticket.ticket_number}</td>
+                            <td>${ticket.ticket_status}</td>
+                            <td>${ticket.assigne}</td>
+                            <td>${ticket.issue}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal"
+                                    data-id="${ticket.ticket_id}"
+                                    data-user="${ticket.user}"
+                                    data-tenant="${ticket.user}"
+                                    data-ticket-number="${ticket.ticket_id}"
+                                    data-status="${ticket.ticket_status}"
+                                    data-issue="${ticket.issue}"
+                                    data-comments="${ticket.comments}"
+                                    data-assigne="${ticket.assigne}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal"
+                                    data-id="${ticket.id}"
+                                    data-ticket-number="${ticket.ticket_number}"
+                                    data-ticket-image="${ticket.image_path}"
+                                    data-description="${ticket.description}"
+                                    data-status="${ticket.ticket_status}"
+                                    data-date-reported="${ticket.days}"
+                                    data-assigne="${ticket.assigne}">
+                                    <i class="fa fa-book"></i>
+                                </button>
+                                <button class="btn btn-info btn-sm bi bi-clock-history" data-bs-toggle="modal" data-bs-target="#showModal"
+                                    data-id="${ticket.ticket_id}"
+                                    data-ticket-number="${ticket.ticket_number}"
+                                    data-comment-history="${ticket.history}">
+                                    <i class="fa fa-history"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    $('#ticketsTable tbody').append(row);
+                });
+
+
+            },
+            error: function() {
+                alert("Error filtering tickets.");
+            }
+        });
+    };
+
+    // Reset button click event
+    $('#resetButton').click(function() {
+        // Reset form fields
+        window.location.reload()
+
+        // Optional: Reset the table to show all tickets
+        $.ajax({
+            url: "{% url 'filter_tickets' %}", // Your URL for showing all tickets
+            method: "GET",
+            success: function(response) {
+                $('#ticketsTable tbody').empty();;
+            },
+            error: function() {
+                alert("Error resetting tickets.");
+            }
+        });
+    });
     // Edit Modal Data Population
     const editModal = document.getElementById('editModal');
     editModal.addEventListener('show.bs.modal', function(event) {
@@ -499,7 +737,8 @@
         const issue = button.getAttribute('data-comments');
         const status = button.getAttribute('data-status');
         const comments = button.getAttribute('data-issue');
-        console.log("iisue", issue)
+        const assigne = button.getAttribute('data-assigne')
+        console.log("iisue", issue, assigne, id)
         const modal = editModal.querySelector('.modal-body');
         modal.querySelector('#editTicketId').value = id;
         modal.querySelector('#editUserSelect').value = user;
@@ -509,6 +748,7 @@
         modal.querySelector('#editTicketStatusSelect').value = status;
         modal.querySelector('#editIssue').value = comments;
         modal.querySelector('#editComment').value = issue;
+        modal.querySelector('#editAssigne').value = assigne;
     });
 
     function saveChanges() {

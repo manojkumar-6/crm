@@ -16,5 +16,6 @@ admin.site.register(FacebookCredentials)
 admin.site.register(DashboardAccessProvidedByClientModel)
 admin.site.register(TemplateModel)
 admin.site.register(ChatOptionsToTenant)
+admin.site.register(AssigneModel)
 
 

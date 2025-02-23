@@ -90,4 +90,10 @@ urlpatterns = [
     path('delete-selected-chat-options/', views.delete_selected_chat_options, name='delete_selected_chatoptions'),
     path('send_message_from_socket/', views.send_message_from_socket,name='user_data'),
     path('mark-messages-as-seen/<str:phone>/', views.mark_messages_as_seen, name='mark_messages_as_seen'),
+    path('assigne/', views.assigne_list, name='assigne_list'),
+    path('assigne/create/', views.create_assigne, name='create_assigne'),
+    path('assigne/update/', views.update_assigne, name='update_assigne'),
+    path('assigne/delete/<int:id>/', views.delete_assigne, name='delete_assigne'),
+    path('filter-tickets/', views.filter_tickets, name='filter_tickets'),
+
 ]

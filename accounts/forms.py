@@ -41,6 +41,15 @@ class TicketsForm(forms.ModelForm):
     class Meta:
         model = TicketsModel
         fields = ['user', 'ticket_number']
+from django import forms
+from .models import AssigneModel, TenantModel
+
+class AssigneForm(forms.ModelForm):
+    class Meta:
+        model = AssigneModel
+        fields = ['name', 'client']
+
+    client = forms.ModelChoiceField(queryset=TenantModel.objects.all(), empty_label="Select a Client")
 
 class TicketsStatusForm(forms.ModelForm):
     class Meta:

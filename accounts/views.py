@@ -836,8 +836,8 @@ message_dict = {}
 
 
 # Download necessary datasets for nltk
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+# nltk.download('wordnet')
+# nltk.download('omw-1.4')
 
 # Initialize sentiment-analysis pipeline
 model_name = "distilbert-base-uncased-finetuned-sst-2-english"
@@ -2077,6 +2077,7 @@ def ticket_status_list(request):
     tickets = TicketsStatusModel.objects.filter(tenant_to=tenants.first())
     users = UserModels.objects.filter(tenant_to=tenants.first())
     ticket_numbers = TicketsModel.objects.filter(user__tenant_to=tenants.first())
+    assignes=AssigneModel.objects.filter(client=tenants.first())
     print(ticket_numbers)
     issues=IssueModel.objects.all()
     print(issues)
@@ -2085,7 +2086,8 @@ def ticket_status_list(request):
         'users': users,
         'tenants': tenants,
         'ticket_numbers': ticket_numbers,
-        'issues':issues
+        'issues':issues,
+        "assignes":assignes
     })
 @superuser_required
 @csrf_exempt
@@ -2134,12 +2136,12 @@ def update_ticket_status(request):
         tenant=TenantModel.objects.filter(name=name).first()
         history=ticket.commentHistory+"\n"+"Ticket status is: "+request.POST.get('ticket_status')+"\n"+"comments :"+request.POST.get('comments')+"\n"+"updated at: "+str(datetime.now())+"\n"+"   "+"\n"
         ticket.issue=request.POST.get('issue')
+        ticket.assigne=AssigneModel.objects.filter(name=request.POST.get("assigne"),client=tenant).first()
         ticket.commentHistory=history
         ticket.user=userData
         ticket.tenant_to=tenant
         ticket.comments=request.POST.get('comments')
         ticket.ticket_status=request.POST.get('ticket_status') #updated
-
         ticket.save()
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
         print(facebookData)
@@ -3318,4 +3320,104 @@ def send_media_to_user(phone_number, media_id, facebookData, file_type):
         print(f"Error sending media: {e}")
         print("Response:", response.text)
         return False
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from .models import AssigneModel, TenantModel
+from .forms import AssigneForm
+
+def assigne_list(request):
+    assignes = AssigneModel.objects.all()
+    tenants = TenantModel.objects.all()
+    return render(request, 'accounts/assigne_list.html', {'assignes': assignes, 'tenants': tenants})
+
+def create_assigne(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        client_id = request.POST.get('client_id')
+        print(name)
+        user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        Tenant=TenantModel.objects.filter(name=user).first()
+        client = TenantModel.objects.get(id=client_id)
+        assigne = AssigneModel.objects.create(name=name, client=Tenant)
+        # Assuming assigne.client is a User model or related to User
+        return JsonResponse({
+    'status': 'success'
+})
+
+from django.http import JsonResponse
+from .models import AssigneModel, TenantModel, User  # Import models if not done already
+
+def update_assigne(request):
+    if request.method == 'POST':
+        # Get the assignee by id passed in the request data
+        user=User.objects.filter(username=request.user.username,email=request.user.email).first()
+        tenant=TenantModel.objects.filter(name=user).first()
+        assigne_id = request.POST.get('id')  # This should match the ID you send via AJAX
+        assigne = AssigneModel.objects.filter(name=assigne_id,client=tenant).first()
+        print("in call", assigne_id, request.POST.get('id'))  # Optional print to debug
+
+        if assigne:
+            assigne.name = request.POST.get('name')
+            assigne.email = request.POST.get('email')
+            user = User.objects.filter(username=request.user.username, email=request.user.email).first()
+            tenant = TenantModel.objects.filter(name=user).first()
+            assigne.client = tenant
+            assigne.save()
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Assignee not found'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'})
+
+
+def delete_assigne(request, id):
+    assigne = get_object_or_404(AssigneModel, id=id)
+    assigne.delete()
+    return JsonResponse({'status': 'success'})
+from django.shortcuts import render
+from django.http import JsonResponse
+from .models import TicketsModel
+from rest_framework.response import Response
+def filter_tickets(request):
+    # Collect query parameters
+    status = request.GET.get('status', '')
+    ticket_number = request.GET.get('ticket_number', '')
+    assignee = request.GET.get('assignee', '')
+    issue = request.GET.get('issue', '')
+    tenant = request.GET.get('tenant', '')
+    print(status,ticket_number,assignee,issue,tenant)
+    # Build the query based on provided filters
+    tickets = TicketsStatusModel.objects.all()
+
+    if status:
+        tickets = tickets.filter(ticket_status__icontains=status)
+    if ticket_number:
+        tickets = tickets.filter(ticket_number__icontains=ticket_number)
+    if assignee:
+        tickets = tickets.filter(assigne__name__icontains=assignee)
+    if issue:
+        tickets = tickets.filter(issue__icontains=issue)
+    if tenant:
+        tickets = tickets.filter(tenant_to__icontains=tenant)
+
+    tickets_data = []
+    for ticket in tickets:
+        tickets_data.append({
+
+            'username': ticket.user.name,
+            "user":ticket.user.id,
+            "ticket_id":ticket.ticket_number.id,
+            'ticket_number': ticket.ticket_number.ticket_number,
+            'ticket_status': ticket.ticket_status,
+            'assigne': ticket.assigne.name,
+            'issue': ticket.issue,
+            'comments': ticket.comments,
+            'description': ticket.description,
+            "history":ticket.commentHistory,
+            "days": ticket.date_reported
+            # Include any other relevant fields here
+        })
+    print(tickets_data)
+    return JsonResponse({'tickets': tickets_data})
+
+
 
