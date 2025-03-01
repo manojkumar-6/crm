@@ -2296,7 +2296,7 @@ def update_ticket_status(request):
         ticket.save()
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
         print(facebookData)
-        data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory+"     Please dont not reply to this message" )
+        data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory" )
         user_intiated_chat[ticket.user.phone]="create"
         send_message(data,facebookData)
         if request.POST.get('ticket_status')=="COMPLETED":
