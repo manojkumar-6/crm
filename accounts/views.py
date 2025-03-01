@@ -3527,7 +3527,7 @@ def delete_assigne(request, id):
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import TicketsModel
-from rest_framework.response import Response
+# from rest_framework.response import Response
 def filter_tickets(request):
     # Collect query parameters
     status = request.GET.get('status', '')
