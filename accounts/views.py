@@ -1310,7 +1310,7 @@ def process_whatsapp_message(body):
 
                 issue_text="The user is facing " +selected_option_id
                 user_issue_dict[receipient_number]=selected_option_id
-                response = get_gemini_response(issue_text+"  "+"if needed ask him more info about the issue and provide trouble shooting steps" , wa_id,"",None)
+                response = get_gemini_response(issue_text+"  "+"if needed ask him more info about the issue ask for image as well and provide trouble shooting steps" , wa_id,"",None)
                 data = get_text_message_input(wa_id, response)
                 send_message(data,facebookData)
 
