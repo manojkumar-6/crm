@@ -11,17 +11,17 @@
 
 <style>
     /* General Styles */
-    
+
     body {
         font-family: Arial, sans-serif;
         background-color: #f8f9fa;
     }
-    
+
     .dashboard {
         padding: 10px;
     }
     /* Accordion Styles */
-    
+
     .accordion-item {
         border: 1px solid #1abc9c;
         border-radius: 0.5rem;
@@ -29,7 +29,7 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         overflow: hidden;
     }
-    
+
     .accordion-button {
         background-color: #ffffff;
         color: #1abc9c;
@@ -37,18 +37,18 @@
         padding: 1rem;
         transition: all 0.3s ease-in-out;
     }
-    
+
     .accordion-button:hover {
         background-color: #f0f8ff;
         color: white;
     }
-    
+
     .accordion-button:not(.collapsed) {
         background-color: white;
         color: #1abc9c;
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .accordion-body {
         background-color: #ffffff;
         color: #333;
@@ -57,7 +57,7 @@
         border-top: 1px solid #1abc9c;
     }
     /* Button Styles */
-    
+
     .btn {
         border-radius: 0.5rem;
         padding: 0.5rem 1rem;
@@ -65,33 +65,33 @@
         font-size: 14px;
         transition: all 0.3s ease-in-out;
     }
-    
+
     .btn-primary {
         background-color: #007bff;
         border: none;
         color: #ffffff;
     }
-    
+
     .btn-primary:hover {
         background-color: #0056b3;
     }
-    
+
     .btn-danger {
         background-color: #dc3545;
         border: none;
         color: #ffffff;
     }
-    
+
     .btn-danger:hover {
         background-color: #b52a37;
     }
     /* Table Styles */
-    
+
     .table {
         border-collapse: collapse;
         width: 100%;
     }
-    
+
     .table thead th {
         background-color: white;
         color: #1abc9c;
@@ -99,47 +99,47 @@
         position: sticky;
         top: 0;
     }
-    
+
     .table tbody tr:hover {
         background-color: #f8f9fa;
     }
-    
+
     .table tbody tr:nth-child(even) {
         background-color: #f2f2f2;
     }
-    
+
     .table td {
         border-bottom: 1px solid #ddd;
         font-size: 14px;
     }
     /* Modal Styles */
-    
+
     .modal-header {
         background-color: #007bff;
         color: #ffffff;
         border-bottom: none;
         padding: 1rem;
     }
-    
+
     .modal-title {
         font-size: 1.2rem;
     }
-    
+
     .modal-body {
         padding: 1.5rem;
         line-height: 1.5;
     }
-    
+
     .modal-footer {
         border-top: none;
         padding: 1rem;
     }
-    
+
     .form-control {
         border-radius: 0.5rem;
     }
     /* Scrollable Section */
-    
+
     .scrollable {
         max-height: 300px;
         overflow-y: auto;
@@ -149,13 +149,13 @@
         background-color: #f8f9fa;
     }
     /* Hover Effects */
-    
+
     .hover-highlight:hover {
         background-color: #e6f7ff;
         color: #007bff;
     }
     /* Selected User List */
-    
+
     .selected-users {
         background-color: #f0f8ff;
         padding: 10px;
@@ -340,23 +340,23 @@
             transform: scale(1.05);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
-        
+
         .card-header,
         .card-title {
             color: #ffffff;
             /* Keep the text white for contrast */
         }
-        
+
         .status-item .badge {
             font-weight: bold;
             /* Make badge text bold for better visibility */
         }
-        
+
         .d-flex {
             display: flex;
             /* Ensures all columns use Flexbox */
         }
-        
+
         .flex-fill {
             flex: 1;
             /* Makes cards fill the available height */
@@ -365,7 +365,7 @@
 
     <style>
         /* Add CSS for flex layout */
-        
+
         .chart-container {
             display: flex;
             justify-content: space-between;
@@ -373,14 +373,14 @@
             gap: 10px;
             /* Optional: Adds a gap between the charts */
         }
-        
+
         .chart-container div {
             flex: 1;
             /* Make each chart take equal space */
             max-width: 78%;
             /* Limit max width to avoid stretching */
         }
-        
+
         canvas {
             width: 80% !important;
             /* Make canvas responsive */
@@ -396,14 +396,14 @@
         </div>
         <script>
             const ticketStatusPieChartCtx = document.getElementById('ticketStatusPieChart').getContext('2d');
-            const data_for_pie_chart = document.getElementById("ticketStatusPieChart").getAttribute("data-for-chart");
+            const data_for_pie_chart = JSON.parse(document.getElementById("ticketStatusPieChart").getAttribute("data-for-chart"));
             const ticketStatusPieChart = new Chart(ticketStatusPieChartCtx, {
                 type: 'pie',
                 data: {
                     labels: ['Pending', 'In Progress', 'Completed'],
                     datasets: [{
                         data: data_for_pie_chart, // Your data for the pie chart
-                        backgroundColor: ['#FF6347', '#FFD700', '#32CD32'], // Colors for each slice
+                        backgroundColor: ['orange', 'blue', 'green'], // Colors for each slice
                     }]
                 },
                 options: {
@@ -647,41 +647,41 @@
             color: #333;
             border-radius: 0.5rem;
         }
-        
+
         .accordion-button:hover,
         .accordion-button:focus {
             background-color: #e2e6ea;
             color: #333;
         }
-        
+
         .table th {
             background-color: #f8f9fa;
             color: #333;
             font-weight: bold;
         }
-        
+
         .table tbody tr:hover {
             background-color: #f1f1f1;
         }
-        
+
         .modal-content {
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        
+
         .modal-header {
             background-color: #007bff;
             color: white;
             border-radius: 8px 8px 0 0;
         }
-        
+
         .btn-info,
         .btn-info:hover {
             background-color: #17a2b8;
             border-color: #17a2b8;
         }
         /* Add scrollbar if rows exceed 7 */
-        
+
         .table-responsive {
             max-height: 400px;
             overflow-y: auto;

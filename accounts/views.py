@@ -49,7 +49,7 @@ user_issue_dict=dict()
 
 image_media_dict=dict()
 
-global_ticket_number=[1006]
+global_ticket_number=[1011]
 
 def superuser_required(view_func):
     @wraps(view_func)
@@ -1166,7 +1166,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     user_intiated_chat[phonenumber]="create"
     del message_dict[phonenumber]
     send_message(data,facebookData)
-    send_message_interaction_check_user_request(phonenumber,global_ticket_number[0])
+    send_message_interaction_get_user_feedback(phonenumber,global_ticket_number[0])
 
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
@@ -1282,6 +1282,19 @@ def process_whatsapp_message(body):
         data = get_text_message_input(wa_id, "You dont have requried permission to access the model kindly check with your client")
         send_message(data,facebookData)
         return "No access granted"
+    if message_data.get('interactive') and  (message_data.get('interactive').get('button_reply')!=None) and ("helpful" in message_data.get('interactive').get('button_reply').get('id').lower()):
+                print(message_data.get('interactive').get('button_reply').get('id').lower(),message_data.get('interactive').get('button_reply').get('id'))
+
+                ticket=message_data.get('interactive').get('button_reply').get('id').split(":")
+                print("ticketjjdgkjas",ticket)
+                ticket_number=ticket[1]
+                ticket_=TicketsModel.objects.filter(ticket_number=ticket_number).first()
+                ticket_id=TicketsStatusModel.objects.filter(ticket_number=ticket_).first()
+                ticket_id.feedback=ticket[0]
+                ticket_id.save()
+                print("updated the ticket feedback",ticket_id)
+                data = get_text_message_input(wa_id, "Thanks For your feedback, we will try to improve based on this")
+                send_message(data,facebookData)
     if receipient_number not in message_dict:
         if message_data.get('interactive')and (message_data.get('interactive').get('list_reply')!=None):
             selected_option_id = message_data['interactive']['list_reply']['title']
@@ -1300,16 +1313,7 @@ def process_whatsapp_message(body):
                 response = get_gemini_response(issue_text+"  "+"if needed ask him more info about the issue and provide trouble shooting steps" , wa_id,"",None)
                 data = get_text_message_input(wa_id, response)
                 send_message(data,facebookData)
-        elif message_data.get('interactive') and ("helpful" in message_data.get('interactive').get('button_reply').get('id').lower()):
-                ticket=message_data.get('interactive').get('button_reply').get('id').split(":")
-                ticket_number=ticket[1]
-                ticket_=TicketsModel.objects.filter(ticket_number=ticket_number).first()
-                ticket_id=TicketsStatusModel.objects.filter(ticket_number=ticket_).first()
-                ticket_id.feedback=ticket[0]
-                ticket_id.save()
-                print("updated the ticket feedback",ticket_id)
-                data = get_text_message_input(wa_id, "Thanks For your feedback, we will try to improve based on this")
-                send_message(data,facebookData)
+
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="m_issue"):
             start_sending_maintainence_issue_interaction(receipient_number)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="not_required"):
@@ -1624,8 +1628,8 @@ def send_message_interaction_get_user_feedback(receipient_number,number):
     'button': 'Options',
     'section_title': 'Menu',
     'rows': [
-        {'id': 'Helpful id:'+str(number), 'title': 'Helpful'},
-        {'id': 'Not Helpful id:'+str(number), 'title': 'Not Helpful'},
+        {'id': 'Helpful :'+str(number), 'title': 'Helpful'},
+        {'id': 'Not Helpful :'+str(number), 'title': 'Not Helpful'},
     ]
 }
     url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
@@ -2296,7 +2300,7 @@ def update_ticket_status(request):
         ticket.save()
         facebookData=FacebookCredentials.objects.filter(user=tenant).first()
         print(facebookData)
-        data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory" )
+        data = get_text_message_input(ticket.user.phone, "The Ticket with id  "+str(ticket.ticket_number)+" had been updated by our team you can track the status here      "+ticket.commentHistory)
         user_intiated_chat[ticket.user.phone]="create"
         send_message(data,facebookData)
         if request.POST.get('ticket_status')=="COMPLETED":
