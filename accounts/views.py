@@ -328,6 +328,13 @@ def export_issue_csv(request):
         ])
 
     return response
+from django.db.models import Count
+import calendar
+from django.db.models.functions import TruncDate, TruncHour
+from django.db.models import F, Func
+from django.db.models import Count, F, ExpressionWrapper, IntegerField
+from django.db.models.functions import TruncWeek
+from django.db.models.functions import TruncDay
 @client_access_required
 def dashBoard(request):
     # Fetch all orders and customers (if needed for other parts of your dashboard)
@@ -380,6 +387,75 @@ def dashBoard(request):
     tenant__=User.objects.filter(username=request.user.username,email=request.user.email).first()
     templates = TemplateModel.objects.filter(name=tenant__)
     print(templates)
+    #
+
+    # Tickets per day (truncated to date)
+    # tickets_per_day = tickets_.annotate(
+    #     date_reported_truncated=Func(
+    #         F('date_reported'), function='DATE', template="%(expressions)s"
+    #     )
+    # ).values('date_reported_truncated').annotate(count=Count('id')).order_by('date_reported_truncated')
+
+    # tickets_per_day_data = {
+    #     'labels': [ticket['date_reported_truncated'] for ticket in tickets_per_day],
+    #     'data': [ticket['count'] for ticket in tickets_per_day]
+    # }
+    # print(tickets_per_day_data)
+    today = timezone.now()
+    start_of_month = today.replace(day=1)
+    end_of_month = today.replace(day=28) + timezone.timedelta(days=4)  # Ensures we get the last day of the month
+
+    # Query tickets raised within the current month and group them by week
+    tickets_s = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month) \
+        .annotate(week_start=TruncWeek('date_reported')) \
+        .values('week_start') \
+        .annotate(ticket_count=Count('id')) \
+        .order_by('week_start')
+
+    # Prepare data for rendering
+    week_data = {
+        'week_1': 0,
+        'week_2': 0,
+        'week_3': 0,
+        'week_4': 0,
+    }
+    today = timezone.now()
+    current_year = today.year
+    current_month = today.month
+    # Categorize tickets by week number
+    for ticket in tickets_s:
+        week_start = ticket['week_start']
+        week_number = (week_start.day - 1) // 7 + 1  # Calculate the week number (1, 2, 3, or 4)
+        week_key = f'week_{week_number}'
+        week_data[week_key] += ticket['ticket_count']
+    _, days_in_month = calendar.monthrange(current_year, current_month)
+
+    # Get the start and end date for the current month
+    start_of_month = today.replace(day=1)
+    end_of_month = today.replace(day=days_in_month)
+
+    # Query tickets raised within the current month and group them by day
+    tickets = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month) \
+        .annotate(day=TruncDay('date_reported')) \
+        .values('day') \
+        .annotate(ticket_count=Count('id')) \
+        .order_by('day')
+
+    # Create a dictionary with days as keys and ticket counts as values
+    tickets_per_day = defaultdict(int)  # Defaulting to 0 if no tickets for a day
+
+    # Fill the dictionary with actual ticket data
+    for ticket in tickets:
+        print("ticket",ticket['day'].day)
+        tickets_per_day[ticket['day'].day] = ticket['ticket_count']
+    print("ticket",tickets_per_day,"t",tickets_per_day.items())
+    # Create a list of days (1 to n) with ticket counts for the chart
+
+    dates = [str(day) for day in range(1, days_in_month + 1)]
+    ticket_counts = [int(tickets_per_day[day]) for day in range(1, days_in_month + 1)]
+    print('ticket_counts',ticket_counts)
+    ticket_range=[int(day) for day in range(1, days_in_month + 1) ]
+    print("ticket_range",ticket_range)
     total_users=0
     if tenant :
         total_users =(UserModels.objects.filter(tenant_to=tenant).count())
@@ -410,6 +486,7 @@ def dashBoard(request):
     else:
         ticket_list_=[]
     users=UserModels.objects.filter(tenant_to=tenant)
+    print("week_data",week_data)
     context = {
         'tickets': tickets_,
         'ticket_list': ticket_list_,
@@ -419,7 +496,6 @@ def dashBoard(request):
         'users':users,
         "i_count":m_count,
         "a_count":a_count,
-        # "issues_count":issues_count,
         'page_obj': tickets_,
         'status_filter': status_filter,
         'username_search': username_search,
@@ -430,6 +506,11 @@ def dashBoard(request):
         'in_progress_count': in_progress_count,
         'completed_count': completed_count,
         'templates': templates,
+        "data_for_pie_chart": [pending_count,in_progress_count,completed_count],
+        "week_data":[int(week_data['week_1']),int(week_data['week_2']),int(week_data['week_3']),int(week_data["week_4"])],
+        "ticket_counts":ticket_counts,
+        "ticket_range":ticket_range,
+
     }
 
 
@@ -1085,6 +1166,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     user_intiated_chat[phonenumber]="create"
     del message_dict[phonenumber]
     send_message(data,facebookData)
+    send_message_interaction_check_user_request(phonenumber,global_ticket_number[0])
 
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
@@ -1217,6 +1299,16 @@ def process_whatsapp_message(body):
                 user_issue_dict[receipient_number]=selected_option_id
                 response = get_gemini_response(issue_text+"  "+"if needed ask him more info about the issue and provide trouble shooting steps" , wa_id,"",None)
                 data = get_text_message_input(wa_id, response)
+                send_message(data,facebookData)
+        elif message_data.get('interactive') and ("helpful" in message_data.get('interactive').get('button_reply').get('id').lower()):
+                ticket=message_data.get('interactive').get('button_reply').get('id').split(":")
+                ticket_number=ticket[1]
+                ticket_=TicketsModel.objects.filter(ticket_number=ticket_number).first()
+                ticket_id=TicketsStatusModel.objects.filter(ticket_number=ticket_).first()
+                ticket_id.feedback=ticket[0]
+                ticket_id.save()
+                print("updated the ticket feedback",ticket_id)
+                data = get_text_message_input(wa_id, "Thanks For your feedback, we will try to improve based on this")
                 send_message(data,facebookData)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="m_issue"):
             start_sending_maintainence_issue_interaction(receipient_number)
@@ -1495,6 +1587,65 @@ def send_message_interaction_check_user_request(receipient_number):
         },
          "body": {  # Adding the body
             "text": 'Do you Want To Raise a Request For The Current Status Of Ticket'  # Ensure 'body' is a key in options
+        },
+        "action": {
+            "buttons": [
+                {
+                    "type": "reply",
+                    "reply": {
+                        "id": opt['id'],
+                        "title": opt['title']
+                    }
+                } for opt in options['rows']  # Adjust the rows to fit button format
+            ]
+        }
+    }
+}
+
+
+    # Send the request
+    # con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
+    # con.save()
+    response = requests.post(url, headers=headers, json=data)
+
+    # Handle response
+
+    # response.raise_for_status()  # Raises an HTTPError for bad responses
+    return response.text # Return the JSON response if successful
+def send_message_interaction_get_user_feedback(receipient_number,number):
+    userData=UserModels.objects.filter(phone=receipient_number).first()
+    print(userData)
+    name=User.objects.filter(username=userData.tenant_to).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+    print(facebookData)
+    options = {
+    'header': '',
+    'button': 'Options',
+    'section_title': 'Menu',
+    'rows': [
+        {'id': 'Helpful id:'+str(number), 'title': 'Helpful'},
+        {'id': 'Not Helpful id:'+str(number), 'title': 'Not Helpful'},
+    ]
+}
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    data = {
+    "messaging_product": "whatsapp",
+    "to": receipient_number,
+    "type": "interactive",
+    "interactive": {
+        "type": "button",
+        "header": {
+            "type": "text",
+            "text": options['header']
+        },
+         "body": {  # Adding the body
+            "text": 'Do the conversation and ticket raised are helpful to you. please provide feedback to us for improvization'  # Ensure 'body' is a key in options
         },
         "action": {
             "buttons": [

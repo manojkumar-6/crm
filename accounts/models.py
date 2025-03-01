@@ -72,6 +72,7 @@ class TicketsStatusModel(models.Model):
     comments = models.CharField(max_length=800)
     commentHistory=models.CharField(max_length=15000)
     description=models.CharField(max_length=10000)
+    feedback=models.CharField(max_length=100)
 
     def __str__(self):
         return self.ticket_status

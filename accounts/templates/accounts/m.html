@@ -13,19 +13,19 @@
             /* Ensures rounded corners work */
         }
         /* Alternate row color for better readability */
-        
+
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: #f9f9f9;
             /* Light gray for odd rows */
         }
         /* Hover effect for rows */
-        
+
         .table-hover tbody tr:hover {
             background-color: #e2e6ea;
             /* Light hover color */
         }
         /* Responsive adjustments */
-        
+
         .table-scrollable {
             max-height: 550px;
             /* Adjust this height based on your design */
@@ -34,91 +34,91 @@
             border-radius: 5px;
         }
         /* Customize the scrollbar */
-        
+
         .table-scrollable::-webkit-scrollbar {
             width: 10px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 5px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
         /* Adjust table layout for better readability */
-        
+
         .table tbody tr:nth-child(odd) {
             background-color: #f9f9f9;
         }
-        
+
         .table tbody tr:nth-child(even) {
             background-color: #f1f1f1;
         }
-        
+
         .table tbody tr:hover {
             background-color: #e2e6ea;
             transition: background-color 0.3s;
         }
-        
+
         .btn {
             font-size: 12px;
             margin: 2px;
         }
-        
+
         .table-striped tbody tr:nth-of-type(odd) {
             background-color: #f9f9f9;
         }
-        
+
         .table-hover tbody tr:hover {
             background-color: #e2e6ea;
         }
-        
+
         .table-scrollable {
             max-height: 550px;
             overflow-y: auto;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar {
             width: 10px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 5px;
         }
-        
+
         .table-scrollable::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-        
+
         .btn {
             font-size: 12px;
             margin: 2px;
             border-radius: 50px;
             padding: 5px 15px;
         }
-        
+
         .form-control {
             border-radius: 50px;
         }
-        
+
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
         }
-        
+
         .modal-content {
             border-radius: 10px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -131,19 +131,19 @@
             top: 0;
             z-index: 100;
         }
-        
+
         th {
             font-weight: bold;
             color: #1abc9c
         }
-        
+
         th,
         td {
             padding: 15px;
             text-align: left;
         }
         /* General Form Styling */
-        
+
         .filter-form {
             max-width: 100%;
             margin: 0 auto;
@@ -154,7 +154,7 @@
             overflow: hidden;
             /* Prevents any overflow in narrow screens */
         }
-        
+
         .form-row {
             display: flex;
             flex-wrap: wrap;
@@ -165,21 +165,21 @@
             /* Aligns elements from the start */
             margin-bottom: 15px;
         }
-        
+
         .form-group {
             flex: 1 1 180px;
             /* Allow elements to grow, shrink, and maintain a minimum width */
             min-width: 180px;
             /* Prevents fields from getting too small */
         }
-        
+
         .form-label {
             font-weight: 600;
             margin-bottom: 8px;
             display: inline-block;
             color: #333;
         }
-        
+
         .form-select {
             width: 100%;
             padding: 8px;
@@ -188,27 +188,27 @@
             border: 1px solid #ccc;
             transition: border-color 0.3s ease;
         }
-        
+
         .form-select:focus {
             border-color: #4CAF50;
             outline: none;
         }
         /* Button Group Styling */
-        
+
         .button-group {
             display: flex;
             gap: 10px;
             align-items: center;
             justify-content: flex-start;
         }
-        
+
         .form-buttons {
             display: flex;
             gap: 20px;
             justify-content: center;
             margin-top: 20px;
         }
-        
+
         .btn {
             padding: 10px 20px;
             font-size: 14px;
@@ -217,26 +217,26 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-        
+
         .btn-primary {
             background-color: #4CAF50;
             color: white;
         }
-        
+
         .btn-primary:hover {
             background-color: #45a049;
         }
-        
+
         .btn-secondary {
             background-color: #f44336;
             color: white;
         }
-        
+
         .btn-secondary:hover {
             background-color: #e53935;
         }
         /* Responsive Design */
-        
+
         .btn-primary,
         .btn-warning,
         .btn-danger,
@@ -245,21 +245,21 @@
             border-radius: 20px;
             padding: 5px 15px;
         }
-        
+
         .form-control {
             border-radius: 50px;
         }
-        
+
         .scrollable-textarea {
             max-height: 150px;
             overflow-y: auto;
         }
-        
+
         .modal-content {
             border-radius: 8px;
             /* Rounded corners for modals */
         }
-        
+
         thead {
             background-color: white;
             color: #1abc9c;
@@ -387,7 +387,7 @@
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#showDescriptionModal" data-id="{{ ticket.id }}" data-ticket-number="{{ ticket.ticket_number.ticket_number }}" data-ticket-image="{{ticket.image_path}}" data-description="{{ ticket.description }}"
-                                data-status="{{ ticket.ticket_status }}" data-date-reported="{{ ticket.date_reported }}" data-assigne="{{ ticket.assigne }}">
+                                data-status="{{ ticket.ticket_status }}" data-date-reported="{{ ticket.date_reported }}" data-assigne="{{ ticket.assigne }}" data-feedback="{{ticket.feedback}}">
                                 <i class="fa fa-book"></i>
 
                             </button>
@@ -474,7 +474,9 @@
                 <div class="modal-body">
                     <p><strong>Ticket Number:</strong> <span id="modalTicketNumber"></span></p>
                     <p><strong>Status:</strong> <span id="modalTicketStatus"></span></p>
+
                     <p><strong>Date Reported:</strong> <span id="modalDateReported"></span> (<span id="modalDaysSinceReported"></span> days ago)</p>
+                    <p><strong>Feedback:</strong> <span id="modalTicketFeedback"></span></p>
                     <div class="mb-3">
                         <label for="modalDescription" class="form-label"><strong>Description:</strong></label>
                         <textarea id="modalDescription" class="form-control scrollable-textarea" readonly></textarea>
@@ -598,15 +600,18 @@
         const ticketStatus = button.getAttribute('data-status');
         const dateReported = button.getAttribute('data-date-reported');
         const issue = button.getAttribute("data-issue")
+        const feedback = button.getAttribute("data-feedback")
         const modalTicketNumber = showDescriptionModal.querySelector('#modalTicketNumber');
         const modalDescription = showDescriptionModal.querySelector('#modalDescription');
         const modalTicketStatus = showDescriptionModal.querySelector('#modalTicketStatus');
         const modalDateReported = showDescriptionModal.querySelector('#modalDateReported');
+        const modalFeedback = showDescriptionModal.querySelector('#modalTicketFeedback');
         const modalImageReported = showDescriptionModal.querySelector('#modalImageReported');
         modalTicketNumber.textContent = ticketNumber;
         modalDescription.value = description;
         modalTicketStatus.textContent = ticketStatus;
         modalDateReported.textContent = dateReported;
+        modalFeedback.textContent = feedback
 
         if (button.getAttribute('data-ticket-image')) {
             // If an image path is provided, show the image
@@ -686,7 +691,8 @@
                                     data-description="${ticket.description}"
                                     data-status="${ticket.ticket_status}"
                                     data-date-reported="${ticket.days}"
-                                    data-assigne="${ticket.assigne}">
+                                    data-assigne="${ticket.assigne}"
+                                    data-feedback="${ticket.feedback}">
                                     <i class="fa fa-book"></i>
                                 </button>
                                 <button class="btn btn-info btn-sm bi bi-clock-history" data-bs-toggle="modal" data-bs-target="#showModal"
