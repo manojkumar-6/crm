@@ -1295,6 +1295,7 @@ def process_whatsapp_message(body):
                 print("updated the ticket feedback",ticket_id)
                 data = get_text_message_input(wa_id, "Thanks For your feedback, we will try to improve based on this")
                 send_message(data,facebookData)
+                return
     if receipient_number not in message_dict:
         if message_data.get('interactive')and (message_data.get('interactive').get('list_reply')!=None):
             selected_option_id = message_data['interactive']['list_reply']['title']
