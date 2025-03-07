@@ -789,9 +789,9 @@ def email(ticket,email_,path):
     #
     smtp_server = "smtp.gmail.com"
     smtp_port = 587  # Use 465 for SSL, or 587 for TLS
-    sender_email = "srsurajjain@gmail.com"  # Your Gmail address
+    sender_email = "noreplyplease1230@gmail.com"  # Your Gmail address
     # receiver_email = "receiver-email@example.com"  # Recipient's email address
-    password = "2p9m3bpw3"  # Use your Gmail App Password (if you have 2FA enabled)
+    password = "srohllfyyugpnuai"  # Use your Gmail App Password (if you have 2FA enabled)
     # Create the email message
     message = MIMEMultipart()
     message["From"] = sender_email
@@ -1151,23 +1151,21 @@ def create_ticket_from_summary(summary,phonenumber,path):
     mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
                'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
     print("triggering a email to client and tenant")
-    # email(mail_body,user.email,path)
-    # email(mail_body,user.tenant_to.email,path)
-    # email(mail_body,"mk123456manoj1@gmail.com",path)
-    # email(mail_body,"mk123456manoj1@gmail.com",path)
+
     userData=UserModels.objects.filter(phone=phonenumber).first()
     print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
-    text="A support ticket had been created for the issue you had raised this is the ticket id "+str(ticket_created.ticket_number)+" further info will be shared to your email"
+    text="A support ticket had been created with ticket id "+str(ticket_created.ticket_number)+" further info will be shared to your email and description of the ticket is as follow\n"+"\n"+str(ticket_status.description)
     data = get_text_message_input(phonenumber, text)
     user_intiated_chat[phonenumber]="create"
     del message_dict[phonenumber]
     send_message(data,facebookData)
     send_message_interaction_get_user_feedback(phonenumber,global_ticket_number[0])
-
+    email(mail_body,user.email,path)
+    email(mail_body,user.tenant_to.email,path)
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
     # Implement the actual model's media processing logic here.
@@ -1286,7 +1284,7 @@ def process_whatsapp_message(body):
                 print(message_data.get('interactive').get('button_reply').get('id').lower(),message_data.get('interactive').get('button_reply').get('id'))
 
                 ticket=message_data.get('interactive').get('button_reply').get('id').split(":")
-                print("ticketjjdgkjas",ticket)
+
                 ticket_number=ticket[1]
                 ticket_=TicketsModel.objects.filter(ticket_number=ticket_number).first()
                 ticket_id=TicketsStatusModel.objects.filter(ticket_number=ticket_).first()
@@ -1294,6 +1292,31 @@ def process_whatsapp_message(body):
                 ticket_id.save()
                 print("updated the ticket feedback",ticket_id)
                 data = get_text_message_input(wa_id, "Thanks For your feedback, we will try to improve based on this")
+                send_message(data,facebookData)
+                return
+    if message_data.get('interactive') and message_data.get('interactive').get('button_reply')!=None  and ((message_data.get('interactive').get('button_reply').get('id')=="Resloved_team" or "No_team" in message_data.get('interactive').get('button_reply').get('id'))):
+            selected_option_id = message_data['interactive']['button_reply']['id']
+            if "No_team" in selected_option_id:
+                print("triggering a mail to team")
+                ticket=selected_option_id.split(":")
+                ticketStatus=TicketsModel.objects.filter(ticket_number=ticket[1]).first()
+                ticket_id=TicketsStatusModel.objects.filter(ticket_number=ticketStatus).first()
+                ticket_id.ticket_status="INPROGRESS"
+                ticket_id.save()
+                data = get_text_message_input(receipient_number, "A mail is sent to the team reagrding the issue they will reach out to you Thanks")
+                s=ConversationModel(user=userData,ai_model_reply="A mail is sent to the team reagrding the issue they will reach out to you Thanks",user_query="issue_persist")
+                s.save()
+                send_message(data,facebookData)
+                mail_body={'ticket_number':ticket_id.ticket_number,'des':ticket_id.description,
+               'phone':ticket_id.user.phone,'status':"we had marked the ticket as completed but the user reported that the issue is not resloved",'username':ticket_id.user.name}
+                email(mail_body,ticket_id.tenant_to.email,"no path")
+                return
+            elif selected_option_id=="Resloved_team":
+                if receipient_number in reslove_dict:
+                    del reslove_dict[receipient_number]
+                data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
+                s=ConversationModel(user=userData,ai_model_reply="I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue",user_query="resloved")
+                s.save()
                 send_message(data,facebookData)
                 return
     if receipient_number not in message_dict:
@@ -1333,22 +1356,8 @@ def process_whatsapp_message(body):
             else:
                 start_sending_message_interaction(receipient_number)
     else:
-        if message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="Resloved_team" or message_data.get('interactive').get('button_reply').get('id')=="No_team"):
-            selected_option_id = message_data['interactive']['button_reply']['id']
-            if selected_option_id=="No_team":
-                print("triggering a mail to team")
-                data = get_text_message_input(receipient_number, "A mail is sent to the team reagrding the issue they will reach out to you Thanks")
-                s=ConversationModel(user=userData,ai_model_reply="A mail is sent to the team reagrding the issue they will reach out to you Thanks",user_query="issue_persist")
-                s.save()
-                send_message(data,facebookData)
-            elif selected_option_id=="Resloved_team":
-                if receipient_number in reslove_dict:
-                    del reslove_dict[receipient_number]
-                data = get_text_message_input(receipient_number, "I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue")
-                s=ConversationModel(user=userData,ai_model_reply="I am happy to hear that the issue is resloved feel free to reach out  to me if you are facing any issue",user_query="resloved")
-                s.save()
-                send_message(data,facebookData)
-        elif message_data.get('interactive') and reslove_dict.get(receipient_number)=='feedback':
+
+        if message_data.get('interactive') and reslove_dict.get(receipient_number)=='feedback':
             selected_option_id = message_data['interactive']['button_reply']['id']
             if selected_option_id=="No_":
                 # reslove_dict[receipient_number]="issue"
@@ -1686,7 +1695,7 @@ def start_sending_message_interaction(receipient_number):
     facebookData = FacebookCredentials.objects.filter(user=tenant).first()
 
     # Welcome message content
-    welcome_text = "Hi there! 👋 Welcome to 'CLIENT', your property maintenance assistant. I'm here to help you with any issues in your property. To get started, please choose a main category from the menu below:"
+    welcome_text = "Hi there! 👋 Welcome to"+ " "+userData.tenant_to.name.username+ " 's  property maintenance assistant. I'm here to help you with any issues in your property. To get started, please choose a main category from the menu below:"
 
     options = {
         'header': " ",
@@ -1891,7 +1900,7 @@ def send_ticket_status(ticketNumber):
     temp="Hi User"+"\n"+"The Ticket Number you choosed is "+ " "+str(ticket.ticket_number)+"\n"+"The status of the ticket is "+" "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
     return temp
 
-def send_message_interaction_by_team(receipient_number):
+def send_message_interaction_by_team(receipient_number,ticket_number):
     print("here i n interatcion by team",receipient_number)
     userData=UserModels.objects.filter(phone=receipient_number).first()
     name=User.objects.filter(username=userData.tenant_to).first()
@@ -1904,7 +1913,7 @@ def send_message_interaction_by_team(receipient_number):
     'section_title': 'Menu',
     'rows': [
         {'id': 'Resloved_team', 'title': 'Yes , Issue resloved'},
-        {'id': 'No_team', 'title': 'No, need support'},
+        {'id': 'No_team :'+str(ticket_number), 'title': 'No, need support'},
     ]
 }
     url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
@@ -2305,7 +2314,7 @@ def update_ticket_status(request):
         user_intiated_chat[ticket.user.phone]="create"
         send_message(data,facebookData)
         if request.POST.get('ticket_status')=="COMPLETED":
-            send_message_interaction_by_team(ticket.user.phone)
+            send_message_interaction_by_team(ticket.user.phone,ticket.ticket_number)
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'error': 'Invalid data'})
 @login_required
@@ -2568,7 +2577,9 @@ def update_user_(request):
         is_superuser = request.POST.get('is_superuser') == 'true'
         user = User.objects.get(id=user_id)
         password=request.POST.get('password')
-        user.set_password(password)
+        if password!="" or password!=None or password!=" ":
+            print(password)
+            user.set_password(password)
         user.save()
         tenant_update=TenantModel.objects.filter(name=user).first()
         print(tenant_update)
