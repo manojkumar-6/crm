@@ -624,12 +624,15 @@ def send_email_view(request):
             message = html_to_whatsapp_text(template.templateDescription)
             json_string=data.get('userIds')
             check=data.get('check')
+            t_name=data.get('templateName')
+            if t_name==None:
+                t_name="welcome"
             if(check):
                 for user_ in UserModels.objects.filter(tenant_to=tenant):
                     message_ = get_text_message_input(user_.phone,message)
                     conv=ConversationModel(user=user_,ai_model_reply="welcome message",user_query=data)
                     conv.save()
-                    if "welcome" in data.get('templateName').lower():
+                    if "welcome" in t_name.lower():
                         data=create_template(user_.phone,"fixm8",user_.name,'fixm8')
                         send_welcome_temlate(data,facebookData)
                     else:
@@ -641,7 +644,7 @@ def send_email_view(request):
                     message_ = get_text_message_input(user.phone,message)
                     conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
                     conv.save()
-                    if "welcome" in data.get('templateName').lower():
+                    if "welcome" in t_name.lower():
                         data=create_template(user.phone,"fixm8",user.name,'fixm8')
                         send_welcome_temlate(data,facebookData)
                     else:
