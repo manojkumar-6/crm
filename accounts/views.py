@@ -625,22 +625,28 @@ def send_email_view(request):
             json_string=data.get('userIds')
             check=data.get('check')
             if(check):
-                for user_ in UserModels.objects.all():
+                for user_ in UserModels.objects.filter(tenant_to=tenant):
                     message_ = get_text_message_input(user_.phone,message)
                     conv=ConversationModel(user=user_,ai_model_reply="welcome message",user_query=data)
                     conv.save()
-
-                    print("sent",message_,user_.name)
-                    send_message_template_(message_,facebookData)
+                    if "welcome" in data.get('templateName').lower():
+                        data=create_template(user_.phone,"fixm8",user_.name,'fixm8')
+                        send_welcome_temlate(data,facebookData)
+                    else:
+                        print("sent",message_,user_.name)
+                        send_message_template_(message_,facebookData)
             else:
 
                 for user in UserModels.objects.filter(tenant_to=tenant, id__in=data.get('userIds')):
                     message_ = get_text_message_input(user.phone,message)
                     conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
                     conv.save()
-                    print("sent",message_)
-                    print("sent to particular user",user.name)
-                    send_message_template_(message_,facebookData)
+                    if "welcome" in data.get('templateName').lower():
+                        data=create_template(user_.phone,"fixm8",user_.name,'fixm8')
+                        send_welcome_temlate(data,facebookData)
+                    else:
+                        print("sent",message_,user_.name)
+                        send_message_template_(message_,facebookData)
 
             return JsonResponse({'message': 'messages successfully!','success': True}, status=200)
 
