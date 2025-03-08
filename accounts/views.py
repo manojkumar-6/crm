@@ -642,10 +642,10 @@ def send_email_view(request):
                     conv=ConversationModel(user=user,ai_model_reply="welcome message",user_query=data)
                     conv.save()
                     if "welcome" in data.get('templateName').lower():
-                        data=create_template(user_.phone,"fixm8",user_.name,'fixm8')
+                        data=create_template(user.phone,"fixm8",user.name,'fixm8')
                         send_welcome_temlate(data,facebookData)
                     else:
-                        print("sent",message_,user_.name)
+                        print("sent",message_,user.name)
                         send_message_template_(message_,facebookData)
 
             return JsonResponse({'message': 'messages successfully!','success': True}, status=200)
