@@ -1160,14 +1160,12 @@ def create_ticket_from_summary(summary,phonenumber,path):
     mail_body={'ticket_number':ticket_created.ticket_number,'des':ticket_created.Description,
                'phone':user.phone,'status':ticket_status.ticket_status,'username':user.name}
     print("triggering a email to client and tenant")
-
     userData=UserModels.objects.filter(phone=phonenumber).first()
-    print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
-    text="A support ticket had been created with ticket id "+str(ticket_created.ticket_number)+" further info will be shared to your email and description of the ticket is as follow\n"+"\n"+str(ticket_status.description)
+    text="A support ticket has been created with the ticket id "+str(ticket_created.ticket_number)+"."+"Further details will be shared to your email" + user.email+"  \n"+"Ticket Summary:\n"+str(ticket_status.description)
     data = get_text_message_input(phonenumber, text)
     user_intiated_chat[phonenumber]="create"
     del message_dict[phonenumber]
@@ -1177,15 +1175,11 @@ def create_ticket_from_summary(summary,phonenumber,path):
     email(mail_body,user.tenant_to.email,path)
 def process_media_with_model(file_path):
     print(f"Processing media file at: {file_path}")
-    # Implement the actual model's media processing logic here.
-    # For example, pass the image to a computer vision model.
     return "Media processed successfully."
 
-# Function to check for acknowledgment in the user's message
 def is_acknowledgment(message):
     return any(keyword in message.lower() for keyword in ACKNOWLEDGMENT_KEYWORDS)
 
-# Function to analyze sentiment of a message
 def check_support_needed(message):
     result = sentiment_pipeline(message)
     sentiment = result[0]['label']
@@ -1625,15 +1619,8 @@ def send_message_interaction_check_user_request(receipient_number):
     }
 }
 
-
-    # Send the request
-    # con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
-    # con.save()
     response = requests.post(url, headers=headers, json=data)
 
-    # Handle response
-
-    # response.raise_for_status()  # Raises an HTTPError for bad responses
     return response.text # Return the JSON response if successful
 def send_message_interaction_get_user_feedback(receipient_number,number):
     userData=UserModels.objects.filter(phone=receipient_number).first()
@@ -1647,8 +1634,8 @@ def send_message_interaction_get_user_feedback(receipient_number,number):
     'button': 'Options',
     'section_title': 'Menu',
     'rows': [
-        {'id': 'Helpful :'+str(number), 'title': 'Helpful'},
-        {'id': 'Not Helpful :'+str(number), 'title': 'Not Helpful'},
+        {'id': 'Helpful :'+str(number), 'title': '👍'},
+        {'id': 'Not Helpful :'+str(number), 'title': '👎'},
     ]
 }
     url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
@@ -1668,7 +1655,7 @@ def send_message_interaction_get_user_feedback(receipient_number,number):
             "text": options['header']
         },
          "body": {  # Adding the body
-            "text": 'Do the conversation and ticket raised are helpful to you. please provide feedback to us for improvization'  # Ensure 'body' is a key in options
+            "text": 'Was it helpful?'  # Ensure 'body' is a key in options
         },
         "action": {
             "buttons": [
@@ -1684,15 +1671,8 @@ def send_message_interaction_get_user_feedback(receipient_number,number):
     }
 }
 
-
-    # Send the request
-    # con=ConversationModel(user=userData,ai_model_reply="template",user_query="button")
-    # con.save()
     response = requests.post(url, headers=headers, json=data)
 
-    # Handle response
-
-    # response.raise_for_status()  # Raises an HTTPError for bad responses
     return response.text # Return the JSON response if successful
 import requests
 def start_sending_message_interaction(receipient_number):
@@ -1704,8 +1684,7 @@ def start_sending_message_interaction(receipient_number):
     facebookData = FacebookCredentials.objects.filter(user=tenant).first()
 
     # Welcome message content
-    welcome_text = "Hi there! 👋 Welcome to"+ " "+userData.tenant_to.name.username+ " 's  property maintenance assistant. I'm here to help you with any issues in your property. To get started, please choose a main category from the menu below:"
-
+    welcome_text = "Hi there! 👋 Welcome to Fixm8, your Property Maintenance Assistant! To get started, simply select 'Report an Issue' and choose the type of issue from the menu. We're here to help—let’s get it fixed!"
     options = {
         'header': " ",
         'section_title': "Choose a Category",
