@@ -3529,8 +3529,10 @@ from .models import AssigneModel, TenantModel
 from .forms import AssigneForm
 
 def assigne_list(request):
-    assignes = AssigneModel.objects.all()
-    tenants = TenantModel.objects.all()
+    tenant__=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    te=TenantModel.objects.filter(name=tenant__).first()
+    assignes = AssigneModel.objects.filter(client=te)
+    tenants = TenantModel.objects.filter(name=tenant__)
     return render(request, 'accounts/assigne_list.html', {'assignes': assignes, 'tenants': tenants})
 
 def create_assigne(request):
