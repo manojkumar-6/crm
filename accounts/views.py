@@ -1152,7 +1152,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
-    text="A support ticket has been created with the ticket id "+str(ticket_created.ticket_number)+"."+"Further details will be shared to your email : " + user.email+"  \n"+"Ticket Summary:\n"+str(ticket_status.description)
+    text="A support ticket has been created with the ticket id "+str(ticket_created.ticket_number)+"."+"Further details will be shared to your email : " + user.email+"  \n"+"Address: "+user.address+"  \n"+"Ticket Summary:\n"+str(ticket_status.description)
     data = get_text_message_input(phonenumber, text)
     user_intiated_chat[phonenumber]="create"
     del message_dict[phonenumber]
@@ -1281,7 +1281,7 @@ def process_whatsapp_message(body):
                 ticket_id.feedback=ticket[0]
                 ticket_id.save()
                 print("updated the ticket feedback",ticket_id)
-                data = get_text_message_input(wa_id, "Thanks For your feedback, we will try to improve based on this")
+                data = get_text_message_input(wa_id, "Thank you for your valuable feedback!")
                 send_message(data,facebookData)
                 return
     if message_data.get('interactive') and message_data.get('interactive').get('button_reply')!=None  and ((message_data.get('interactive').get('button_reply').get('id')=="Resloved_team" or "No_team" in message_data.get('interactive').get('button_reply').get('id'))):
@@ -1343,7 +1343,7 @@ def process_whatsapp_message(body):
             if message_data.get('interactive').get('button_reply').get('id')=="n_help":
                 data=get_text_message_input(wa_id,"Thank you! If you encounter any other issues, don’t hesitate to reach out – I’m here to help!")
             else:
-                data = get_text_message_input(wa_id, "I have notified the team they willreach out to you soon.")
+                data = get_text_message_input(wa_id, "I have notified the team they will reach out to you soon.")
                 print("triggering email")
             send_message(data,facebookData)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="e_status"):
@@ -1599,7 +1599,7 @@ def send_message_interaction_check_user_request_escalate(receipient_number,ticke
             "text": options['header']
         },
          "body": {  # Adding the body
-            "text": 'Do you Want To Raise a Request For The Current Status Of Ticket'  # Ensure 'body' is a key in options
+            "text": 'Do you want further support on this ticket?'  # Ensure 'body' is a key in options
         },
         "action": {
             "buttons": [
@@ -1651,7 +1651,7 @@ def send_message_interaction_check_user_request(receipient_number,ticket):
             "text": options['header']
         },
          "body": {  # Adding the body
-            "text": 'Do you Want To Raise a Request For The Current Status Of Ticket'  # Ensure 'body' is a key in options
+            "text": 'Do you want further support on this ticket?'  # Ensure 'body' is a key in options
         },
         "action": {
             "buttons": [
@@ -1933,7 +1933,7 @@ def get_data_about_exiting_tickets(receipient_number):
         send_whatsapp_message(data,facebookData)
 def send_ticket_status(ticketNumber):
     ticket=TicketsStatusModel.objects.get(ticket_number=ticketNumber)
-    temp="The Ticket Number you choosed is "+ " "+str(ticket.ticket_number)+"\n"+"and this is the current status of the ticket"+" "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
+    temp="The Ticket Number you choosed is "+ ": "+str(ticket.ticket_number)+"\n"+"and this is the current status of the ticket"+": "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
     return temp
 
 def send_message_interaction_by_team(receipient_number,ticket_number):
