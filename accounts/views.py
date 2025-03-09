@@ -385,6 +385,7 @@ def dashBoard(request):
     print("user",request.user.username)
     username=User.objects.filter(username=request.user.username).first()
     tenant__=User.objects.filter(username=request.user.username,email=request.user.email).first()
+    te=TenantModel.objects.filter(name=tenant__).first()
     templates = TemplateModel.objects.filter(name=tenant__)
     print(templates)
     today = timezone.now()
@@ -392,7 +393,7 @@ def dashBoard(request):
     end_of_month = today.replace(day=28) + timezone.timedelta(days=4)  # Ensures we get the last day of the month
 
     # Query tickets raised within the current month and group them by week
-    tickets_s = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month,tenant_to=tenant__) \
+    tickets_s = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month,tenant_to=te) \
         .annotate(week_start=TruncWeek('date_reported')) \
         .values('week_start') \
         .annotate(ticket_count=Count('id')) \
@@ -421,7 +422,7 @@ def dashBoard(request):
     end_of_month = today.replace(day=days_in_month)
 
     # Query tickets raised within the current month and group them by day
-    tickets = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month,tenant_to=tenant__) \
+    tickets = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month,tenant_to=te) \
         .annotate(day=TruncDay('date_reported')) \
         .values('day') \
         .annotate(ticket_count=Count('id')) \
