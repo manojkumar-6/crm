@@ -196,7 +196,7 @@
     function removeTenant(userId, user_to_tenant_ids) {
         console.log(user_to_tenant_ids, user_to_tenant_ids[userId])
         if (confirm('Are you sure you want to delete access to this client')) {
-            fetch("{% url 'delete_tenant' 0 %}".replace('0', user_to_tenant_ids[userId]), {
+            fetch("{% url 'delete_user_' %}", {
                     method: 'DELETE',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}',
