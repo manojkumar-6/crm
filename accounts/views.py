@@ -1342,7 +1342,7 @@ def process_whatsapp_message(body):
             if message_data.get('interactive').get('button_reply').get('id')=="n_help":
                 data=get_text_message_input(wa_id,"Thank you! If you encounter any other issues, don’t hesitate to reach out – I’m here to help!")
             else:
-                data = get_text_message_input(wa_id, "I had notified the team by sending email they will get in touch with you soon")
+                data = get_text_message_input(wa_id, "I have notified the team they willreach out to you soon.")
                 print("triggering email")
             send_message(data,facebookData)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="e_status"):
