@@ -387,26 +387,12 @@ def dashBoard(request):
     tenant__=User.objects.filter(username=request.user.username,email=request.user.email).first()
     templates = TemplateModel.objects.filter(name=tenant__)
     print(templates)
-    #
-
-    # Tickets per day (truncated to date)
-    # tickets_per_day = tickets_.annotate(
-    #     date_reported_truncated=Func(
-    #         F('date_reported'), function='DATE', template="%(expressions)s"
-    #     )
-    # ).values('date_reported_truncated').annotate(count=Count('id')).order_by('date_reported_truncated')
-
-    # tickets_per_day_data = {
-    #     'labels': [ticket['date_reported_truncated'] for ticket in tickets_per_day],
-    #     'data': [ticket['count'] for ticket in tickets_per_day]
-    # }
-    # print(tickets_per_day_data)
     today = timezone.now()
     start_of_month = today.replace(day=1)
     end_of_month = today.replace(day=28) + timezone.timedelta(days=4)  # Ensures we get the last day of the month
 
     # Query tickets raised within the current month and group them by week
-    tickets_s = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month) \
+    tickets_s = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month,tenant_to=tenant__) \
         .annotate(week_start=TruncWeek('date_reported')) \
         .values('week_start') \
         .annotate(ticket_count=Count('id')) \
@@ -435,7 +421,7 @@ def dashBoard(request):
     end_of_month = today.replace(day=days_in_month)
 
     # Query tickets raised within the current month and group them by day
-    tickets = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month) \
+    tickets = TicketsStatusModel.objects.filter(date_reported__gte=start_of_month, date_reported__lte=end_of_month,tenant_to=tenant__) \
         .annotate(day=TruncDay('date_reported')) \
         .values('day') \
         .annotate(ticket_count=Count('id')) \
@@ -1165,7 +1151,7 @@ def create_ticket_from_summary(summary,phonenumber,path):
     tenant=TenantModel.objects.filter(name=name).first()
     facebookData=FacebookCredentials.objects.filter(user=tenant).first()
     print(facebookData)
-    text="A support ticket has been created with the ticket id "+str(ticket_created.ticket_number)+"."+"Further details will be shared to your email" + user.email+"  \n"+"Ticket Summary:\n"+str(ticket_status.description)
+    text="A support ticket has been created with the ticket id "+str(ticket_created.ticket_number)+"."+"Further details will be shared to your email : " + user.email+"  \n"+"Ticket Summary:\n"+str(ticket_status.description)
     data = get_text_message_input(phonenumber, text)
     user_intiated_chat[phonenumber]="create"
     del message_dict[phonenumber]
@@ -1332,7 +1318,7 @@ def process_whatsapp_message(body):
                 status=send_ticket_status(get_ticket[0])
                 data = get_text_message_input(wa_id, status)
                 send_message(data,facebookData)
-                send_message_interaction_check_user_request(receipient_number)
+                send_message_interaction_check_user_request(receipient_number,get_ticket[0])
             else:
 
                 issue_text="The user is facing " +selected_option_id
@@ -1344,11 +1330,20 @@ def process_whatsapp_message(body):
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="m_issue"):
             start_sending_maintainence_issue_interaction(receipient_number)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="not_required"):
-            data = get_text_message_input(wa_id, "Feel free to reach out tome if you are facing any issue havea good day")
+            data = get_text_message_input(wa_id, "Feel free to reach out tome if you are facing any issue have a good day")
             send_message(data,facebookData)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="request_current_stat"):
-            data = get_text_message_input(wa_id, "I Had Notfied the team by sending a email they will get in touch with you soon feel free to reach out regarding any other issue you are facing")
-            print("triggering email")
+            get_ticket=message_data.get('interactive').get('button_reply').get('id').split(":")
+            status=send_ticket_status(get_ticket[1])
+            data = get_text_message_input(wa_id, status)
+            send_message(data,facebookData)
+            send_message_interaction_check_user_request(receipient_number,get_ticket[1])
+        elif message_data.get('interactive') and "help" in (message_data.get('interactive').get('button_reply').get('id')):
+            if message_data.get('interactive').get('button_reply').get('id')=="n_help":
+                data=get_text_message_input(wa_id,"Thank you! If you encounter any other issues, don’t hesitate to reach out – I’m here to help!")
+            else:
+                data = get_text_message_input(wa_id, "I had notified the team by sending email they will get in touch with you soon")
+                print("triggering email")
             send_message(data,facebookData)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="e_status"):
              get_data_about_exiting_tickets(receipient_number)
@@ -1570,7 +1565,7 @@ def send_message_interaction(receipient_number):
 
     # response.raise_for_status()  # Raises an HTTPError for bad responses
     # return response.text # Return the JSON response if successful
-def send_message_interaction_check_user_request(receipient_number):
+def send_message_interaction_check_user_request_escalate(receipient_number,ticket):
     userData=UserModels.objects.filter(phone=receipient_number).first()
     print(userData)
     name=User.objects.filter(username=userData.tenant_to).first()
@@ -1582,8 +1577,60 @@ def send_message_interaction_check_user_request(receipient_number):
     'button': 'Options',
     'section_title': 'Menu',
     'rows': [
-        {'id': 'request_current_stat', 'title': 'Request Current Stat'},
+        {'id': 'request_current_stat:'+str(ticket), 'title': 'Request Current Stat'},
         {'id': 'not_required', 'title': 'Not Required'},
+    ]
+}
+    url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
+    headers = {
+        "Authorization": "Bearer " + facebookData.accessToken,
+        "Content-Type": "application/json",
+    }
+
+    data = {
+    "messaging_product": "whatsapp",
+    "to": receipient_number,
+    "type": "interactive",
+    "interactive": {
+        "type": "button",
+        "header": {
+            "type": "text",
+            "text": options['header']
+        },
+         "body": {  # Adding the body
+            "text": 'Do you Want To Raise a Request For The Current Status Of Ticket'  # Ensure 'body' is a key in options
+        },
+        "action": {
+            "buttons": [
+                {
+                    "type": "reply",
+                    "reply": {
+                        "id": opt['id'],
+                        "title": opt['title']
+                    }
+                } for opt in options['rows']  # Adjust the rows to fit button format
+            ]
+        }
+    }
+}
+
+    response = requests.post(url, headers=headers, json=data)
+
+    return response.text # Return the JSON response if successful
+def send_message_interaction_check_user_request(receipient_number,ticket):
+    userData=UserModels.objects.filter(phone=receipient_number).first()
+    print(userData)
+    name=User.objects.filter(username=userData.tenant_to).first()
+    tenant=TenantModel.objects.filter(name=name).first()
+    facebookData=FacebookCredentials.objects.filter(user=tenant).first()
+    print(facebookData)
+    options = {
+    'header': '',
+    'button': 'Options',
+    'section_title': 'Menu',
+    'rows': [
+        {'id': 'help:'+str(ticket), 'title': 'Need More Support'},
+        {'id': 'n_help', 'title': 'Not Required'},
     ]
 }
     url = f"https://graph.facebook.com/{facebookData.version}/{facebookData.phoneNumberId}/messages"
@@ -1885,7 +1932,7 @@ def get_data_about_exiting_tickets(receipient_number):
         send_whatsapp_message(data,facebookData)
 def send_ticket_status(ticketNumber):
     ticket=TicketsStatusModel.objects.get(ticket_number=ticketNumber)
-    temp="Hi User"+"\n"+"The Ticket Number you choosed is "+ " "+str(ticket.ticket_number)+"\n"+"The status of the ticket is "+" "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
+    temp="The Ticket Number you choosed is "+ " "+str(ticket.ticket_number)+"\n"+"and this is the current status of the ticket"+" "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
     return temp
 
 def send_message_interaction_by_team(receipient_number,ticket_number):
