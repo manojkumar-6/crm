@@ -3039,6 +3039,7 @@ def manage_chat_options(request):
     templates = TemplateModel.objects.filter(name=username)
     print(templates)
     chat_options = ChatOption.objects.filter(name=username)
+    print("chat",chat_options)
     return render(request, 'accounts/template.html', {
         'chat_options': chat_options,
         'users': users,
@@ -3104,12 +3105,13 @@ def delete_selected_chat_options(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 def showTemplate(request):
-    chat_options = ChatOption.objects.all()
+
       # Assuming you have a User model or tenant model
     username=User.objects.filter(username=request.user.username,email=request.user.email).first()
     tenant=TenantModel.objects.filter(name=username).first()
     users=UserModels.objects.filter(tenant_to=tenant)
     templates = TemplateModel.objects.filter(name=username)
+    chat_options = ChatOption.objects.filter(user=username)
     print(templates)
     return render(request, 'accounts/template.html', {
         'chat_options': chat_options,
