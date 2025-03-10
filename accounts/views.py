@@ -3033,11 +3033,12 @@ from django.views.decorators.http import require_POST
 
 # View for managing chat options
 def manage_chat_options(request):
-    chat_options = ChatOption.objects.all()
+
     users = User.objects.all()  # Assuming you have a User model or tenant model
     username=User.objects.filter(username=request.user.username,email=request.user.email).first()
     templates = TemplateModel.objects.filter(name=username)
     print(templates)
+    chat_options = ChatOption.objects.filter(name=username)
     return render(request, 'accounts/template.html', {
         'chat_options': chat_options,
         'users': users,
