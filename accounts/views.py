@@ -168,15 +168,15 @@ def upload_csv(request):
                         username = row['username']
                         email = row['email']
                         phone = row['phone']
-
+                        address=row["address"]
                         # Create user with default password
-                        user = UserModels(name=username, email=email, phone=phone,tenant_to=tenant)
+                        user = UserModels(name=username, email=email, phone=phone,tenant_to=tenant,address=address)
                         user.save()
                         print("user dsaved")
                         # Optionally, you can save phone number if you have a field for it in your user model
                         # user.profile.phone = phone  # assuming you have a related Profile model
                         # user.profile.save()
-
+                        # send_onbarding_mail(username,email,home_directory_link)
                     return JsonResponse({'message': f'Uploaded {len(df)} users successfully.'})
 
             except Exception as e:
