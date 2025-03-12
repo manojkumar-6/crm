@@ -167,7 +167,7 @@ def upload_csv(request):
                     for index, row in df.iterrows():
                         username = row['username']
                         email = row['email']
-                        phone = row['phone']
+                        phone = int(row['phone'])
                         address=row["address"]
                         # Create user with default password
                         user = UserModels(name=username, email=email, phone=phone,tenant_to=tenant,address=address)
