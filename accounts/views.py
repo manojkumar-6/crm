@@ -1348,6 +1348,7 @@ def process_whatsapp_message(body):
             send_message(data,facebookData)
         elif message_data.get('interactive') and (message_data.get('interactive').get('button_reply').get('id')=="e_status"):
              get_data_about_exiting_tickets(receipient_number)
+
         else:
             message_body = message_data.get("text", {}).get("body", "")
             if message_body in ACKNOWLEDGMENT_KEYWORDS:
@@ -1874,7 +1875,8 @@ def get_data_about_exiting_tickets(receipient_number):
     facebookData = FacebookCredentials.objects.filter(user=tenant).first()
     user_instance = UserModels.objects.get(id=userData.id)
     tickets = TicketsStatusModel.objects.filter(user=user_instance).order_by('-date_reported')[:10]
-
+    # if len(tickets)==0:
+    #     return 0
     row=[]
     for ticket in tickets:
         temp={}
@@ -1894,7 +1896,6 @@ def get_data_about_exiting_tickets(receipient_number):
             "Content-Type": "application/json",
         }
 
-        # Construct the data for the list message
         data = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
@@ -1910,10 +1911,10 @@ def get_data_about_exiting_tickets(receipient_number):
                     "text": " List Of Tickets Raised By"+" "+userData.name
                 },
                 "footer": {
-                    "text": "Tap below to choose an ticket to get info about"  # Footer text
+                    "text": "Tap below to choose an ticket to get info about"
                 },
                 "action": {
-                    "button": "Select Ticket",  # **THIS IS THE REQUIRED BUTTON LABEL**
+                    "button": "Select Ticket",
                     "sections": [
                         {
                             "title": options['section_title'],
@@ -1929,8 +1930,8 @@ def get_data_about_exiting_tickets(receipient_number):
         print(response,response.text,response.json())
         return response.json()
     else:
-        data=get_text_message_input(receipient_number,"No tickets were raised on your behalf if ypur facing any issue you can raise a support ticket")
-        send_whatsapp_message(data,facebookData)
+        data=get_text_message_input(receipient_number,"No tickets were raised on your behalf if your facing any issue you can raise a support ticket")
+        send_message(data,facebookData)
 def send_ticket_status(ticketNumber):
     ticket=TicketsStatusModel.objects.get(ticket_number=ticketNumber)
     temp="The Ticket Number you choosed is "+ ": "+str(ticket.ticket_number)+"\n"+"and this is the current status of the ticket"+": "+str(ticket.ticket_status)+"\n"+" "+"The comments are"+str(ticket.commentHistory)
@@ -3515,6 +3516,10 @@ def send_media_to_user(phone_number, media_id, facebookData, file_type):
         # response.raise_for_status()  # Raise an error for non-2xx status codes
 
         if response.status_code == 200:
+            user=UserModels.objects.filter(phone=phone_number).first()
+            if user:
+                c=ConversationModel(user=user,ai_model_reply="media sent successfully",is_seen=True);
+                c.save()
             print(f"Media sent successfully to {phone_number}")
             return True
         else:
